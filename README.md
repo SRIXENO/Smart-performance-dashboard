@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # SPID - Enterprise Student Performance Analytics Platform 🎓
 
 > **Fully transformed into an enterprise-grade analytics platform with AI insights, comprehensive GPA calculations, and advanced visualizations**
@@ -383,10 +382,3 @@ For issues or questions:
 
 This project is for educational purposes.
 
----
-
-**🎉 Now featuring enterprise-grade analytics with AI-powered insights!**
-=======
-# On going
->>>>>>> 5c4e213725d2bd2a616f3b0666b91523dae6c439
-# Smart_performance_dashboard
