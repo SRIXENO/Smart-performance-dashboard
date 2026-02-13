@@ -1,0 +1,192 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --input-bg: #ffffff;
+  --input-text: #111827;
+  --input-border: #d1d5db;
+  --input-placeholder: #9ca3af;
+  --label-text: #374151;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --input-bg: #1F2933;
+    --input-text: #FFFFFF;
+    --input-border: #374151;
+    --input-placeholder: #9CA3AF;
+    --label-text: #E5E7EB;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Enhanced Input Field Styling */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+input[type="search"],
+select,
+textarea {
+  color: var(--input-text) !important;
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  font-weight: 500;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--input-text) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--input-placeholder) !important;
+  opacity: 1 !important;
+  font-weight: 400;
+}
+
+label {
+  color: var(--label-text) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  color: var(--input-text) !important;
+  background-color: var(--input-bg) !important;
+  border-color: #3b82f6 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+input:hover,
+textarea:hover,
+select:hover {
+  border-color: #6b7280 !important;
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Autofill styling */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--input-text) !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Enhanced Select Dropdown Styling */
+select {
+  color: var(--input-text) !important;
+  background-color: var(--input-bg) !important;
+  font-weight: 500;
+}
+
+select option {
+  background-color: var(--input-bg);
+  color: var(--input-text);
+  padding: 8px 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+  background-color: #2563eb !important;
+  background: #2563eb !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+select option:disabled {
+  color: #9ca3af;
+  background-color: #f3f4f6;
+}
+
+/* Firefox specific */
+@-moz-document url-prefix() {
+  select option:hover,
+  select option:focus {
+    background-color: #2563eb;
+    color: #ffffff;
+  }
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+select option:checked {
+  background: linear-gradient(#2563eb, #2563eb);
+  color: #ffffff;
+}
+
+select:focus option:checked {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* Modal Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.2s ease-out;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
