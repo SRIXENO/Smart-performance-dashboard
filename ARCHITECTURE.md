@@ -1,650 +1,233 @@
-# 🏗️ SPID ENTERPRISE PLATFORM - SYSTEM ARCHITECTURE
+# Smart Performance Dashboard Architecture
 
-## Overview
+## 1. Purpose
 
-This document provides a comprehensive view of the system architecture, data flow, and component relationships.
+This document describes the technical architecture of the Smart Performance Dashboard, including system boundaries, runtime components, data flow, and operational characteristics.
 
----
+## 2. System Context
 
-## 🎯 SYSTEM ARCHITECTURE DIAGRAM
+The platform is a web-based student performance system with:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         FRONTEND LAYER                          │
-│                      (Next.js 16 + React 19)                    │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
-│  │  Dashboard   │  │   Students   │  │   Subjects   │        │
-│  │    Page      │  │     Page     │  │     Page     │        │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘        │
-│         │                  │                  │                 │
-│  ┌──────▼──────────────────▼──────────────────▼───────┐       │
-│  │           API Client (Axios)                        │       │
-│  │  - dashboardAPI  - academicAPI  - aiAnalyticsAPI   │       │
-│  │  - studentsAPI   - subjectsAPI  - activityAPI      │       │
-│  └─────────────────────────┬───────────────────────────┘       │
-│                            │                                    │
-└────────────────────────────┼────────────────────────────────────┘
-                             │
-                    HTTP/REST API
-                             │
-┌────────────────────────────▼────────────────────────────────────┐
-│                        BACKEND LAYER                            │
-│                    (Node.js + Express.js)                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │                    API ROUTES                            │  │
-│  │  /api/dashboard  /api/academic  /api/ai-analytics       │  │
-│  │  /api/students   /api/subjects  /api/activities         │  │
-│  └────────────────────┬─────────────────────────────────────┘  │
-│                       │                                         │
-│  ┌────────────────────▼─────────────────────────────────────┐  │
-│  │                  CONTROLLERS                             │  │
-│  │  - dashboardController  - academicController             │  │
-│  │  - aiAnalyticsController - activityController            │  │
-│  │  - studentController    - subjectController              │  │
-│  └────────────────────┬─────────────────────────────────────┘  │
-│                       │                                         │
-│  ┌────────────────────▼─────────────────────────────────────┐  │
-│  │                  BUSINESS LOGIC                          │  │
-│  │  - SGPA/CGPA Calculation  - AI Risk Assessment           │  │
-│  │  - Performance Prediction - Trend Analysis               │  │
-│  │  - Alert Generation       - Suggestion Engine            │  │
-│  └────────────────────┬─────────────────────────────────────┘  │
-│                       │                                         │
-│  ┌────────────────────▼─────────────────────────────────────┐  │
-│  │                    MODELS                                │  │
-│  │  - Student  - AcademicRecord  - AIAnalytics             │  │
-│  │  - Performance  - Subject  - ActivityLog                │  │
-│  └────────────────────┬─────────────────────────────────────┘  │
-│                       │                                         │
-└───────────────────────┼─────────────────────────────────────────┘
-                        │
-                   Mongoose ODM
-                        │
-┌───────────────────────▼─────────────────────────────────────────┐
-│                     DATABASE LAYER                              │
-│                    (MongoDB Atlas)                              │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
-│  │   students   │  │ performances │  │   subjects   │        │
-│  └──────────────┘  └──────────────┘  └──────────────┘        │
-│                                                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
-│  │academic      │  │ aianalytics  │  │ activitylogs │        │
-│  │records       │  │              │  │              │        │
-│  └──────────────┘  └──────────────┘  └──────────────┘        │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+- Next.js frontend for user-facing workflows and dashboards
+- Express.js backend for REST APIs and business logic
+- MongoDB Atlas for persistent storage
 
----
+Primary user roles:
 
-## 📊 DATA FLOW DIAGRAMS
+- Admin
+- Faculty
+- Student
 
-### 1. SGPA/CGPA Calculation Flow
+## 3. Runtime Topology
 
-```
-┌─────────────┐
-│   Admin     │
-│  Enters     │
-│  Grades     │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────────────────────────┐
-│  POST /api/academic/student/:id/semester│
-└──────┬──────────────────────────────────┘
-       │
-       ▼
-┌──────────────────────────────────────────┐
-│  academicController.updateSemesterData   │
-│  1. Validate input                       │
-│  2. Calculate grade from marks           │
-│  3. Calculate credit points              │
-│  4. Calculate semester SGPA              │
-│  5. Recalculate overall CGPA             │
-│  6. Update academic status               │
-│  7. Update student quick stats           │
-│  8. Log activity                         │
-└──────┬───────────────────────────────────┘
-       │
-       ▼
-┌──────────────────────────────────────────┐
-│  AcademicRecord.calculateSGPA()          │
-│  SGPA = Σ(credits × gradePoint) / Σ(credits)│
-└──────┬───────────────────────────────────┘
-       │
-       ▼
-┌──────────────────────────────────────────┐
-│  AcademicRecord.calculateCGPA()          │
-│  CGPA = Average of all semester SGPAs    │
-└──────┬───────────────────────────────────┘
-       │
-       ▼
-┌──────────────────────────────────────────┐
-│  Save to MongoDB                         │
-│  - AcademicRecord updated                │
-│  - Student.currentCGPA updated           │
-│  - ActivityLog created                   │
-└──────────────────────────────────────────┘
-```
+Development runtime:
 
-### 2. AI Analytics Flow
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:5000` (`/api/*`)
+- Database: MongoDB Atlas cluster
 
-```
-┌─────────────┐
-│  Trigger    │
-│  Analysis   │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────────────────────────┐
-│  GET /api/ai-analytics/student/:id      │
-└──────┬──────────────────────────────────┘
-       │
-       ▼
-┌──────────────────────────────────────────┐
-│  aiAnalyticsController.runStudentAnalysis│
-└──────┬───────────────────────────────────┘
-       │
-       ├──────────────────────────────────┐
-       │                                  │
-       ▼                                  ▼
-┌──────────────────┐          ┌──────────────────┐
-│ Calculate Risk   │          │ Analyze Trends   │
-│ Score            │          │ - Attendance     │
-│ - Attendance 40% │          │ - Performance    │
-│ - Performance 40%│          │ - Historical     │
-│ - Trend 20%      │          └──────────────────┘
-└──────┬───────────┘                     │
-       │                                  │
-       ├──────────────────────────────────┤
-       │                                  │
-       ▼                                  ▼
-┌──────────────────┐          ┌──────────────────┐
-│ Generate Alerts  │          │ Predict          │
-│ - Low attendance │          │ Performance      │
-│ - Subject failure│          │ - Future CGPA    │
-│ - Probation risk │          │ - Next SGPA      │
-└──────┬───────────┘          └──────┬───────────┘
-       │                             │
-       ├─────────────────────────────┤
-       │                             │
-       ▼                             ▼
-┌──────────────────┐          ┌──────────────────┐
-│ Generate         │          │ Analyze Subjects │
-│ Suggestions      │          │ - Difficulty     │
-│ - Study habits   │          │ - Failure risk   │
-│ - Time mgmt      │          │ - Predictions    │
-└──────┬───────────┘          └──────┬───────────┘
-       │                             │
-       └─────────────┬───────────────┘
-                     │
-                     ▼
-           ┌──────────────────┐
-           │ Compare with     │
-           │ Peers            │
-           │ - Dept rank      │
-           │ - Percentile     │
-           └──────┬───────────┘
-                  │
-                  ▼
-           ┌──────────────────┐
-           │ Save AIAnalytics │
-           │ to MongoDB       │
-           └──────────────────┘
-```
+Backend bootstrapping is handled in `server/src/server.js`:
 
-### 3. Dashboard Data Flow
+- Environment loading (`dotenv`)
+- Database connection (`connectDB()`)
+- Middleware initialization (CORS, JSON parsing, cookies, logging, passport)
+- Route registration
+- Health endpoint and error handling
 
-```
-┌─────────────┐
-│  User Opens │
-│  Dashboard  │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────────────────────────┐
-│  Dashboard Component Loads              │
-│  Parallel API Calls (Promise.all)       │
-└──────┬──────────────────────────────────┘
-       │
-       ├──────────────┬──────────────┬──────────────┐
-       │              │              │              │
-       ▼              ▼              ▼              ▼
-┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
-│ Summary  │  │Attendance│  │  Grade   │  │Department│
-│   Data   │  │  Trend   │  │Distribution│ │Comparison│
-└────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘
-     │             │             │             │
-     └─────────────┴─────────────┴─────────────┘
-                   │
-                   ▼
-         ┌──────────────────┐
-         │ Aggregate Data   │
-         │ from MongoDB     │
-         │ - Students       │
-         │ - Performance    │
-         │ - AcademicRecord │
-         │ - AIAnalytics    │
-         └────────┬─────────┘
-                  │
-                  ▼
-         ┌──────────────────┐
-         │ Process & Format │
-         │ - Calculate KPIs │
-         │ - Prepare charts │
-         │ - Apply filters  │
-         └────────┬─────────┘
-                  │
-                  ▼
-         ┌──────────────────┐
-         │ Render Dashboard │
-         │ - KPI Cards      │
-         │ - Charts         │
-         │ - Tables         │
-         └──────────────────┘
-```
+## 4. High-Level Architecture
 
----
+### Frontend Layer (Next.js)
 
-## 🗂️ COMPONENT HIERARCHY
+Key responsibilities:
 
-### Frontend Component Tree
+- Authentication-aware navigation and protected routes
+- Dashboard visualizations and analytics pages
+- Student, subject, performance, and import workflows
+- API integration through a centralized client layer (`src/lib/api.ts`)
 
-```
-App
-│
-├── Dashboard Layout
-│   ├── Sidebar
-│   └── Topbar
-│
-├── Dashboard Page
-│   ├── Header
-│   ├── SmartFilter
-│   ├── KPI Cards Grid
-│   │   ├── EnhancedKPICard (x8)
-│   │   │   ├── Icon
-│   │   │   ├── Value (animated)
-│   │   │   ├── Trend Indicator
-│   │   │   └── Mini Chart
-│   │   └── ...
-│   ├── AI Insights Panel
-│   ├── Charts Grid
-│   │   ├── GradientLineChart
-│   │   ├── ChartCard (Doughnut)
-│   │   ├── ChartCard (Bar)
-│   │   ├── MultiLineChart
-│   │   └── ...
-│   └── Data Tables
-│       ├── At-Risk Students
-│       ├── Difficult Subjects
-│       └── Recent Students
-│
-├── Student Analytics Page
-│   ├── Header
-│   ├── Performance Summary Cards (x4)
-│   ├── AI Risk Assessment Panel
-│   ├── Prediction Cards (x3)
-│   ├── CGPA Trend Chart
-│   ├── Semester Performance Table
-│   ├── Alerts & Suggestions Grid
-│   └── Activity Timeline
-│
-└── Shared Components
-    ├── EnhancedKPICard
-    ├── ChartCard
-    ├── SmartFilter
-    ├── SkeletonLoader
-    ├── ConfirmModal
-    └── ...
-```
+Representative structure:
 
----
+- `src/app/dashboard/*`
+- `src/app/students/*`
+- `src/app/subjects/*`
+- `src/app/performance/*`
+- `src/components/dashboard/*`
+- `src/context/AuthContext.tsx`
 
-## 🔄 STATE MANAGEMENT
+### Backend Layer (Express)
 
-### Data Flow Pattern
+Key responsibilities:
 
-```
-┌─────────────────────────────────────────┐
-│           Component State               │
-│  - useState for local state             │
-│  - useEffect for data fetching          │
-│  - Props for parent-child communication │
-└──────────────┬──────────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────────┐
-│           API Client Layer              │
-│  - Centralized axios instance           │
-│  - Organized by domain (dashboardAPI,   │
-│    academicAPI, aiAnalyticsAPI, etc.)   │
-└──────────────┬──────────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────────┐
-│           Backend API                   │
-│  - RESTful endpoints                    │
-│  - JSON responses                       │
-│  - Error handling                       │
-└─────────────────────────────────────────┘
-```
+- Domain APIs grouped by business area
+- Authentication and authorization
+- Academic and analytics business logic
+- Data persistence via Mongoose models
 
----
+Main route groups:
 
-## 🗄️ DATABASE SCHEMA RELATIONSHIPS
+- `/api/auth`
+- `/api/students`
+- `/api/dashboard`
+- `/api/performance`
+- `/api/subjects`
+- `/api/academic`
+- `/api/ai-analytics`
+- `/api/activities`
 
-```
-┌──────────────┐
-│   Student    │
-│              │
-│ _id          │◄─────────┐
-│ studentId    │          │
-│ name         │          │
-│ department   │          │
-│ year         │          │
-│ currentCGPA  │          │
-└──────────────┘          │
-                          │
-                          │ studentId (ref)
-                          │
-        ┌─────────────────┼─────────────────┐
-        │                 │                 │
-        │                 │                 │
-┌───────▼──────┐  ┌───────▼──────┐  ┌──────▼───────┐
-│ Performance  │  │ Academic     │  │ AIAnalytics  │
-│              │  │ Record       │  │              │
-│ studentId    │  │              │  │ studentId    │
-│ subjectName  │  │ studentId    │  │ riskScore    │
-│ marks        │  │ semesters[]  │  │ predictions  │
-│ attendance   │  │ cgpa         │  │ alerts[]     │
-│ grade        │  │ status       │  │ suggestions[]│
-└──────────────┘  └──────────────┘  └──────────────┘
-        │
-        │
-        │ subjectId (ref)
-        │
-        ▼
-┌──────────────┐
-│ SubjectGroup │
-│              │
-│ department   │
-│ year         │
-│ subjects[]   │
-└──────────────┘
+### Data Layer (MongoDB + Mongoose)
 
-┌──────────────┐
-│ ActivityLog  │
-│              │
-│ targetId     │──────► Can reference any collection
-│ targetType   │
-│ action       │
-│ description  │
-│ timestamp    │
-└──────────────┘
-```
+Core entities:
 
----
+- `User`
+- `Student`
+- `Subject`
+- `SubjectGroup`
+- `Performance`
+- `AcademicRecord`
+- `AIAnalytics`
+- `ActivityLog`
+- `Counter` (ID generation support)
 
-## 🔐 SECURITY ARCHITECTURE
+## 5. API and Domain Boundaries
 
-```
-┌─────────────────────────────────────────┐
-│           Frontend Security             │
-│  - Environment variables                │
-│  - No sensitive data in client          │
-│  - HTTPS only (production)              │
-└──────────────┬──────────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────────┐
-│           API Security                  │
-│  - CORS configuration                   │
-│  - JWT authentication                   │
-│  - Input validation                     │
-│  - Rate limiting (ready)                │
-└──────────────┬──────────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────────┐
-│           Database Security             │
-│  - MongoDB Atlas encryption             │
-│  - IP whitelisting                      │
-│  - Secure connection strings            │
-│  - Role-based access                    │
-└─────────────────────────────────────────┘
-```
+### Authentication Domain
 
----
+- Registration/login/logout and profile retrieval
+- JWT-based session handling
+- Google OAuth integration (passport-based flow)
 
-## 📈 SCALABILITY ARCHITECTURE
+### Student and Subject Domain
 
-### Horizontal Scaling Ready
+- Student CRUD and profile views
+- Subject and grouping management
+- Operational data used by dashboard and academic modules
 
-```
-┌─────────────────────────────────────────┐
-│         Load Balancer (Future)          │
-└──────────────┬──────────────────────────┘
-               │
-       ┌───────┴───────┐
-       │               │
-       ▼               ▼
-┌─────────────┐ ┌─────────────┐
-│  Backend    │ │  Backend    │
-│  Instance 1 │ │  Instance 2 │
-└──────┬──────┘ └──────┬──────┘
-       │               │
-       └───────┬───────┘
-               │
-               ▼
-┌─────────────────────────────────────────┐
-│      MongoDB Atlas (Clustered)          │
-│  - Automatic sharding                   │
-│  - Replica sets                         │
-│  - Auto-scaling                         │
-└─────────────────────────────────────────┘
-```
+### Academic Domain
 
-### Caching Strategy (Future)
+- Semester-level academic updates
+- SGPA/CGPA calculations
+- Historical academic progression per student
 
-```
-┌─────────────┐
-│   Request   │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│   Redis     │  ◄── Cache frequently accessed data
-│   Cache     │      - Dashboard summaries
-└──────┬──────┘      - Student lists
-       │             - Analytics results
-       │ Cache Miss
-       ▼
-┌─────────────┐
-│  MongoDB    │
-└─────────────┘
-```
+### Analytics Domain
 
----
+- Dashboard summary metrics and trends
+- AI/risk-oriented analysis endpoints
+- Activity timeline and recent event retrieval
 
-## 🔄 DEPLOYMENT ARCHITECTURE
+## 6. Request Lifecycle
 
-### Development Environment
+Typical request lifecycle:
 
-```
-┌─────────────────────────────────────────┐
-│  Developer Machine                      │
-│                                         │
-│  ┌──────────────┐  ┌──────────────┐   │
-│  │  Frontend    │  │  Backend     │   │
-│  │  localhost:  │  │  localhost:  │   │
-│  │  3000        │  │  5000        │   │
-│  └──────────────┘  └──────────────┘   │
-│                                         │
-└─────────────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────┐
-│      MongoDB Atlas (Cloud)              │
-└─────────────────────────────────────────┘
-```
+1. Frontend sends HTTP request through `src/lib/api.ts`
+2. Express route maps request to controller
+3. Controller validates input and applies business logic
+4. Mongoose queries/updates MongoDB
+5. Controller returns normalized JSON response
+6. Frontend updates UI state and components
 
-### Production Environment (Recommended)
+Cross-cutting concerns:
 
-```
-┌─────────────────────────────────────────┐
-│           CDN (Vercel/Netlify)          │
-│  - Static assets                        │
-│  - Frontend build                       │
-└──────────────┬──────────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────────┐
-│      Frontend (Next.js SSR)             │
-│  - Vercel / AWS / Azure                 │
-└──────────────┬──────────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────────┐
-│      Backend API (Node.js)              │
-│  - AWS EC2 / Azure VM / Heroku          │
-│  - PM2 process manager                  │
-│  - Nginx reverse proxy                  │
-└──────────────┬──────────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────────┐
-│      MongoDB Atlas (Production)         │
-│  - M10+ cluster                         │
-│  - Automated backups                    │
-│  - Point-in-time recovery               │
-└─────────────────────────────────────────┘
-```
+- Cookie parsing and auth token extraction
+- Role checks in middleware for protected resources
+- Request logging via `morgan`
+- Centralized error fallback (500 handler)
 
----
+## 7. Data and Computation Flows
 
-## 📊 MONITORING & LOGGING
+### Academic Computation Flow
 
-### Logging Architecture
+- Semester data submitted via academic endpoints
+- Grade/credit logic applied in controller/model workflow
+- SGPA and CGPA recalculated based on stored records
+- Student summary fields updated for quick read paths
+- Activity records captured for traceability
 
-```
-┌─────────────────────────────────────────┐
-│           Application Logs              │
-│  - Console logs (development)           │
-│  - File logs (production)               │
-│  - Error tracking                       │
-└──────────────┬──────────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────────┐
-│           Activity Logs                 │
-│  - User actions                         │
-│  - System events                        │
-│  - Performance metrics                  │
-│  - Stored in MongoDB                    │
-└──────────────┬──────────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────────┐
-│      Monitoring Dashboard (Future)      │
-│  - Real-time metrics                    │
-│  - Error rates                          │
-│  - Performance graphs                   │
-└─────────────────────────────────────────┘
-```
+### Dashboard Flow
 
----
+- Dashboard UI issues multiple API calls (often in parallel)
+- Backend returns aggregated metrics and distribution datasets
+- Frontend renders KPI cards, charts, and tables
 
-## 🎯 PERFORMANCE METRICS
+### AI Analytics Flow
 
-### Target Performance
+- Student/performance signals are aggregated
+- Risk and trend outputs are computed and stored/retrieved
+- Resulting insights are exposed through `/api/ai-analytics/*`
 
-```
-┌─────────────────────────────────────────┐
-│         Performance Targets             │
-│                                         │
-│  Dashboard Load Time:    < 2 seconds    │
-│  API Response Time:      < 500ms        │
-│  Chart Render Time:      < 1 second     │
-│  Database Query Time:    < 200ms        │
-│  Page Transition:        < 300ms        │
-│                                         │
-└─────────────────────────────────────────┘
-```
+## 8. Security Architecture
 
-### Optimization Techniques
+Current security controls:
 
-```
-Frontend:
-  ├── Code splitting
-  ├── Lazy loading
-  ├── Image optimization
-  ├── Memoization
-  └── Parallel API calls
+- JWT-based authentication
+- Cookie-based session transport
+- Role-based authorization middleware
+- Environment-variable-based secret/config loading
+- Password hashing with bcrypt
 
-Backend:
-  ├── Database indexing
-  ├── Aggregation pipelines
-  ├── Query optimization
-  ├── Denormalization
-  └── Batch operations
+Operational note:
 
-Database:
-  ├── Compound indexes
-  ├── Covered queries
-  ├── Projection optimization
-  └── Connection pooling
-```
+- Current CORS configuration in development allows broad origins (`origin: true`).
+- Production deployment should restrict origins to trusted frontend hosts.
 
----
+## 9. Reliability and Error Handling
 
-## 🔧 TECHNOLOGY STACK DETAILS
+- Health endpoint: `GET /api/health`
+- Unknown routes return 404 JSON response
+- Unhandled server errors return 500 JSON response
+- Startup logs indicate binding host/port and runtime status
 
-```
-┌─────────────────────────────────────────┐
-│           Frontend Stack                │
-│                                         │
-│  Framework:     Next.js 16              │
-│  UI Library:    React 19                │
-│  Language:      TypeScript              │
-│  Styling:       Tailwind CSS 4          │
-│  Charts:        Chart.js + react-chartjs-2│
-│  HTTP Client:   Axios                   │
-│  State:         React Hooks             │
-│                                         │
-└─────────────────────────────────────────┘
+## 10. Performance and Scalability Considerations
 
-┌─────────────────────────────────────────┐
-│           Backend Stack                 │
-│                                         │
-│  Runtime:       Node.js                 │
-│  Framework:     Express.js              │
-│  Language:      JavaScript (ES6+)       │
-│  ODM:           Mongoose                │
-│  Auth:          JWT                     │
-│  Validation:    express-validator       │
-│  Logging:       Morgan                  │
-│                                         │
-└─────────────────────────────────────────┘
+Implemented patterns:
 
-┌─────────────────────────────────────────┐
-│           Database Stack                │
-│                                         │
-│  Database:      MongoDB Atlas           │
-│  Version:       6.0+                    │
-│  Features:      - Aggregation           │
-│                 - Indexing              │
-│                 - Transactions          │
-│                 - Change Streams        │
-│                                         │
-└─────────────────────────────────────────┘
-```
+- Domain-specific route/controller separation for maintainability
+- Aggregation-style analytics endpoints to reduce frontend joins
+- Frontend parallel data fetching for dashboard responsiveness
 
----
+Scalability path:
 
-**🏗️ Architecture designed for scalability, maintainability, and performance!**
+- Horizontal scaling of stateless API tier
+- MongoDB index tuning for high-frequency queries
+- Optional caching layer (future) for expensive analytics reads
+
+## 11. Deployment View
+
+### Development
+
+- Frontend and backend started independently
+- Database hosted in MongoDB Atlas
+
+### Production (recommended baseline)
+
+- Frontend hosted on SSR-capable Next.js platform
+- Backend hosted as managed Node.js service
+- MongoDB Atlas with production network and credential controls
+- Strict CORS, secure cookie settings, and rotated secrets
+
+## 12. Operations and Local Runbook
+
+### Automated Windows workflow
+
+- `install_all.bat`
+  - Installs root dependencies
+  - Installs `server/` dependencies
+  - Runs backend seed command
+
+- `start_project.bat`
+  - Opens backend dev server window (`npm run dev` in `server/`)
+  - Opens frontend dev server window (`npm run dev` in root)
+
+### Environment handling
+
+- Real secrets must remain in local env files only
+- Template files (`.env.example`, `server/.env.example`) are committed for team onboarding
+
+## 13. Source References
+
+- Entry point: `server/src/server.js`
+- Database init: `server/src/config/database.js`
+- Auth middleware: `server/src/middleware/authMiddleware.js`
+- API client: `src/lib/api.ts`
+- Frontend auth context: `src/context/AuthContext.tsx`
+- Detailed setup: `SETUP.md`
+- Operational guide: `QUICK_START.md`

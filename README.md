@@ -1,122 +1,178 @@
 # Smart Performance Dashboard
 
-Smart Performance Dashboard is a full-stack web application for tracking student academic performance, attendance, and institutional insights. It combines a Next.js frontend with an Express and MongoDB backend, with role-based access and analytics features for administrators, faculty, and students.
+Smart Performance Dashboard is a full-stack student performance platform for academic operations, analytics, and institutional monitoring.
+
+## Overview
+
+The system combines:
+
+- A Next.js frontend for role-based workflows and dashboards
+- An Express.js API layer organized by domain
+- MongoDB Atlas for persistent data storage
+
+Supported roles:
+
+- Admin
+- Faculty
+- Student
 
 ## Core Capabilities
 
-- Secure authentication with role-based access control
-- Student record management (create, read, update, delete)
-- Attendance and marks tracking
-- Dashboard analytics with interactive charts
-- SGPA and CGPA tracking workflows
-- AI-assisted risk and trend insights
-- Bulk CSV import support
+- Authentication and role-based access control
+- Student, subject, and performance management
+- Academic workflows with SGPA/CGPA computations
+- Dashboard analytics and trend views
+- AI-oriented risk and insight endpoints
+- Activity timeline and audit support
 
 ## Technology Stack
 
 - Frontend: Next.js, React, TypeScript, Tailwind CSS, Chart.js
 - Backend: Node.js, Express.js, Mongoose
 - Database: MongoDB Atlas
-- Auth and Security: JWT, bcrypt, cookie-based sessions
+- Security: JWT, bcrypt, cookie-based auth
 
 ## Project Structure
 
 ```text
 PROJECT 1/
-  src/                    Frontend source (Next.js)
-  server/                 Backend source (Express)
-  install_all.bat         One-click dependency install + seed
-  start_project.bat       One-click local startup (frontend + backend)
+  src/                          Frontend source
+  server/                       Backend source
+  install_all.bat               Installs dependencies and runs seed
+  start_project.bat             Starts backend + frontend in separate terminals
   README.md
+  QUICK_START.md
+  SETUP.md
+  ARCHITECTURE.md
+  DOCUMENTATION_INDEX.md
+  ENTERPRISE_TRANSFORMATION.md
+  TRANSFORMATION_SUMMARY.md
 ```
 
 ## Prerequisites
 
-- Node.js 18 or newer
+- Node.js 18+
 - npm
-- MongoDB connection configured in environment files
+- MongoDB connection string
+- Windows PowerShell (for `.bat` workflow)
 
-## Quick Start (Recommended)
+## Environment Setup
 
-### 1) Install everything and seed data
-
-Double-click `install_all.bat`.
-
-This script will:
-- Install frontend dependencies in the project root
-- Install backend dependencies inside `server/`
-- Run backend seed script (`npm run seed`)
-
-### 2) Start the full project
-
-Double-click `start_project.bat`.
-
-This script opens two terminal windows:
-- Backend API: `http://localhost:5000`
-- Frontend app: `http://localhost:3000`
-
-## Manual Setup (Optional)
-
-If you prefer terminal commands:
-
-```bash
-# frontend
-npm install
-
-# backend
-cd server
-npm install
-npm run seed
-npm run dev
-```
-
-In a separate terminal from the project root:
-
-```bash
-npm run dev
-```
-
-## Available Scripts
-
-### Frontend (project root)
-
-- `npm run dev` - start Next.js development server
-- `npm run build` - production build
-- `npm run start` - run production build
-- `npm run lint` - run ESLint
-
-### Backend (`server/`)
-
-- `npm run dev` - start backend with nodemon
-- `npm run start` - start backend in production mode
-- `npm run seed` - populate database with seed data
-
-## Environment Notes
-
-- Keep real secrets only in local env files (`.env`, `.env.local`, `server/.env`).
-- Commit only template files (`.env.example`, `server/.env.example`) with variable names and no real values.
-- After cloning, copy template files and fill real values:
+Create local environment files from templates:
 
 ```powershell
 Copy-Item .env.example .env
 Copy-Item server/.env.example server/.env
 ```
 
-- Then edit `.env` and `server/.env` with your actual values and run the app.
-- Verify database URI and JWT-related settings before first run.
+Then fill real values in:
 
-If an env file was committed before, adding it to `.gitignore` is not enough. Remove it from Git tracking with:
+- `.env`
+- `server/.env`
+
+Security note:
+
+- Do not commit real secrets
+- Commit only `.env.example` templates
+
+If needed, untrack accidentally committed env files:
 
 ```powershell
-git rm --cached .env .env.local server/.env
+git rm --cached --ignore-unmatch .env .env.local server/.env
 ```
+
+## Quick Start (Windows)
+
+### 1. Install dependencies and seed data
+
+```powershell
+.\install_all.bat
+```
+
+`install_all.bat` does the following:
+
+- Installs frontend dependencies in root
+- Installs backend dependencies in `server/`
+- Runs backend seed command
+
+### 2. Start backend and frontend
+
+```powershell
+.\start_project.bat
+```
+
+`start_project.bat` opens two terminals:
+
+- Backend (`server/`): `npm run dev`
+- Frontend (root): `npm run dev`
+
+### 3. Access the app
+
+- Frontend: `http://localhost:3000`
+- Dashboard: `http://localhost:3000/dashboard`
+- Backend API: `http://localhost:5000/api`
+- Health endpoint: `http://localhost:5000/api/health`
+
+## Manual Startup (Alternative)
+
+Backend:
+
+```bash
+cd server
+npm install
+npm run seed
+npm run dev
+```
+
+Frontend (separate terminal):
+
+```bash
+npm install
+npm run dev
+```
+
+## API Domains
+
+- `/api/auth`
+- `/api/students`
+- `/api/subjects`
+- `/api/performance`
+- `/api/academic`
+- `/api/dashboard`
+- `/api/ai-analytics`
+- `/api/activities`
+
+## Scripts
+
+Frontend (root):
+
+- `npm run dev`
+- `npm run build`
+- `npm run start`
+- `npm run lint`
+
+Backend (`server/`):
+
+- `npm run dev`
+- `npm run start`
+- `npm run seed`
+
+## Documentation Map
+
+- `ARCHITECTURE.md`: system architecture, request/data flow, security, deployment notes
+- `QUICK_START.md`: operational setup and troubleshooting
+- `SETUP.md`: setup reference and validation checklist
+- `ENTERPRISE_TRANSFORMATION.md`: transformation scope and technical impact
+- `TRANSFORMATION_SUMMARY.md`: executive summary and next-stage priorities
+- `DOCUMENTATION_INDEX.md`: reading paths for developers, reviewers, and QA
 
 ## Troubleshooting
 
-- If seeding fails, verify database connectivity and backend environment values.
-- If ports are busy, stop existing processes on `3000` or `5000` and restart.
-- If dependencies fail to install, update Node.js to the latest LTS release.
+- Backend start issues: verify `server/.env`, DB connectivity, port `5000`
+- Frontend start issues: verify dependencies, port `3000`, clear `.next`
+- Seed failures: run `npm run seed` in `server/` and inspect output
+- API errors: confirm backend availability and API base URL settings
 
 ## License
 
-This project is intended for educational and internal demonstration use.
+Intended for educational and internal demonstration use.

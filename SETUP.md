@@ -1,249 +1,167 @@
-# SPID Dashboard - Setup Instructions
+# Setup Reference
 
-## Project Status: ✅ COMPLETED
+## 1. Purpose
 
-The Smart Performance Indicator Dashboard (SPID) has been successfully implemented with the following features:
+This document provides implementation-oriented setup guidance for local development and validation.
 
-### ✅ Completed Features
+## 2. Current Implementation Scope
 
-1. **Backend (Express.js + MongoDB)**
-   - JWT Authentication with httpOnly cookies
-   - Role-based access control (Admin, Faculty, Student)
-   - Complete REST API with all endpoints
-   - MongoDB Atlas integration
-   - Auto-increment ID generation
-   - Data seeding functionality
+The project includes:
 
-2. **Frontend (Next.js + TypeScript)**
-   - Authentication pages (Login/Register)
-   - Dashboard with KPI cards and charts
-   - Student management (List, Add, View)
-   - Responsive design with Tailwind CSS
-   - Protected routes with middleware
+- Authentication and role-based access control
+- Student and subject management flows
+- Performance tracking workflows
+- Academic record logic (SGPA/CGPA)
+- Analytics endpoints and dashboard views
+- Activity logging and timeline retrieval
 
-3. **Database Models**
-   - Users (Authentication)
-   - Students (Academic records)
-   - Subjects (Course information)
-   - Performance (Attendance, marks, grades)
-   - Counters (Auto-increment IDs)
+## 3. Prerequisites
 
-## Quick Start Guide
+- Node.js 18+
+- npm
+- MongoDB Atlas connection string (or compatible MongoDB instance)
+- Windows PowerShell (for batch-script workflow)
 
-### 1. Start Backend Server
+## 4. Environment Configuration
 
-```bash
-cd server
-npm run dev
-```
-
-The backend will start on `http://localhost:5000`
-
-### 2. Seed Database (First Time Only)
-
-```bash
-cd server
-npm run seed
-```
-
-This creates sample data including:
-- Admin user: admin@spid.com / admin123
-- Faculty user: faculty@spid.com / faculty123
-- 50 sample students
-- 5 subjects
-- Performance records
-
-### 3. Start Frontend
-
-```bash
-npm run dev
-```
-
-The frontend will start on `http://localhost:3000`
-
-### 4. Login and Test
-
-1. Visit `http://localhost:3000`
-2. Login with admin credentials: `admin@spid.com` / `admin123`
-3. Explore the dashboard, student management, and other features
-
-## Project Structure
-
-```
-my-first-project-main/
-├── server/                    # Backend (Express.js)
-│   ├── src/
-│   │   ├── controllers/       # API route handlers
-│   │   ├── models/           # MongoDB models
-│   │   ├── routes/           # API routes
-│   │   ├── middleware/       # Auth & validation
-│   │   └── utils/            # Helper functions
-│   ├── seed.js              # Database seeder
-│   └── .env                 # Environment variables
-├── src/                     # Frontend (Next.js)
-│   ├── app/                 # App Router pages
-│   ├── components/          # Reusable components
-│   ├── context/            # React context
-│   ├── lib/                # API client
-│   └── types/              # TypeScript types
-└── README.md               # Project documentation
-```
-
-## Key Features Implemented
-
-### Authentication System
-- JWT tokens in httpOnly cookies
-- Role-based access (Admin/Faculty/Student)
-- Protected routes with Next.js middleware
-- Secure password hashing with bcrypt
-
-### Dashboard Analytics
-- KPI summary cards (Total Students, Avg Attendance, Performance, At-Risk)
-- Interactive charts (Attendance trend, Grade distribution)
-- At-risk students identification
-- Real-time data from MongoDB
-
-### Student Management
-- Complete CRUD operations
-- Search and filtering
-- Pagination for large datasets
-- Form validation and error handling
-
-### Database Design
-- Auto-generated IDs (STU000001, USR000001, etc.)
-- Proper relationships between collections
-- Grade auto-calculation based on marks
-- Optimized queries with indexes
-
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/logout` - User logout
-- `GET /api/auth/me` - Get current user
-
-### Students
-- `GET /api/students` - List students (with pagination/filters)
-- `GET /api/students/:id` - Get student details
-- `POST /api/students` - Create student
-- `PUT /api/students/:id` - Update student
-- `DELETE /api/students/:id` - Delete student
-
-### Dashboard
-- `GET /api/dashboard/summary` - KPI summary data
-- `GET /api/dashboard/attendance-trend` - Attendance chart data
-- `GET /api/dashboard/grade-distribution` - Grade pie chart data
-- `GET /api/dashboard/at-risk-students` - At-risk students list
-
-## Environment Configuration
-
-Copy the template files first:
+Create local env files from templates:
 
 ```powershell
 Copy-Item .env.example .env
 Copy-Item server/.env.example server/.env
 ```
 
-### Backend (server/.env)
-```
-PORT=
-NODE_ENV=
-MONGODB_URI=
-JWT_SECRET=
-JWT_EXPIRE=
-COOKIE_EXPIRE=
-FRONTEND_URL=
-MAX_FILE_SIZE=
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-GOOGLE_CALLBACK_URL=
-```
+Populate values in:
 
-### Frontend (.env)
-```
-NEXT_PUBLIC_API_URL=
-NEXT_PUBLIC_APP_NAME=
+- `.env`
+- `server/.env`
+
+Required backend keys are documented in `server/.env.example` (for example: `MONGODB_URI`, `JWT_SECRET`, OAuth-related keys).
+
+Security policy:
+
+- Real env files remain local only
+- Only template env files are committed
+
+If needed, untrack accidentally committed env files:
+
+```powershell
+git rm --cached --ignore-unmatch .env .env.local server/.env
 ```
 
-## Testing the Application
+## 5. Installation
 
-### 1. Authentication Flow
-- Register new users with different roles
-- Login/logout functionality
-- Protected route access
+### Recommended (Windows batch)
 
-### 2. Dashboard Features
-- View KPI cards with real data
-- Interactive charts rendering
-- At-risk students identification
+```powershell
+.\install_all.bat
+```
 
-### 3. Student Management
-- Add new students with validation
-- Search and filter functionality
-- View student details
-- Edit/delete operations
+This script:
 
-### 4. Role-Based Access
-- Admin: Full access to all features
-- Faculty: Limited to assigned students
-- Student: Own data only
+- Installs frontend dependencies in root
+- Installs backend dependencies in `server/`
+- Seeds initial backend data
 
-## Next Steps for Enhancement
+### Manual installation
 
-### Phase 2 Features (Not Implemented)
-1. **Performance Management**
-   - Add/edit performance records
-   - Bulk grade entry
-   - Attendance tracking
+```bash
+npm install
+cd server
+npm install
+npm run seed
+```
 
-2. **CSV Import System**
-   - File upload validation
-   - Bulk data import
-   - Error reporting
+## 6. Startup
 
-3. **Advanced Features**
-   - Email notifications
-   - Report generation
-   - Advanced analytics
-   - Mobile responsiveness improvements
+### Recommended (Windows batch)
 
-## Deployment Ready
+```powershell
+.\start_project.bat
+```
 
-The application is ready for deployment:
+This starts:
 
-### Backend Deployment (Render/Railway)
-- All environment variables configured
-- MongoDB Atlas connection established
-- Production-ready error handling
+- Backend dev server in one terminal (`server/`)
+- Frontend dev server in another terminal (project root)
 
-### Frontend Deployment (Vercel/Netlify)
-- Next.js optimized build
-- Environment variables configured
-- Static asset optimization
+### Manual startup
 
-## Support & Troubleshooting
+Backend terminal:
 
-### Common Issues
-1. **MongoDB Connection**: Ensure MongoDB Atlas allows connections from your IP
-2. **CORS Errors**: Check FRONTEND_URL in backend .env
-3. **Build Errors**: Ensure all dependencies are installed
+```bash
+cd server
+npm run dev
+```
 
-### Development Tips
-1. Use `npm run seed` to reset database with fresh data
-2. Check browser console for frontend errors
-3. Monitor backend logs for API issues
-4. Use MongoDB Compass to inspect database
+Frontend terminal:
 
-## Project Success Metrics
+```bash
+npm run dev
+```
 
-✅ **Authentication**: Complete JWT-based auth system
-✅ **Dashboard**: Interactive analytics with real data
-✅ **CRUD Operations**: Full student management
-✅ **Database**: Properly designed schema with relationships
-✅ **Security**: Role-based access control
-✅ **UI/UX**: Professional, responsive design
-✅ **API**: RESTful endpoints with proper error handling
-✅ **Documentation**: Comprehensive setup instructions
+## 7. Local Endpoints
 
-The SPID Dashboard is now a fully functional educational performance monitoring system ready for production use or further enhancement.
+- Frontend: `http://localhost:3000`
+- Dashboard: `http://localhost:3000/dashboard`
+- Backend API: `http://localhost:5000/api`
+- Health endpoint: `http://localhost:5000/api/health`
+
+## 8. Validation Checklist
+
+After startup, verify:
+
+1. Health endpoint returns success
+2. Authentication flow works (login/session)
+3. Dashboard renders with API-backed data
+4. Student workflows (list/create/update/delete) function
+5. Academic endpoints respond for SGPA/CGPA workflows
+6. Activity endpoints return data
+
+## 9. Script Reference
+
+### Frontend (root)
+
+- `npm run dev`
+- `npm run build`
+- `npm run start`
+- `npm run lint`
+
+### Backend (`server/`)
+
+- `npm run dev`
+- `npm run start`
+- `npm run seed`
+
+## 10. Common Issues
+
+### Backend startup failure
+
+- Check `server/.env` values
+- Verify MongoDB connectivity and network allowlist
+- Confirm port `5000` availability
+
+### Frontend startup failure
+
+- Confirm port `3000` availability
+- Reinstall root dependencies
+- Clear `.next` cache and restart
+
+### Seed failure
+
+- Re-check DB credentials and permissions
+- Run `npm run seed` directly in `server/` for full error output
+
+### API/CORS errors
+
+- Ensure backend is running
+- Verify frontend API base URL configuration
+- Check backend logs for route or middleware errors
+
+## 11. Related Documents
+
+- `README.md`
+- `QUICK_START.md`
+- `ARCHITECTURE.md`
+- `ENTERPRISE_TRANSFORMATION.md`
+- `DOCUMENTATION_INDEX.md`
