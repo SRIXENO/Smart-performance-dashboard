@@ -93,9 +93,23 @@ npm run dev
 
 ## Environment Notes
 
-- Frontend environment values are read from `.env.local`
-- Backend environment values are read from `server/.env`
-- Verify database URI and JWT-related settings before first run
+- Keep real secrets only in local env files (`.env`, `.env.local`, `server/.env`).
+- Commit only template files (`.env.example`, `server/.env.example`) with variable names and no real values.
+- After cloning, copy template files and fill real values:
+
+```powershell
+Copy-Item .env.example .env
+Copy-Item server/.env.example server/.env
+```
+
+- Then edit `.env` and `server/.env` with your actual values and run the app.
+- Verify database URI and JWT-related settings before first run.
+
+If an env file was committed before, adding it to `.gitignore` is not enough. Remove it from Git tracking with:
+
+```powershell
+git rm --cached .env .env.local server/.env
+```
 
 ## Troubleshooting
 

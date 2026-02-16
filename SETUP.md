@@ -138,22 +138,32 @@ my-first-project-main/
 
 ## Environment Configuration
 
-### Backend (.env)
-```
-PORT=5000
-NODE_ENV=development
-MONGODB_URI=mongodb+srv://mrvssridhar3_db_user:m2bv7qeMwDDhsMRG@project-1.qxylrvv.mongodb.net/spid_development?retryWrites=true&w=majority
-JWT_SECRET=your_super_secret_jwt_key_change_this_in_production_12345
-JWT_EXPIRE=7d
-COOKIE_EXPIRE=7
-FRONTEND_URL=http://localhost:3000
-MAX_FILE_SIZE=5242880
+Copy the template files first:
+
+```powershell
+Copy-Item .env.example .env
+Copy-Item server/.env.example server/.env
 ```
 
-### Frontend (.env.local)
+### Backend (server/.env)
 ```
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-NEXT_PUBLIC_APP_NAME=SPID Dashboard
+PORT=
+NODE_ENV=
+MONGODB_URI=
+JWT_SECRET=
+JWT_EXPIRE=
+COOKIE_EXPIRE=
+FRONTEND_URL=
+MAX_FILE_SIZE=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=
+```
+
+### Frontend (.env)
+```
+NEXT_PUBLIC_API_URL=
+NEXT_PUBLIC_APP_NAME=
 ```
 
 ## Testing the Application

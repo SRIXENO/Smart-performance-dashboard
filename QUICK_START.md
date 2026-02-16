@@ -18,16 +18,20 @@ cd server
 # Install dependencies
 npm install
 
-# Verify .env file exists with correct MongoDB URI
+# Copy and fill backend env file
+Copy-Item .env.example .env
 # File: server/.env
-PORT=5000
-NODE_ENV=development
-MONGODB_URI=mongodb+srv://mrvssridhar3_db_user:srixeno@project-1.qxylrvv.mongodb.net/spid_development?retryWrites=true&w=majority&appName=PROJECT-1
-JWT_SECRET=your_super_secret_jwt_key_change_this_in_production_12345
-JWT_EXPIRE=7d
-COOKIE_EXPIRE=7
-FRONTEND_URL=http://localhost:3000
-MAX_FILE_SIZE=5242880
+PORT=
+NODE_ENV=
+MONGODB_URI=
+JWT_SECRET=
+JWT_EXPIRE=
+COOKIE_EXPIRE=
+FRONTEND_URL=
+MAX_FILE_SIZE=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=
 
 # Start backend server
 npm run dev
