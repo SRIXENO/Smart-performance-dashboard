@@ -85,6 +85,7 @@ export default function StudentDashboard() {
   };
 
   const handleSaveEdit = () => {
+    if (!editingStudent) return;
     const updatedStudents = students.map(s => 
       s.id === editingStudent.id ? editingStudent : s
     );
