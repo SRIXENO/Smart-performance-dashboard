@@ -22,7 +22,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await register(formData);
+      await register(formData.name, formData.email, formData.password, formData.role);
       router.push('/dashboard');
     } catch (error: any) {
       setError(error.response?.data?.error || 'Registration failed');
