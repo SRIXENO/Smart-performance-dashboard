@@ -95,7 +95,7 @@ export default function StudentDashboard() {
 
   const handleSubjectChange = (subject: string, value: string) => {
     const updatedSubjects = {...editingStudent.subjects, [subject]: parseFloat(value) || 0};
-    const subjectValues = Object.values(updatedSubjects);
+    const subjectValues = Object.values(updatedSubjects) as number[];
     const averageMarks = subjectValues.reduce((a, b) => a + b, 0) / subjectValues.length;
     setEditingStudent({
       ...editingStudent,
