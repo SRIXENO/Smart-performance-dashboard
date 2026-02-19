@@ -165,13 +165,43 @@ Backend (`server/`):
 - `ENTERPRISE_TRANSFORMATION.md`: transformation scope and technical impact
 - `TRANSFORMATION_SUMMARY.md`: executive summary and next-stage priorities
 - `DOCUMENTATION_INDEX.md`: reading paths for developers, reviewers, and QA
+- `DEPLOYMENT.md`: complete guide for deploying online (MongoDB Atlas + Render + Vercel)
+- `DEPLOYMENT_QUICK_REFERENCE.md`: quick deployment reference card
+- `DEPLOYMENT_CHECKLIST.md`: step-by-step deployment checklist
+
+## Deploy Online (FREE)
+
+Deploy your app to the cloud and share it worldwide:
+
+**Services Used (All Free):**
+- MongoDB Atlas: Cloud database
+- Render: Backend hosting
+- Vercel: Frontend hosting
+
+**Quick Steps:**
+1. Set up MongoDB Atlas cluster and get connection string
+2. Deploy backend on Render with environment variables
+3. Deploy frontend on Vercel with API URL
+4. Connect frontend URL back to backend
+5. Share your public URL!
+
+**Detailed Instructions:** See `DEPLOYMENT.md` for complete step-by-step guide
+
+**Auto-Deploy:** Every `git push` automatically deploys both frontend and backend
 
 ## Troubleshooting
 
+**Local Development:**
 - Backend start issues: verify `server/.env`, DB connectivity, port `5000`
 - Frontend start issues: verify dependencies, port `3000`, clear `.next`
 - Seed failures: run `npm run seed` in `server/` and inspect output
 - API errors: confirm backend availability and API base URL settings
+
+**Production Deployment:**
+- Backend not responding: check Render logs, verify MongoDB URI
+- CORS errors: ensure FRONTEND_URL is set correctly on Render
+- Database connection failed: verify MongoDB Atlas network access (0.0.0.0/0)
+- Slow first load: normal on free tier (Render sleeps after 15 min inactivity)
 
 ## License
 
