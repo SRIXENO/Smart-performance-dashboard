@@ -18,8 +18,8 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 export default function StudentDashboard() {
   const router = useRouter();
-  const [students, setStudents] = useState([]);
-  const [filteredStudents, setFilteredStudents] = useState([]);
+  const [students, setStudents] = useState<any[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<any[]>([]);
   const [selectedYear, setSelectedYear] = useState('All');
   const [selectedGrade, setSelectedGrade] = useState('All');
   const [sortOrder, setSortOrder] = useState('asc');
