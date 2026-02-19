@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { dashboardAPI, aiAnalyticsAPI } from '@/lib/api';
 import EnhancedKPICard from '@/components/dashboard/EnhancedKPICard';
