@@ -26,7 +26,7 @@ export default function StudentDashboard() {
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [editingStudent, setEditingStudent] = useState(null);
+  const [editingStudent, setEditingStudent] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
