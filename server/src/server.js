@@ -24,7 +24,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: true, // Allow all origins in development
+  origin: process.env.FRONTEND_URL || true,
   credentials: true
 }));
 app.use(express.json());

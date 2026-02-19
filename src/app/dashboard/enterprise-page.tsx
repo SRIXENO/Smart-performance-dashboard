@@ -8,7 +8,7 @@ import SmartFilter from '@/components/dashboard/SmartFilter';
 import { DashboardSkeleton } from '@/components/dashboard/SkeletonLoader';
 import { DashboardSummary } from '@/types';
 
-export default function EnterpriseD ashboard() {
+export default function EnterpriseDashboard(): JSX.Element {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [attendanceData, setAttendanceData] = useState<any>(null);
   const [gradeData, setGradeData] = useState<any>(null);
