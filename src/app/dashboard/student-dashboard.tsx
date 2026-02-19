@@ -79,7 +79,7 @@ export default function StudentDashboard() {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
-  const handleEditStudent = (student) => {
+  const handleEditStudent = (student: any) => {
     setEditingStudent({...student});
     setShowEditModal(true);
   };
@@ -92,7 +92,7 @@ export default function StudentDashboard() {
     setShowEditModal(false);
   };
 
-  const handleSubjectChange = (subject, value) => {
+  const handleSubjectChange = (subject: string, value: string) => {
     const updatedSubjects = {...editingStudent.subjects, [subject]: parseFloat(value) || 0};
     const subjectValues = Object.values(updatedSubjects);
     const averageMarks = subjectValues.reduce((a, b) => a + b, 0) / subjectValues.length;
