@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  register: (name: string, email: string, password: string, role: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,6 +44,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(response.data.user);
   };
 
+  const register = async (name: string, email: string, password: string, role: string) => {
+    const response = await authAPI.register({ name, email, password, role });
+    setUser(response.data.user);
+  };
+
   const logout = async () => {
     await authAPI.logout();
     setUser(null);
@@ -53,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth, register }}>
       {children}
     </AuthContext.Provider>
   );
