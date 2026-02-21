@@ -172,7 +172,7 @@ export default function SubjectManagement() {
           <h1 className="text-3xl font-bold text-gray-900">Subject Management</h1>
           <p className="text-gray-600 mt-2">Assign subjects by department and year - automatically applies to all matching students</p>
         </div>
-        {!showForm && user?.role !== 'viewer' && (
+        {!showForm && (user?.role === 'admin' || user?.role === 'faculty') && (
           <button
             onClick={() => setShowForm(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium flex items-center space-x-2"
@@ -363,7 +363,7 @@ export default function SubjectManagement() {
                     </p>
                   </div>
 
-                  {user?.role !== 'viewer' && (
+                  {(user?.role === 'admin' || user?.role === 'faculty') && (
                     <div className="flex space-x-2 ml-4">
                       <button
                         onClick={() => handleEdit(group)}
