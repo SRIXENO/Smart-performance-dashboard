@@ -425,8 +425,8 @@ export default function StudentDetail() {
         onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         onConfirm={confirmModal.onConfirm}
         title={confirmModal.title}
-        message={confirmModal.message}
-        type="danger"
+        description={confirmModal.message}
+        confirmStyle="danger"
         confirmText="Delete"
         cancelText="Cancel"
         loading={isDeleting}
