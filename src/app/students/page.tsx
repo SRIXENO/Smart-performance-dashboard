@@ -86,7 +86,7 @@ export default function Students() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-900">Students</h1>
-        {user?.role !== 'viewer' && (
+        {(user?.role === 'admin' || user?.role === 'faculty') && (
           <a
             href="/students/add"
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
@@ -196,7 +196,7 @@ export default function Students() {
                       >
                         View
                       </a>
-                      {user?.role !== 'viewer' && (
+                      {(user?.role === 'admin' || user?.role === 'faculty') && (
                         <>
                           <a
                             href={`/students/${student._id}/edit`}
@@ -221,7 +221,7 @@ export default function Students() {
             {students.length === 0 && (
               <div className="text-center py-12">
                 <div className="text-gray-500 mb-4">No students found</div>
-                {user?.role !== 'viewer' && (
+                {(user?.role === 'admin' || user?.role === 'faculty') && (
                   <a
                     href="/students/add"
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
@@ -240,8 +240,8 @@ export default function Students() {
         onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         onConfirm={confirmModal.onConfirm}
         title={confirmModal.title}
-        message={confirmModal.message}
-        type="danger"
+        description={confirmModal.message}
+        confirmStyle="danger"
         confirmText="Delete"
         cancelText="Cancel"
         loading={isDeleting}
