@@ -44,6 +44,7 @@ const register = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
+      token,
       user: { userId: newUser.userId, name: newUser.name, email: newUser.email, role: newUser.role }
     });
   } catch (error) {
@@ -78,6 +79,7 @@ const login = async (req, res) => {
     res.json({
       success: true,
       message: 'Login successful',
+      token,
       user: { userId: user.userId, name: user.name, email: user.email, role: user.role }
     });
   } catch (error) {
