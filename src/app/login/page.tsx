@@ -21,7 +21,7 @@ export default function Login() {
       console.log('Attempting login with:', email);
       await login(email, password);
       console.log('Login successful, redirecting...');
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     } catch (error: any) {
       console.error('Login error:', error);
       const errorMessage = error.response?.data?.error || error.message || 'Login failed';
