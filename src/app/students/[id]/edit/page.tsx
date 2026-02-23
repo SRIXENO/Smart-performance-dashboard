@@ -29,6 +29,7 @@ export default function EditStudent() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
+  const [uploadingDoc, setUploadingDoc] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -87,6 +88,30 @@ export default function EditStudent() {
     guardianPhone: '',
     guardianEmail: '',
     guardianOccupation: '',
+    aadharCard: '',
+    aadharCardName: '',
+    aadharCardUploadedAt: '',
+    panCard: '',
+    panCardName: '',
+    panCardUploadedAt: '',
+    tenthMarksheet: '',
+    tenthMarksheetName: '',
+    tenthMarksheetUploadedAt: '',
+    twelfthMarksheet: '',
+    twelfthMarksheetName: '',
+    twelfthMarksheetUploadedAt: '',
+    transferCertificate: '',
+    transferCertificateName: '',
+    transferCertificateUploadedAt: '',
+    migrationCertificate: '',
+    migrationCertificateName: '',
+    migrationCertificateUploadedAt: '',
+    photo: '',
+    photoName: '',
+    photoUploadedAt: '',
+    signature: '',
+    signatureName: '',
+    signatureUploadedAt: '',
     cgpa: '',
     attendance: '',
     creditsEarned: '',
@@ -109,6 +134,16 @@ export default function EditStudent() {
   const genders = ['Male', 'Female', 'Other'];
   const religions = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Buddhist', 'Jain', 'Other'];
   const languageOptions = ['English', 'Hindi', 'Tamil', 'Telugu', 'Kannada', 'Malayalam', 'Bengali', 'Marathi', 'Gujarati'];
+  const documentFields = [
+    { key: 'aadharCard', name: 'Aadhar Card' },
+    { key: 'panCard', name: 'PAN Card' },
+    { key: 'tenthMarksheet', name: '10th Marksheet' },
+    { key: 'twelfthMarksheet', name: '12th Marksheet' },
+    { key: 'transferCertificate', name: 'Transfer Certificate' },
+    { key: 'migrationCertificate', name: 'Migration Certificate' },
+    { key: 'photo', name: 'Passport Photo' },
+    { key: 'signature', name: 'Signature' },
+  ] as const;
   
   const [availableSubjects, setAvailableSubjects] = useState<any[]>([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
@@ -182,6 +217,30 @@ export default function EditStudent() {
           guardianPhone: student.guardianPhone || '',
           guardianEmail: student.guardianEmail || '',
           guardianOccupation: student.guardianOccupation || '',
+          aadharCard: student.aadharCard || '',
+          aadharCardName: student.aadharCardName || '',
+          aadharCardUploadedAt: student.aadharCardUploadedAt || '',
+          panCard: student.panCard || '',
+          panCardName: student.panCardName || '',
+          panCardUploadedAt: student.panCardUploadedAt || '',
+          tenthMarksheet: student.tenthMarksheet || '',
+          tenthMarksheetName: student.tenthMarksheetName || '',
+          tenthMarksheetUploadedAt: student.tenthMarksheetUploadedAt || '',
+          twelfthMarksheet: student.twelfthMarksheet || '',
+          twelfthMarksheetName: student.twelfthMarksheetName || '',
+          twelfthMarksheetUploadedAt: student.twelfthMarksheetUploadedAt || '',
+          transferCertificate: student.transferCertificate || '',
+          transferCertificateName: student.transferCertificateName || '',
+          transferCertificateUploadedAt: student.transferCertificateUploadedAt || '',
+          migrationCertificate: student.migrationCertificate || '',
+          migrationCertificateName: student.migrationCertificateName || '',
+          migrationCertificateUploadedAt: student.migrationCertificateUploadedAt || '',
+          photo: student.photo || '',
+          photoName: student.photoName || '',
+          photoUploadedAt: student.photoUploadedAt || '',
+          signature: student.signature || '',
+          signatureName: student.signatureName || '',
+          signatureUploadedAt: student.signatureUploadedAt || '',
           cgpa: student.cgpa || '',
           attendance: student.attendance || '',
           creditsEarned: student.creditsEarned || '',
@@ -234,6 +293,29 @@ export default function EditStudent() {
     }));
   };
 
+  const handleDocumentUpload = async (field: (typeof documentFields)[number]['key'], file: File | null) => {
+    if (!file) return;
+    setUploadingDoc(field);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const fileData = reader.result as string;
+      setFormData((prev) => {
+        const next = { ...prev } as any;
+        next[field] = fileData;
+        next[`${field}Name`] = file.name;
+        next[`${field}UploadedAt`] = new Date().toISOString();
+        return next;
+      });
+      setUploadingDoc('');
+    };
+    reader.onerror = () => {
+      setUploadingDoc('');
+      alert('Failed to read selected file');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const copySameAddress = () => {
     setFormData(prev => ({
       ...prev,
@@ -265,6 +347,7 @@ export default function EditStudent() {
               { id: 'academic', label: 'Academic' },
               { id: 'contact', label: 'Contact & Address' },
               { id: 'guardian', label: 'Guardian' },
+              { id: 'documents', label: 'Documents' },
               { id: 'performance', label: 'Performance' },
             ].map((tab) => (
               <button
@@ -656,6 +739,50 @@ export default function EditStudent() {
                       <input type="text" value={formData.guardianOccupation} onChange={(e) => setFormData({ ...formData, guardianOccupation: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'documents' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-1">Certificates & Documents</h3>
+                  <p className="text-sm text-gray-600">Upload or replace student certificates. Files are saved when you click Update Student.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {documentFields.map((doc) => {
+                    const isUploaded = Boolean(formData[doc.key as keyof typeof formData]);
+                    const fileName = formData[`${doc.key}Name` as keyof typeof formData] as string;
+                    const uploadedAt = formData[`${doc.key}UploadedAt` as keyof typeof formData] as string;
+                    return (
+                      <div key={doc.key} className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="font-medium text-gray-900">{doc.name}</p>
+                          <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${isUploaded ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                            {isUploaded ? 'Uploaded' : 'Not uploaded'}
+                          </span>
+                        </div>
+                        <input
+                          type="file"
+                          className="w-full text-sm"
+                          onChange={(e) => handleDocumentUpload(doc.key, e.target.files?.[0] || null)}
+                        />
+                        {uploadingDoc === doc.key && <p className="text-xs text-blue-600">Reading file...</p>}
+                        {fileName && <p className="text-xs text-gray-500 truncate">File: {fileName}</p>}
+                        {uploadedAt && <p className="text-xs text-gray-500">Updated: {new Date(uploadedAt).toLocaleString()}</p>}
+                        {isUploaded && (
+                          <a
+                            href={formData[doc.key as keyof typeof formData] as string}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-block text-sm text-blue-600 hover:text-blue-700"
+                          >
+                            View file
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -21,11 +21,11 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
-    --input-bg: #1F2933;
-    --input-text: #FFFFFF;
-    --input-border: #374151;
-    --input-placeholder: #9CA3AF;
-    --label-text: #E5E7EB;
+    --input-bg: #ffffff;
+    --input-text: #111827;
+    --input-border: #cbd5e1;
+    --input-placeholder: #94a3b8;
+    --label-text: #475569;
   }
 }
 
