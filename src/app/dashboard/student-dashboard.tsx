@@ -175,21 +175,31 @@ export default function StudentDashboard() {
   );
 
   const departmentChartData = useMemo(() => {
-    const palette = ['#22d3ee', '#06b6d4', '#34d399', '#a78bfa', '#f59e0b', '#f472b6'];
+    const palette = ['#22d3ee', '#0ea5e9', '#14b8a6', '#8b5cf6', '#f59e0b', '#ec4899', '#64748b'];
     return {
       labels: departmentLabels,
       datasets: [
         {
           label: deptMetric === 'count' ? 'Students' : deptMetric === 'cgpa' ? 'Average CGPA' : 'Average Attendance (%)',
           data: departmentMetricData,
-          backgroundColor: palette,
-          borderColor: '#0f172a',
-          borderWidth: deptChartType === 'line' ? 2 : 0,
+          backgroundColor: (context: any) => {
+            const chart = context.chart;
+            const { ctx, chartArea } = chart;
+            if (!chartArea) return '#22d3ee';
+            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            gradient.addColorStop(0, 'rgba(14, 165, 233, 0.9)');
+            gradient.addColorStop(1, 'rgba(14, 165, 233, 0.25)');
+            return deptChartType === 'line' ? 'rgba(14,165,233,0.18)' : gradient;
+          },
+          borderColor: deptChartType === 'line' ? '#0284c7' : palette,
+          borderWidth: deptChartType === 'line' ? 3 : 1,
           borderRadius: deptChartType === 'bar' ? 12 : 0,
+          maxBarThickness: 48,
           fill: deptChartType === 'line',
           tension: 0.35,
           pointRadius: deptChartType === 'line' ? 4 : 0,
-          pointHoverRadius: deptChartType === 'line' ? 6 : 0,
+          pointHoverRadius: deptChartType === 'line' ? 8 : 0,
+          pointHoverBackgroundColor: '#0369a1',
         },
       ],
     };
@@ -201,7 +211,15 @@ export default function StudentDashboard() {
       datasets.push({
         label: 'Male',
         data: maleData,
-        backgroundColor: '#38bdf8',
+        backgroundColor: (context: any) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return '#38bdf8';
+          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, 'rgba(56,189,248,0.95)');
+          gradient.addColorStop(1, 'rgba(56,189,248,0.35)');
+          return gradient;
+        },
         borderRadius: 10,
         borderSkipped: false,
       });
@@ -210,7 +228,15 @@ export default function StudentDashboard() {
       datasets.push({
         label: 'Female',
         data: femaleData,
-        backgroundColor: '#f472b6',
+        backgroundColor: (context: any) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return '#f472b6';
+          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, 'rgba(244,114,182,0.95)');
+          gradient.addColorStop(1, 'rgba(244,114,182,0.35)');
+          return gradient;
+        },
         borderRadius: 10,
         borderSkipped: false,
       });
@@ -224,32 +250,45 @@ export default function StudentDashboard() {
       datasets: [
         {
           label: 'Avg CGPA',
+          yAxisID: 'yCgpa',
           data: yearLabels.map((year) => avg(filteredStudents.filter((s) => s.year === year).map((s) => Number(s.cgpa) || 0))),
-          borderColor: '#22d3ee',
-          backgroundColor: 'rgba(34,211,238,0.15)',
+          borderColor: '#06b6d4',
+          backgroundColor: 'rgba(6,182,212,0.16)',
           fill: true,
-          tension: 0.35,
-          pointRadius: 3,
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 7,
         },
         {
           label: 'Avg Attendance',
+          yAxisID: 'yAttendance',
           data: yearLabels.map((year) => avg(filteredStudents.filter((s) => s.year === year).map((s) => Number(s.attendance) || 0))),
-          borderColor: '#a78bfa',
-          backgroundColor: 'rgba(167,139,250,0.12)',
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139,92,246,0.14)',
           fill: true,
-          tension: 0.35,
-          pointRadius: 3,
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 7,
         },
       ],
     };
   }, [filteredStudents]);
+
+  const rankedDepartments = useMemo(() => {
+    return departmentLabels
+      .map((label, index) => ({ label, value: Number(departmentMetricData[index] || 0) }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  }, [departmentLabels, departmentMetricData]);
+
+  const maxRankValue = useMemo(() => Math.max(...rankedDepartments.map((item) => item.value), 1), [rankedDepartments]);
 
   const departmentChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     interaction: { mode: 'index' as const, intersect: false },
     plugins: {
-      legend: { position: 'top' as const, labels: { usePointStyle: true, boxWidth: 8 } },
+      legend: { position: 'top' as const, labels: { usePointStyle: true, boxWidth: 8, padding: 18 } },
       tooltip: {
         backgroundColor: 'rgba(15, 23, 42, 0.94)',
         padding: 12,
@@ -266,7 +305,10 @@ export default function StudentDashboard() {
       y: {
         beginAtZero: true,
         suggestedMax: deptMetric === 'cgpa' ? 10 : undefined,
-        grid: { color: '#e2e8f0' },
+        grid: { color: 'rgba(148,163,184,0.2)' },
+        ticks: {
+          callback: (val: number | string) => (deptMetric === 'attendance' ? `${val}%` : val),
+        },
       },
       x: { grid: { display: false } },
     },
@@ -276,12 +318,12 @@ export default function StudentDashboard() {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'top' as const, labels: { usePointStyle: true, boxWidth: 8 } },
+      legend: { position: 'top' as const, labels: { usePointStyle: true, boxWidth: 8, padding: 16 } },
       tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.94)', padding: 12, cornerRadius: 10 },
     },
     scales: {
       x: { stacked: genderMode === 'stacked', grid: { display: false } },
-      y: { beginAtZero: true, stacked: genderMode === 'stacked', grid: { color: '#e2e8f0' } },
+      y: { beginAtZero: true, stacked: genderMode === 'stacked', grid: { color: 'rgba(148,163,184,0.2)' } },
     },
   };
 
@@ -290,11 +332,12 @@ export default function StudentDashboard() {
     maintainAspectRatio: false,
     interaction: { mode: 'index' as const, intersect: false },
     plugins: {
-      legend: { position: 'top' as const, labels: { usePointStyle: true, boxWidth: 8 } },
+      legend: { position: 'top' as const, labels: { usePointStyle: true, boxWidth: 8, padding: 16 } },
       tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.94)', padding: 12, cornerRadius: 10 },
     },
     scales: {
-      y: { beginAtZero: true, grid: { color: '#e2e8f0' } },
+      yCgpa: { beginAtZero: true, max: 10, position: 'left' as const, grid: { color: 'rgba(148,163,184,0.2)' } },
+      yAttendance: { beginAtZero: true, max: 100, position: 'right' as const, grid: { drawOnChartArea: false } },
       x: { grid: { display: false } },
     },
   };
@@ -534,64 +577,146 @@ export default function StudentDashboard() {
       </section>
 
       <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-cyan-50/30 to-sky-50/40 p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
               <h3 className="text-lg font-bold text-slate-900">Department Analytics</h3>
-              <p className="text-sm text-slate-500">Click chart bars or points to filter department</p>
+              <p className="text-sm text-slate-500">Interactive performance distribution by department</p>
             </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={deptMetric}
-                onChange={(e) => setDeptMetric(e.target.value as DeptMetric)}
-                className="px-3 py-2 rounded-lg border border-slate-300 text-sm"
-              >
-                <option value="count">Students</option>
-                <option value="cgpa">Avg CGPA</option>
-                <option value="attendance">Avg Attendance</option>
-              </select>
-              <select
-                value={deptChartType}
-                onChange={(e) => setDeptChartType(e.target.value as DeptChartType)}
-                className="px-3 py-2 rounded-lg border border-slate-300 text-sm"
-              >
-                <option value="bar">Bar</option>
-                <option value="line">Line</option>
-              </select>
+            <div className="flex flex-wrap items-center gap-2">
+              {(['count', 'cgpa', 'attendance'] as DeptMetric[]).map((metric) => (
+                <button
+                  key={metric}
+                  onClick={() => setDeptMetric(metric)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                    deptMetric === metric
+                      ? 'bg-slate-900 text-white border-slate-900'
+                      : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'
+                  }`}
+                >
+                  {metric === 'count' ? 'Students' : metric === 'cgpa' ? 'Avg CGPA' : 'Avg Attendance'}
+                </button>
+              ))}
+              <div className="inline-flex items-center rounded-full border border-slate-300 bg-white p-1">
+                {(['bar', 'line'] as DeptChartType[]).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setDeptChartType(type)}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                      deptChartType === type ? 'bg-cyan-500 text-slate-950' : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    {type === 'bar' ? 'Bar' : 'Line'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="h-[340px]">
+          <div className="mb-3 flex items-center justify-between gap-3 text-xs">
+            <div className="rounded-full border border-slate-300 bg-white/80 px-3 py-1 text-slate-600">
+              Focus: {selectedDepartment === 'All' ? 'All Departments' : selectedDepartment}
+            </div>
+            {selectedDepartment !== 'All' && (
+              <button
+                onClick={() => setSelectedDepartment('All')}
+                className="rounded-full border border-slate-300 bg-white px-3 py-1 font-semibold text-slate-600 hover:text-slate-900"
+              >
+                Clear focus
+              </button>
+            )}
+          </div>
+
+          <div className="h-[320px]">
             {deptChartType === 'bar' ? (
               <Bar key={`dept-bar-${deptMetric}-${selectedDepartment}`} data={departmentChartData} options={departmentChartOptions} />
             ) : (
               <Line key={`dept-line-${deptMetric}-${selectedDepartment}`} data={departmentChartData} options={departmentChartOptions} />
             )}
           </div>
+
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {rankedDepartments.map((item, index) => {
+              const width = (item.value / maxRankValue) * 100;
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => setSelectedDepartment(item.label)}
+                  className="rounded-xl border border-slate-200 bg-white/90 p-3 text-left hover:shadow-sm transition"
+                >
+                  <p className="text-xs text-slate-500">#{index + 1}</p>
+                  <p className="font-semibold text-sm text-slate-900 truncate">{item.label}</p>
+                  <p className="text-xs text-slate-600 mt-1">{item.value.toFixed(deptMetric === 'count' ? 0 : 2)}</p>
+                  <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                    <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" style={{ width: `${width}%` }} />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-violet-50/20 to-fuchsia-50/30 p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
               <h3 className="text-lg font-bold text-slate-900">Cohort & Trend Analytics</h3>
-              <p className="text-sm text-slate-500">Gender mix and academic movement by year</p>
+              <p className="text-sm text-slate-500">Gender composition and academic progression by year</p>
             </div>
-            <select
-              value={genderMode}
-              onChange={(e) => setGenderMode(e.target.value as GenderMode)}
-              className="px-3 py-2 rounded-lg border border-slate-300 text-sm"
-            >
-              <option value="grouped">Grouped</option>
-              <option value="stacked">Stacked</option>
-              <option value="male">Male Only</option>
-              <option value="female">Female Only</option>
-            </select>
+            <div className="inline-flex items-center rounded-full border border-slate-300 bg-white p-1">
+              {([
+                { id: 'grouped', label: 'Grouped' },
+                { id: 'stacked', label: 'Stacked' },
+                { id: 'male', label: 'Male' },
+                { id: 'female', label: 'Female' },
+              ] as Array<{ id: GenderMode; label: string }>).map((mode) => (
+                <button
+                  key={mode.id}
+                  onClick={() => setGenderMode(mode.id)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                    genderMode === mode.id ? 'bg-violet-500 text-white' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="h-[160px] mb-4">
+          <div className="h-[170px] mb-4">
             <Bar key={`year-gender-${genderMode}`} data={yearGenderChartData} options={yearGenderChartOptions} />
           </div>
-          <div className="h-[160px]">
-            <Line key={`year-trend-${selectedDepartment}-${timeRange}`} data={trendData} options={trendOptions} />
+          <div className="rounded-xl border border-slate-200/80 bg-white/85 p-3">
+            <p className="text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Dual-Axis Trend (CGPA vs Attendance)</p>
+            <div className="h-[165px]">
+              <Line key={`year-trend-${selectedDepartment}-${timeRange}`} data={trendData} options={trendOptions} />
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+            <div className="rounded-xl border border-cyan-200 bg-cyan-50/70 p-3">
+              <p className="text-cyan-700 font-semibold">Best Year (CGPA)</p>
+              <p className="text-slate-900 mt-1">
+                {(() => {
+                  const scores = yearLabels.map((year) => ({
+                    year,
+                    score: avg(filteredStudents.filter((s) => s.year === year).map((s) => Number(s.cgpa) || 0)),
+                  }));
+                  const best = scores.reduce((acc, item) => (item.score > acc.score ? item : acc), { year: 1, score: 0 });
+                  return `${best.year} (${best.score.toFixed(2)})`;
+                })()}
+              </p>
+            </div>
+            <div className="rounded-xl border border-violet-200 bg-violet-50/70 p-3">
+              <p className="text-violet-700 font-semibold">Best Year (Attendance)</p>
+              <p className="text-slate-900 mt-1">
+                {(() => {
+                  const scores = yearLabels.map((year) => ({
+                    year,
+                    score: avg(filteredStudents.filter((s) => s.year === year).map((s) => Number(s.attendance) || 0)),
+                  }));
+                  const best = scores.reduce((acc, item) => (item.score > acc.score ? item : acc), { year: 1, score: 0 });
+                  return `${best.year} (${best.score.toFixed(1)}%)`;
+                })()}
+              </p>
+            </div>
           </div>
         </div>
       </section>

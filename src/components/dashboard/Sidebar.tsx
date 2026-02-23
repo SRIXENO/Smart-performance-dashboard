@@ -69,14 +69,20 @@ const adminItem: NavItem = {
   )
 };
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen = false, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const { user } = useAuth();
   const items = user?.role === 'admin' ? [...navigation, adminItem] : navigation;
 
   return (
-    <aside className="w-64 min-h-screen p-4 bg-white border-r border-slate-200">
-      <div className="mb-8">
+    <>
+      {isOpen && <button className="fixed inset-0 z-40 bg-slate-900/40 md:hidden" onClick={onClose} aria-label="Close menu overlay" />}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[86vw] p-4 bg-white border-r border-slate-200 overflow-y-auto transform transition-transform duration-200 md:static md:z-0 md:w-64 md:max-w-none md:translate-x-0 md:min-h-screen ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+      <div className="mb-6">
         <h1 className="text-xl font-bold text-slate-900 tracking-tight">SPID Dashboard</h1>
         <p className="text-slate-500 text-sm mt-1">Performance Intelligence</p>
       </div>
@@ -88,6 +94,7 @@ export default function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={onClose}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 isActive
                   ? 'bg-blue-50 text-blue-700 border border-blue-200'
@@ -106,6 +113,7 @@ export default function Sidebar() {
         <div className="text-sm font-semibold mt-1 text-slate-900 truncate">{user?.name || 'User'}</div>
         <div className="text-xs uppercase tracking-wide mt-1 text-slate-500">{user?.role || 'guest'}</div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
