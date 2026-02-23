@@ -5,19 +5,10 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('token');
   const { pathname } = request.nextUrl;
 
-  // Public routes - allow without token
-  if (pathname === '/login' || pathname === '/register') {
-    return NextResponse.next();
-  }
-
-  // Protected routes - require token
-  if (pathname.startsWith('/dashboard') || 
-      pathname.startsWith('/students') || 
-      pathname.startsWith('/performance') || 
-      pathname.startsWith('/import')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+  // When a same-domain auth cookie exists, keep logged-in users away from auth pages.
+  // Note: protected-route enforcement happens client-side via AuthProvider/localStorage.
+  if ((pathname === '/login' || pathname === '/register') && token) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return NextResponse.next();
@@ -25,10 +16,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/dashboard/:path*', 
-    '/students/:path*', 
-    '/performance/:path*',
-    '/import/:path*',
     '/login', 
     '/register'
   ]

@@ -22,7 +22,7 @@ export default function Login() {
       console.log('Attempting login with:', email);
       await login(email, password);
       console.log('Login successful, redirecting...');
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
     } catch (error: any) {
       console.error('Login error:', error);
       const errorMessage = error.response?.data?.error || error.message || 'Login failed';
