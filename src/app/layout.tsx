@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   title: "SPID",
   description: "SPID Dashboard",
   applicationName: "SPID",
+  icons: {
+    icon: "/spid-logo.svg",
+    shortcut: "/spid-logo.svg",
+    apple: "/spid-logo.svg",
+  },
 };
 
 export default function RootLayout({

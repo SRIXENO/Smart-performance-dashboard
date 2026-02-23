@@ -92,7 +92,10 @@ export default function Sidebar({ isOpen = false, onClose }: { isOpen?: boolean;
         }`}
       >
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-slate-900 tracking-tight">SPID Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <img src="/spid-logo.svg" alt="SPID logo" className="h-7 w-7 rounded-full border border-slate-300" />
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">SPID Dashboard</h1>
+        </div>
         <p className="text-slate-500 text-sm mt-1">Performance Intelligence</p>
       </div>
 
