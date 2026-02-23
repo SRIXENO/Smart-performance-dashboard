@@ -36,9 +36,11 @@ export default function SmartFilter({
   const departments = [
     'Computer Science',
     'Information Technology',
-    'Electronics',
+    'Electrical and Communication Engineering',
+    'Electrical and Electronic Engineering',
     'Mechanical',
-    'Civil'
+    'Civil',
+    'Biotechnology'
   ];
 
   const years = [1, 2, 3, 4];

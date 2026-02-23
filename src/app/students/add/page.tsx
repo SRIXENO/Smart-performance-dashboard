@@ -4,6 +4,25 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { studentsAPI } from '@/lib/api';
 
+const DEPARTMENT_CODE_MAP: Record<string, string> = {
+  CS: 'Computer Science',
+  IT: 'Information Technology',
+  EC: 'Electrical and Communication Engineering',
+  ECE: 'Electrical and Communication Engineering',
+  EE: 'Electrical and Electronic Engineering',
+  EEE: 'Electrical and Electronic Engineering',
+  ME: 'Mechanical',
+  CE: 'Civil',
+  BT: 'Biotechnology',
+};
+
+const detectDepartmentFromRegisterNumber = (value: string) => {
+  const upper = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const found = upper.match(/[A-Z]{2}/);
+  if (!found) return '';
+  return DEPARTMENT_CODE_MAP[found[0]] || '';
+};
+
 export default function AddStudent() {
   const [formData, setFormData] = useState({
     name: '',
@@ -24,17 +43,30 @@ export default function AddStudent() {
   const departments = [
     'Computer Science',
     'Information Technology',
-    'Electronics',
+    'Electrical and Communication Engineering',
+    'Electrical and Electronic Engineering',
     'Mechanical',
-    'Civil'
+    'Civil',
+    'Biotechnology',
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'year' ? parseInt(value) : value
-    }));
+    setFormData((prev) => {
+      const next = {
+        ...prev,
+        [name]: name === 'year' ? parseInt(value) : value
+      };
+
+      if (name === 'rollNumber') {
+        const detectedDepartment = detectDepartmentFromRegisterNumber(value);
+        if (detectedDepartment) {
+          next.department = detectedDepartment;
+        }
+      }
+
+      return next;
+    });
     
     // Clear error when user starts typing
     if (errors[name]) {
@@ -228,6 +260,9 @@ export default function AddStudent() {
                 }`}
                 placeholder="Enter register number"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Example: <span className="font-mono">7376241CS515</span> → CS maps to Computer Science
+              </p>
               {errors.rollNumber && <p className="text-red-600 text-sm mt-1">{errors.rollNumber}</p>}
             </div>
 

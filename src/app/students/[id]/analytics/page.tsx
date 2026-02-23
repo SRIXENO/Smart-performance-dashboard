@@ -76,7 +76,7 @@ export default function StudentAnalyticsPage() {
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-xl shadow-lg p-6 text-white">
-        <h1 className="text-3xl font-bold mb-2">🎓 Student Analytics & AI Insights</h1>
+        <h1 className="text-3xl font-bold mb-2">Student Analytics & AI Insights</h1>
         <p className="text-indigo-100">Comprehensive academic performance analysis</p>
       </div>
 
@@ -112,7 +112,7 @@ export default function StudentAnalyticsPage() {
         <div className={`bg-gradient-to-r ${getRiskBgColor(aiAnalytics.riskLevel)} rounded-xl shadow-lg p-6 text-white`}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-2xl font-bold">🤖 AI Risk Assessment</h2>
+              <h2 className="text-2xl font-bold">AI Risk Assessment</h2>
               <p className="text-sm opacity-90 mt-1">Intelligent performance analysis</p>
             </div>
             <div className="text-right">
@@ -155,7 +155,7 @@ export default function StudentAnalyticsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center space-x-3 mb-4">
-              <span className="text-3xl">🔮</span>
+              <span className="text-3xl">Prediction</span>
               <div>
                 <h3 className="font-semibold text-gray-900">Predicted CGPA</h3>
                 <p className="text-sm text-gray-500">End of program</p>
@@ -169,7 +169,7 @@ export default function StudentAnalyticsPage() {
 
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center space-x-3 mb-4">
-              <span className="text-3xl">📊</span>
+              <span className="text-3xl">Trend</span>
               <div>
                 <h3 className="font-semibold text-gray-900">Next Semester SGPA</h3>
                 <p className="text-sm text-gray-500">Prediction</p>
@@ -181,7 +181,7 @@ export default function StudentAnalyticsPage() {
 
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center space-x-3 mb-4">
-              <span className="text-3xl">🏆</span>
+              <span className="text-3xl">Rank</span>
               <div>
                 <h3 className="font-semibold text-gray-900">Expected Grade</h3>
                 <p className="text-sm text-gray-500">Final classification</p>
@@ -207,7 +207,7 @@ export default function StudentAnalyticsPage() {
       )}
 
       <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">📚 Semester-wise Performance</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Semester-wise Performance</h3>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -277,7 +277,7 @@ export default function StudentAnalyticsPage() {
 
         {aiAnalytics && aiAnalytics.suggestions.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">💡 Improvement Suggestions</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Improvement Suggestions</h3>
             <div className="space-y-3">
               {aiAnalytics.suggestions.map((suggestion, idx) => (
                 <div key={idx} className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">

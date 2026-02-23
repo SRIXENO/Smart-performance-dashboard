@@ -4,6 +4,25 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { studentsAPI, subjectsAPI } from '@/lib/api';
 
+const DEPARTMENT_CODE_MAP: Record<string, string> = {
+  CS: 'Computer Science',
+  IT: 'Information Technology',
+  EC: 'Electrical and Communication Engineering',
+  ECE: 'Electrical and Communication Engineering',
+  EE: 'Electrical and Electronic Engineering',
+  EEE: 'Electrical and Electronic Engineering',
+  ME: 'Mechanical',
+  CE: 'Civil',
+  BT: 'Biotechnology',
+};
+
+const detectDepartmentFromRegisterNumber = (value: string) => {
+  const upper = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const found = upper.match(/[A-Z]{2}/);
+  if (!found) return '';
+  return DEPARTMENT_CODE_MAP[found[0]] || '';
+};
+
 export default function EditStudent() {
   const params = useParams();
   const router = useRouter();
@@ -76,7 +95,15 @@ export default function EditStudent() {
     sgpa: {} as Record<number, string>
   });
 
-  const departments = ['Computer Science', 'Information Technology', 'Electronics', 'Mechanical', 'Civil', 'Electrical', 'Chemical', 'Biotechnology'];
+  const departments = [
+    'Computer Science',
+    'Information Technology',
+    'Electrical and Communication Engineering',
+    'Electrical and Electronic Engineering',
+    'Mechanical',
+    'Civil',
+    'Biotechnology'
+  ];
   const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   const categories = ['General', 'OBC', 'SC', 'ST', 'EWS'];
   const genders = ['Male', 'Female', 'Other'];
@@ -234,11 +261,11 @@ export default function EditStudent() {
         <div className="border-b border-gray-200">
           <nav className="flex space-x-8 px-6" aria-label="Tabs">
             {[
-              { id: 'personal', label: 'Personal Info', icon: '👤' },
-              { id: 'academic', label: 'Academic', icon: '📚' },
-              { id: 'contact', label: 'Contact & Address', icon: '📍' },
-              { id: 'guardian', label: 'Guardian', icon: '👨‍👩‍👧' },
-              { id: 'performance', label: 'Performance', icon: '📊' },
+              { id: 'personal', label: 'Personal Info' },
+              { id: 'academic', label: 'Academic' },
+              { id: 'contact', label: 'Contact & Address' },
+              { id: 'guardian', label: 'Guardian' },
+              { id: 'performance', label: 'Performance' },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -249,7 +276,6 @@ export default function EditStudent() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <span>{tab.icon}</span>
                 <span>{tab.label}</span>
               </button>
             ))}
@@ -340,7 +366,24 @@ export default function EditStudent() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Roll Number *</label>
-                    <input type="text" required value={formData.rollNumber} onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input
+                      type="text"
+                      required
+                      value={formData.rollNumber}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const detectedDepartment = detectDepartmentFromRegisterNumber(value);
+                        setFormData({
+                          ...formData,
+                          rollNumber: value,
+                          department: detectedDepartment || formData.department
+                        });
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Example: <span className="font-mono">7376241CS515</span> → CS maps to Computer Science
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Department *</label>
@@ -676,10 +719,7 @@ export default function EditStudent() {
                     <span>Saving...</span>
                   </>
                 ) : (
-                  <>
-                    <span>💾</span>
-                    <span>Update Student</span>
-                  </>
+                  <span>Update Student</span>
                 )}
               </button>
             </div>

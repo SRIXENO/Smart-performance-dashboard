@@ -7,7 +7,15 @@ const studentSchema = new mongoose.Schema({
   department: { 
     type: String, 
     required: true, 
-    enum: ['Computer Science', 'Information Technology', 'Electronics', 'Mechanical', 'Civil', 'Electrical', 'Chemical', 'Biotechnology'] 
+    enum: [
+      'Computer Science',
+      'Information Technology',
+      'Electrical and Communication Engineering',
+      'Electrical and Electronic Engineering',
+      'Mechanical',
+      'Civil',
+      'Biotechnology'
+    ] 
   },
   year: { type: Number, required: true, min: 1, max: 4 },
   semester: { type: Number },

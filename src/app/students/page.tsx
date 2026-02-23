@@ -30,9 +30,11 @@ export default function Students() {
   const departments = [
     'Computer Science',
     'Information Technology',
-    'Electronics',
+    'Electrical and Communication Engineering',
+    'Electrical and Electronic Engineering',
     'Mechanical',
-    'Civil'
+    'Civil',
+    'Biotechnology'
   ];
 
   const fetchStudents = async (page = 1) => {
@@ -101,7 +103,7 @@ export default function Students() {
           <div className="md:col-span-2">
             <input
               type="text"
-              placeholder="🔍 Search by name, email, or student ID..."
+              placeholder="Search by name, email, or student ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

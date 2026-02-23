@@ -2,6 +2,26 @@ const Student = require('../models/Student');
 const Performance = require('../models/Performance');
 const { generateId } = require('../utils/generateId');
 
+const DEPARTMENT_CODE_MAP = {
+  CS: 'Computer Science',
+  IT: 'Information Technology',
+  EC: 'Electrical and Communication Engineering',
+  ECE: 'Electrical and Communication Engineering',
+  EE: 'Electrical and Electronic Engineering',
+  EEE: 'Electrical and Electronic Engineering',
+  ME: 'Mechanical',
+  CE: 'Civil',
+  BT: 'Biotechnology',
+};
+
+const detectDepartmentFromRegisterNumber = (value) => {
+  if (!value || typeof value !== 'string') return '';
+  const upper = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const match = upper.match(/[A-Z]{2}/);
+  if (!match) return '';
+  return DEPARTMENT_CODE_MAP[match[0]] || '';
+};
+
 const getStudents = async (req, res) => {
   try {
     const { page = 1, limit = 20, search, department, year, status } = req.query;
@@ -107,10 +127,13 @@ const getStudentById = async (req, res) => {
 
 const createStudent = async (req, res) => {
   try {
+    const detectedDepartment = detectDepartmentFromRegisterNumber(req.body.rollNumber);
+
     const studentId = await generateId('studentId');
     const newStudent = await Student.create({
       studentId,
-      ...req.body
+      ...req.body,
+      department: detectedDepartment || req.body.department,
     });
 
     res.status(201).json({
@@ -125,10 +148,16 @@ const createStudent = async (req, res) => {
 
 const updateStudent = async (req, res) => {
   try {
+    const detectedDepartment = detectDepartmentFromRegisterNumber(req.body.rollNumber);
+    const updatePayload = {
+      ...req.body,
+      ...(detectedDepartment ? { department: detectedDepartment } : {}),
+    };
+
     console.log('Update request body:', JSON.stringify(req.body, null, 2));
     const updatedStudent = await Student.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updatePayload,
       { new: true, runValidators: true }
     );
 

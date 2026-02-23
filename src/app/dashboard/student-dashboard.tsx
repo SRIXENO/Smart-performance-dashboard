@@ -318,34 +318,33 @@ export default function StudentDashboard() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-950 via-slate-900 to-cyan-900 px-6 py-6 text-white shadow-lg">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.35),_transparent_45%)] pointer-events-none" />
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <section className="rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <p className="text-cyan-300 text-xs uppercase tracking-[0.2em] mb-2">Analytics Studio</p>
-            <h2 className="text-3xl font-black tracking-tight">Student Intelligence Dashboard</h2>
-            <p className="text-slate-300 mt-2">
-              {filteredStudents.length} records in scope • Last refresh {lastRefreshed.toLocaleTimeString()}
+            <p className="text-blue-600 text-xs uppercase tracking-[0.2em] mb-2">Analytics Studio</p>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900">Student Intelligence Dashboard</h2>
+            <p className="text-slate-500 mt-2">
+              {filteredStudents.length} records in scope | Last refresh {lastRefreshed.toLocaleTimeString()}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xs">{now.toLocaleString()}</span>
+            <span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs text-slate-600">{now.toLocaleString()}</span>
             <button
               onClick={() => setShowFilters((prev) => !prev)}
-              className="rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 text-sm font-semibold transition"
+              className="rounded-lg bg-white hover:bg-slate-50 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition"
             >
               {showFilters ? 'Hide Filters' : 'Show Filters'}
             </button>
             <button
               onClick={() => setViewMode((prev) => (prev === 'table' ? 'cards' : 'table'))}
-              className="rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 text-sm font-semibold transition"
+              className="rounded-lg bg-white hover:bg-slate-50 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition"
             >
               {viewMode === 'table' ? 'Card View' : 'Table View'}
             </button>
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="rounded-xl bg-cyan-400 text-slate-900 hover:bg-cyan-300 px-4 py-2 text-sm font-bold transition disabled:opacity-70"
+              className="rounded-lg bg-slate-900 text-white hover:bg-slate-800 px-4 py-2 text-sm font-semibold transition disabled:opacity-70"
             >
               {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </button>
@@ -649,20 +648,20 @@ function Kpi({
   tone: 'cyan' | 'emerald' | 'violet' | 'amber' | 'rose' | 'slate';
 }) {
   const tones: Record<string, string> = {
-    cyan: 'from-cyan-100 to-cyan-50 border-cyan-200 text-cyan-900',
-    emerald: 'from-emerald-100 to-emerald-50 border-emerald-200 text-emerald-900',
-    violet: 'from-violet-100 to-violet-50 border-violet-200 text-violet-900',
-    amber: 'from-amber-100 to-amber-50 border-amber-200 text-amber-900',
-    rose: 'from-rose-100 to-rose-50 border-rose-200 text-rose-900',
-    slate: 'from-slate-200 to-slate-50 border-slate-300 text-slate-900',
+    cyan: 'border-cyan-200 text-cyan-900 bg-white',
+    emerald: 'border-emerald-200 text-emerald-900 bg-white',
+    violet: 'border-violet-200 text-violet-900 bg-white',
+    amber: 'border-amber-200 text-amber-900 bg-white',
+    rose: 'border-rose-200 text-rose-900 bg-white',
+    slate: 'border-slate-200 text-slate-900 bg-white',
   };
 
   const delta = getDelta(value, String(baseValue));
 
   return (
-    <div className={`rounded-2xl border bg-gradient-to-br p-4 shadow-sm transition-transform hover:-translate-y-0.5 ${tones[tone]}`}>
+    <div className={`rounded-xl border p-4 shadow-sm transition-colors hover:bg-slate-50 ${tones[tone]}`}>
       <p className="text-xs uppercase tracking-[0.12em] opacity-80">{title}</p>
-      <p className="mt-2 text-3xl font-black">{value}</p>
+      <p className="mt-2 text-3xl font-bold">{value}</p>
       <p className="mt-2 text-xs font-semibold opacity-75">{delta}</p>
     </div>
   );
@@ -710,7 +709,7 @@ function Th({
     <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
       <button onClick={onClick} className="inline-flex items-center gap-1 hover:text-slate-700">
         {label}
-        <span className={`text-[10px] ${active ? 'opacity-100' : 'opacity-40'}`}>{order === 'asc' ? '▲' : '▼'}</span>
+        <span className={`text-[10px] ${active ? 'opacity-100' : 'opacity-40'}`}>{order === 'asc' ? '^' : 'v'}</span>
       </button>
     </th>
   );

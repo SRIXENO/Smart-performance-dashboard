@@ -75,42 +75,36 @@ export default function Sidebar() {
   const items = user?.role === 'admin' ? [...navigation, adminItem] : navigation;
 
   return (
-    <aside className="relative text-white w-72 min-h-screen p-5 bg-slate-950 border-r border-slate-800 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(14,165,233,0.18),_transparent_42%),radial-gradient(circle_at_bottom_left,_rgba(34,197,94,0.12),_transparent_45%)] pointer-events-none" />
-
-      <div className="relative z-10 mb-8">
-        <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] tracking-wide uppercase bg-slate-800/80 text-slate-300 border border-slate-700">
-          Live Workspace
-        </div>
-        <h1 className="text-2xl font-black mt-3 tracking-tight">SPID Command</h1>
-        <p className="text-slate-400 text-sm mt-1">Performance Intelligence</p>
+    <aside className="w-64 min-h-screen p-4 bg-white border-r border-slate-200">
+      <div className="mb-8">
+        <h1 className="text-xl font-bold text-slate-900 tracking-tight">SPID Dashboard</h1>
+        <p className="text-slate-500 text-sm mt-1">Performance Intelligence</p>
       </div>
 
-      <nav className="relative z-10 space-y-2">
+      <nav className="space-y-1.5">
         {items.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`group relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 isActive
-                  ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-400/30 shadow-[0_0_0_1px_rgba(34,211,238,0.25)]'
-                  : 'text-slate-300 hover:bg-slate-800/90 hover:text-white border border-transparent'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
               }`}
             >
-              {isActive && <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r bg-cyan-300" />}
               <span>{item.icon}</span>
-              <span className="tracking-wide">{item.name}</span>
+              <span>{item.name}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="relative z-10 mt-8 rounded-xl border border-slate-800 bg-slate-900/80 p-4">
-        <div className="text-xs text-slate-400">Signed in as</div>
-        <div className="text-sm font-semibold mt-1 truncate">{user?.name || 'User'}</div>
-        <div className="text-xs uppercase tracking-wide mt-2 text-cyan-300">{user?.role || 'guest'}</div>
+      <div className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div className="text-xs text-slate-500">Signed in as</div>
+        <div className="text-sm font-semibold mt-1 text-slate-900 truncate">{user?.name || 'User'}</div>
+        <div className="text-xs uppercase tracking-wide mt-1 text-slate-500">{user?.role || 'guest'}</div>
       </div>
     </aside>
   );

@@ -18,6 +18,7 @@ export default function StudentDetail() {
     onConfirm: () => {}
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [uploadingDoc, setUploadingDoc] = useState('');
 
   useEffect(() => {
     const fetchStudent = async () => {
@@ -65,6 +66,40 @@ export default function StudentDetail() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDocumentUpload = async (field: string, file: File | null) => {
+    if (!file || !student) return;
+
+    try {
+      setUploadingDoc(field);
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const fileData = reader.result;
+        try {
+          await studentsAPI.update(student._id, {
+            [field]: fileData,
+            [`${field}Name`]: file.name,
+            [`${field}UploadedAt`]: new Date().toISOString(),
+          });
+          setStudent((prev: any) => ({
+            ...prev,
+            [field]: fileData,
+            [`${field}Name`]: file.name,
+            [`${field}UploadedAt`]: new Date().toISOString(),
+          }));
+        } catch (error) {
+          console.error('Failed to save uploaded document:', error);
+          alert('Failed to upload document');
+        } finally {
+          setUploadingDoc('');
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Document upload error:', error);
+      setUploadingDoc('');
+    }
   };
 
   if (loading) {
@@ -121,28 +156,24 @@ export default function StudentDetail() {
               onClick={() => router.push(`/students/${student._id}/edit`)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
             >
-              <span>✏️</span>
               <span>Edit</span>
             </button>
             <button
               onClick={handlePrint}
               className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
             >
-              <span>🖨️</span>
               <span>Print</span>
             </button>
             <button
               onClick={handleExport}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
             >
-              <span>📥</span>
               <span>Export</span>
             </button>
             <button
               onClick={handleDelete}
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
             >
-              <span>🗑️</span>
               <span>Delete</span>
             </button>
           </div>
@@ -154,12 +185,12 @@ export default function StudentDetail() {
         <div className="border-b border-gray-200">
           <nav className="flex space-x-8 px-6" aria-label="Tabs">
             {[
-              { id: 'personal', label: 'Personal Info', icon: '👤' },
-              { id: 'academic', label: 'Academic Details', icon: '📚' },
-              { id: 'contact', label: 'Contact & Address', icon: '📞' },
-              { id: 'guardian', label: 'Guardian Info', icon: '👨‍👩‍👧' },
-              { id: 'documents', label: 'Documents', icon: '📄' },
-              { id: 'performance', label: 'Performance', icon: '📊' },
+              { id: 'personal', label: 'Personal Info' },
+              { id: 'academic', label: 'Academic Details' },
+              { id: 'contact', label: 'Contact & Address' },
+              { id: 'guardian', label: 'Guardian Info' },
+              { id: 'documents', label: 'Documents' },
+              { id: 'performance', label: 'Performance' },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -170,7 +201,6 @@ export default function StudentDetail() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <span>{tab.icon}</span>
                 <span>{tab.label}</span>
               </button>
             ))}
@@ -311,24 +341,46 @@ export default function StudentDetail() {
               <h3 className="text-lg font-semibold mb-4">Uploaded Documents</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
-                  { name: 'Aadhar Card', status: student.aadharCard ? 'Uploaded' : 'Not Uploaded' },
-                  { name: 'PAN Card', status: student.panCard ? 'Uploaded' : 'Not Uploaded' },
-                  { name: '10th Marksheet', status: student.tenthMarksheet ? 'Uploaded' : 'Not Uploaded' },
-                  { name: '12th Marksheet', status: student.twelfthMarksheet ? 'Uploaded' : 'Not Uploaded' },
-                  { name: 'Transfer Certificate', status: student.transferCertificate ? 'Uploaded' : 'Not Uploaded' },
-                  { name: 'Migration Certificate', status: student.migrationCertificate ? 'Uploaded' : 'Not Uploaded' },
-                  { name: 'Passport Photo', status: student.photo ? 'Uploaded' : 'Not Uploaded' },
-                  { name: 'Signature', status: student.signature ? 'Uploaded' : 'Not Uploaded' },
-                ].map((doc, idx) => (
-                  <div key={idx} className="bg-gray-50 p-4 rounded-md flex justify-between items-center">
-                    <span className="font-medium">{doc.name}</span>
-                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                      doc.status === 'Uploaded' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {doc.status}
-                    </span>
+                  { key: 'aadharCard', name: 'Aadhar Card', status: student.aadharCard ? 'Uploaded' : 'Not Uploaded' },
+                  { key: 'panCard', name: 'PAN Card', status: student.panCard ? 'Uploaded' : 'Not Uploaded' },
+                  { key: 'tenthMarksheet', name: '10th Marksheet', status: student.tenthMarksheet ? 'Uploaded' : 'Not Uploaded' },
+                  { key: 'twelfthMarksheet', name: '12th Marksheet', status: student.twelfthMarksheet ? 'Uploaded' : 'Not Uploaded' },
+                  { key: 'transferCertificate', name: 'Transfer Certificate', status: student.transferCertificate ? 'Uploaded' : 'Not Uploaded' },
+                  { key: 'migrationCertificate', name: 'Migration Certificate', status: student.migrationCertificate ? 'Uploaded' : 'Not Uploaded' },
+                  { key: 'photo', name: 'Passport Photo', status: student.photo ? 'Uploaded' : 'Not Uploaded' },
+                  { key: 'signature', name: 'Signature', status: student.signature ? 'Uploaded' : 'Not Uploaded' },
+                ].map((doc) => (
+                  <div key={doc.key} className="bg-gray-50 p-4 rounded-md space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{doc.name}</span>
+                      <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                        doc.status === 'Uploaded'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {doc.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="file"
+                        className="text-sm"
+                        onChange={(e) => handleDocumentUpload(doc.key, e.target.files?.[0] || null)}
+                      />
+                      {uploadingDoc === doc.key && (
+                        <span className="text-xs text-blue-600">Uploading...</span>
+                      )}
+                    </div>
+                    {student[doc.key] && (
+                      <a
+                        href={student[doc.key]}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-blue-600 hover:text-blue-800"
+                      >
+                        View Uploaded File
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>

@@ -8,7 +8,15 @@ const subjectSchema = new mongoose.Schema({
   department: { 
     type: String, 
     required: true, 
-    enum: ['Computer Science', 'Information Technology', 'Electronics', 'Mechanical', 'Civil'] 
+    enum: [
+      'Computer Science',
+      'Information Technology',
+      'Electrical and Communication Engineering',
+      'Electrical and Electronic Engineering',
+      'Mechanical',
+      'Civil',
+      'Biotechnology'
+    ] 
   },
   facultyId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, {

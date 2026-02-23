@@ -39,7 +39,15 @@ export default function SubjectManagement() {
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const departments = ['Computer Science', 'Information Technology', 'Electronics', 'Mechanical', 'Civil', 'Electrical'];
+  const departments = [
+    'Computer Science',
+    'Information Technology',
+    'Electrical and Communication Engineering',
+    'Electrical and Electronic Engineering',
+    'Mechanical',
+    'Civil',
+    'Biotechnology'
+  ];
 
   useEffect(() => {
     fetchSubjectGroups();
