@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { studentsAPI, subjectsAPI } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 const DEPARTMENT_CODE_MAP: Record<string, string> = {
   CS: 'Computer Science',
@@ -26,6 +27,7 @@ const detectDepartmentFromRegisterNumber = (value: string) => {
 export default function EditStudent() {
   const params = useParams();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
@@ -147,6 +149,12 @@ export default function EditStudent() {
   
   const [availableSubjects, setAvailableSubjects] = useState<any[]>([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && user?.role !== 'admin' && user?.role !== 'faculty') {
+      router.push(`/students/${params.id}`);
+    }
+  }, [authLoading, params.id, router, user?.role]);
 
   useEffect(() => {
     if (formData.department && formData.year) {

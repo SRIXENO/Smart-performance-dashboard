@@ -22,6 +22,15 @@ const navigation: NavItem[] = [
     )
   },
   {
+    name: 'Faculty',
+    href: '/faculty',
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422A12.083 12.083 0 0118 16.5c0 1.061-.137 2.09-.394 3.07M12 14L5.84 10.578A12.083 12.083 0 006 16.5c0 1.061.137 2.09.394 3.07M8 20h8" />
+      </svg>
+    )
+  },
+  {
     name: 'Students',
     href: '/students',
     icon: (

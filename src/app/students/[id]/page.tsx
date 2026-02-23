@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { studentsAPI } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
+import { useAuth } from '@/context/AuthContext';
 
 export default function StudentDetail() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('personal');
@@ -130,8 +132,18 @@ export default function StudentDetail() {
       <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
         <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
           <div className="flex items-center space-x-4 min-w-0">
-            <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-              {student.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+            <div className="relative h-20 w-20">
+              {student.photo ? (
+                <img
+                  src={student.photo}
+                  alt={`${student.name} profile`}
+                  className="h-20 w-20 rounded-full object-cover border-2 border-white shadow-sm"
+                />
+              ) : (
+                <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                  {student.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+                </div>
+              )}
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{student.name}</h1>
@@ -148,16 +160,32 @@ export default function StudentDetail() {
                   Year {student.year}
                 </span>
               </div>
+              {user?.role === 'admin' && (
+                <>
+                  <label className="mt-2 inline-flex items-center text-xs text-blue-600 hover:text-blue-800 cursor-pointer">
+                    Change Photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleDocumentUpload('photo', e.target.files?.[0] || null)}
+                    />
+                  </label>
+                  {uploadingDoc === 'photo' && <p className="text-xs text-blue-600 mt-1">Uploading photo...</p>}
+                </>
+              )}
             </div>
           </div>
           
           <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => router.push(`/students/${student._id}/edit`)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
-            >
-              <span>Edit</span>
-            </button>
+            {(user?.role === 'admin' || user?.role === 'faculty') && (
+              <button
+                onClick={() => router.push(`/students/${student._id}/edit`)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
+              >
+                <span>Edit</span>
+              </button>
+            )}
             <button
               onClick={handlePrint}
               className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
@@ -170,12 +198,14 @@ export default function StudentDetail() {
             >
               <span>Export</span>
             </button>
-            <button
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
-            >
-              <span>Delete</span>
-            </button>
+            {user?.role === 'admin' && (
+              <button
+                onClick={handleDelete}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
+              >
+                <span>Delete</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -361,16 +391,18 @@ export default function StudentDetail() {
                         {doc.status}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="file"
-                        className="text-sm"
-                        onChange={(e) => handleDocumentUpload(doc.key, e.target.files?.[0] || null)}
-                      />
-                      {uploadingDoc === doc.key && (
-                        <span className="text-xs text-blue-600">Uploading...</span>
-                      )}
-                    </div>
+                    {user?.role === 'admin' && (
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="file"
+                          className="text-sm"
+                          onChange={(e) => handleDocumentUpload(doc.key, e.target.files?.[0] || null)}
+                        />
+                        {uploadingDoc === doc.key && (
+                          <span className="text-xs text-blue-600">Uploading...</span>
+                        )}
+                      </div>
+                    )}
                     {student[doc.key] && (
                       <a
                         href={student[doc.key]}

@@ -16,6 +16,7 @@ const subjectRoutes = require('./routes/subjectRoutes');
 const academicRoutes = require('./routes/academicRoutes');
 const aiAnalyticsRoutes = require('./routes/aiAnalyticsRoutes');
 const activityRoutes = require('./routes/activityRoutes');
+const facultyRoutes = require('./routes/facultyRoutes');
 
 const app = express();
 
@@ -67,6 +68,7 @@ app.use('/api/subjects', subjectRoutes);
 app.use('/api/academic', academicRoutes);
 app.use('/api/ai-analytics', aiAnalyticsRoutes);
 app.use('/api/activities', activityRoutes);
+app.use('/api/faculty', facultyRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

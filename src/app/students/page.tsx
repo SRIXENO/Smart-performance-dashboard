@@ -88,7 +88,7 @@ export default function Students() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-900">Students</h1>
-        {(user?.role === 'admin' || user?.role === 'faculty') && (
+        {user?.role === 'admin' && (
           <a
             href="/students/add"
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
@@ -213,12 +213,14 @@ export default function Students() {
                               >
                                 Edit
                               </a>
-                              <button
-                                onClick={() => handleDelete(student._id, student.name)}
-                                className="block w-full text-left rounded px-2 py-1 text-red-600 hover:bg-red-50"
-                              >
-                                Delete
-                              </button>
+                              {user?.role === 'admin' && (
+                                <button
+                                  onClick={() => handleDelete(student._id, student.name)}
+                                  className="block w-full text-left rounded px-2 py-1 text-red-600 hover:bg-red-50"
+                                >
+                                  Delete
+                                </button>
+                              )}
                             </div>
                           </details>
                           <a
@@ -227,12 +229,14 @@ export default function Students() {
                           >
                             Edit
                           </a>
-                          <button
-                            onClick={() => handleDelete(student._id, student.name)}
-                            className="hidden sm:inline text-red-600 hover:text-red-900"
-                          >
-                            Delete
-                          </button>
+                          {user?.role === 'admin' && (
+                            <button
+                              onClick={() => handleDelete(student._id, student.name)}
+                              className="hidden sm:inline text-red-600 hover:text-red-900"
+                            >
+                              Delete
+                            </button>
+                          )}
                         </>
                       )}
                       </div>
@@ -246,7 +250,7 @@ export default function Students() {
             {students.length === 0 && (
               <div className="text-center py-12">
                 <div className="text-gray-500 mb-4">No students found</div>
-                {(user?.role === 'admin' || user?.role === 'faculty') && (
+                {user?.role === 'admin' && (
                   <a
                     href="/students/add"
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"

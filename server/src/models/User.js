@@ -7,6 +7,11 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true },
   password: { type: String },
   role: { type: String, required: true, enum: ['admin', 'faculty', 'student', 'viewer'], default: 'student' },
+  department: { type: String, trim: true },
+  designation: { type: String, trim: true, default: 'Faculty Member' },
+  bio: { type: String, trim: true },
+  expertise: [{ type: String }],
+  profilePhoto: { type: String },
   googleId: { type: String, unique: true, sparse: true },
   avatar: { type: String },
   authProvider: { type: String, enum: ['local', 'google'], default: 'local' }

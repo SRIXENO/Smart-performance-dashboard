@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { studentsAPI } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 const DEPARTMENT_CODE_MAP: Record<string, string> = {
   CS: 'Computer Science',
@@ -24,6 +25,7 @@ const detectDepartmentFromRegisterNumber = (value: string) => {
 };
 
 export default function AddStudent() {
+  const { user, loading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -39,6 +41,12 @@ export default function AddStudent() {
   const [errors, setErrors] = useState<any>({});
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && user?.role !== 'admin') {
+      router.push('/students');
+    }
+  }, [authLoading, router, user?.role]);
 
   const departments = [
     'Computer Science',

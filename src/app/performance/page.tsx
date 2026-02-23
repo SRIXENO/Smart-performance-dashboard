@@ -175,7 +175,7 @@ export default function Performance() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
         <h1 className="text-2xl font-semibold text-gray-900">Performance Management</h1>
-        {(user?.role === 'admin' || user?.role === 'faculty') && (
+        {user?.role === 'admin' && (
           <button
             onClick={() => setShowForm(!showForm)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
@@ -335,7 +335,7 @@ export default function Performance() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.semester}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  {(user?.role === 'admin' || user?.role === 'faculty') && (
+                  {user?.role === 'admin' && (
                     <button
                       onClick={() => handleDelete(record._id, students.find(s => s._id === record.studentId)?.name || 'Unknown', record.subjectName)}
                       className="text-red-600 hover:text-red-900"

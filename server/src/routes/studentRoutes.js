@@ -1,13 +1,14 @@
 const express = require('express');
 const { getStudents, getStudentById, createStudent, updateStudent, deleteStudent } = require('../controllers/studentController');
+const authMiddleware = require('../middleware/authMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware');
 
 const router = express.Router();
 
-// Remove auth middleware temporarily to test
-router.get('/', getStudents);
-router.get('/:id', getStudentById);
-router.post('/', createStudent);
-router.put('/:id', updateStudent);
-router.delete('/:id', deleteStudent);
+router.get('/', authMiddleware, getStudents);
+router.get('/:id', authMiddleware, getStudentById);
+router.post('/', authMiddleware, roleMiddleware(['admin']), createStudent);
+router.put('/:id', authMiddleware, roleMiddleware(['admin', 'faculty']), updateStudent);
+router.delete('/:id', authMiddleware, roleMiddleware(['admin']), deleteStudent);
 
 module.exports = router;

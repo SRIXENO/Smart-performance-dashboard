@@ -96,4 +96,11 @@ export const subjectsAPI = {
   delete: (id: string) => api.delete(`/subjects/${id}`),
 };
 
+export const facultyAPI = {
+  getAll: (params?: any) => api.get('/faculty', { params }),
+  create: (data: any) => api.post('/faculty', data),
+  update: (id: string, data: any) => api.put(`/faculty/${id}`, data),
+  delete: (id: string) => api.delete(`/faculty/${id}`),
+};
+
 export default api;
