@@ -9,16 +9,22 @@ passport.use(new GoogleStrategy({
   callbackURL: process.env.GOOGLE_CALLBACK_URL
 }, async (accessToken, refreshToken, profile, done) => {
   try {
+    const googleEmail = profile.emails[0].value;
     let user = await User.findOne({ googleId: profile.id });
     
     if (user) {
+      if (user.role !== 'student') {
+        user.role = 'student';
+        await user.save();
+      }
       return done(null, user);
     }
     
-    user = await User.findOne({ email: profile.emails[0].value });
+    user = await User.findOne({ email: googleEmail });
     
     if (user) {
       user.googleId = profile.id;
+      user.role = 'student';
       user.authProvider = 'google';
       user.avatar = profile.photos[0]?.value;
       await user.save();
@@ -30,9 +36,9 @@ passport.use(new GoogleStrategy({
       userId,
       googleId: profile.id,
       name: profile.displayName,
-      email: profile.emails[0].value,
+      email: googleEmail,
       avatar: profile.photos[0]?.value,
-      role: 'viewer',
+      role: 'student',
       authProvider: 'google'
     });
     

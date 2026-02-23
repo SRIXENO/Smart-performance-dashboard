@@ -8,8 +8,7 @@ export default function Register() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: '',
-    role: 'student'
+    password: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,7 +21,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await register(formData.name, formData.email, formData.password, formData.role);
+      await register(formData.name, formData.email, formData.password);
       router.push('/dashboard');
     } catch (error: any) {
       setError(error.response?.data?.error || 'Registration failed');
@@ -31,7 +30,7 @@ export default function Register() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -73,16 +72,6 @@ export default function Register() {
               className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               placeholder="Password (min 8 characters)"
             />
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            >
-              <option value="student">Student</option>
-              <option value="faculty">Faculty</option>
-              <option value="admin">Admin</option>
-            </select>
           </div>
 
           {error && (
