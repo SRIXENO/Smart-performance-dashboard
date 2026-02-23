@@ -8,11 +8,27 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const { user, logout } = useAuth();
   const router = useRouter();
   const [clock, setClock] = useState(new Date());
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
     const timer = setInterval(() => setClock(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const saved = (localStorage.getItem('theme') as 'light' | 'dark' | null) || null;
+    const initial =
+      saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    setTheme(initial);
+    document.documentElement.classList.toggle('dark', initial === 'dark');
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    localStorage.setItem('theme', next);
+    document.documentElement.classList.toggle('dark', next === 'dark');
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -40,6 +56,15 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            aria-label="Toggle dark mode"
+          >
+            {theme === 'dark' ? 'Light' : 'Dark'}
+          </button>
+
           <div className="hidden sm:flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <div className="text-sm">
