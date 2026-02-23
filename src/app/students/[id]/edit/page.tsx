@@ -335,13 +335,13 @@ export default function EditStudent() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Edit Student Information</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Edit Student Information</h1>
         <p className="text-gray-600 mt-2">Update comprehensive student details</p>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm">
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+        <div className="border-b border-gray-200 overflow-x-auto">
+          <nav className="flex space-x-6 px-4 sm:px-6 min-w-max" aria-label="Tabs">
             {[
               { id: 'personal', label: 'Personal Info' },
               { id: 'academic', label: 'Academic' },
@@ -831,11 +831,11 @@ export default function EditStudent() {
             )}
           </div>
 
-          <div className="border-t px-6 py-4 bg-gray-50 flex justify-between items-center">
+          <div className="border-t px-4 sm:px-6 py-4 bg-gray-50 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
             <button type="button" onClick={() => router.push('/students')} className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 transition-colors font-medium">
               Cancel
             </button>
-            <div className="flex space-x-3">
+            <div className="flex flex-wrap gap-3">
               <button type="button" onClick={() => router.push(`/students/${params.id}`)} className="px-6 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors font-medium">
                 View Details
               </button>

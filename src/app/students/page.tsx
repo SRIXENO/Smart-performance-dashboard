@@ -138,28 +138,29 @@ export default function Students() {
           <div className="p-6 text-center">Loading...</div>
         ) : (
           <>
-            <table className="min-w-full divide-y divide-gray-200">
+            <div className="overflow-x-auto">
+            <table className="min-w-[920px] w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Student ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Department
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Year
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="sticky right-0 z-10 bg-gray-50 shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.35)] px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -167,22 +168,22 @@ export default function Students() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {students.map((student) => (
                   <tr key={student._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {student.studentId}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {student.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {student.email}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {student.department}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       Year {student.year}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         student.status === 'active' 
                           ? 'bg-green-100 text-green-800' 
@@ -191,7 +192,8 @@ export default function Students() {
                         {student.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    <td className="sticky right-0 z-10 bg-white shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.35)] px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="inline-flex items-center gap-2 sm:gap-3">
                       <a
                         href={`/students/${student._id}`}
                         className="text-blue-600 hover:text-blue-900"
@@ -200,25 +202,46 @@ export default function Students() {
                       </a>
                       {(user?.role === 'admin' || user?.role === 'faculty') && (
                         <>
+                          <details className="relative sm:hidden">
+                            <summary className="list-none cursor-pointer rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 hover:bg-gray-50">
+                              More
+                            </summary>
+                            <div className="absolute right-0 mt-1 w-28 rounded-md border border-gray-200 bg-white shadow-lg p-1 z-20">
+                              <a
+                                href={`/students/${student._id}/edit`}
+                                className="block rounded px-2 py-1 text-indigo-600 hover:bg-indigo-50"
+                              >
+                                Edit
+                              </a>
+                              <button
+                                onClick={() => handleDelete(student._id, student.name)}
+                                className="block w-full text-left rounded px-2 py-1 text-red-600 hover:bg-red-50"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </details>
                           <a
                             href={`/students/${student._id}/edit`}
-                            className="text-indigo-600 hover:text-indigo-900"
+                            className="hidden sm:inline text-indigo-600 hover:text-indigo-900"
                           >
                             Edit
                           </a>
                           <button
                             onClick={() => handleDelete(student._id, student.name)}
-                            className="text-red-600 hover:text-red-900"
+                            className="hidden sm:inline text-red-600 hover:text-red-900"
                           >
                             Delete
                           </button>
                         </>
                       )}
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
 
             {students.length === 0 && (
               <div className="text-center py-12">

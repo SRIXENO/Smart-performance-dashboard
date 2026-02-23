@@ -173,7 +173,7 @@ export default function Performance() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
         <h1 className="text-2xl font-semibold text-gray-900">Performance Management</h1>
         {(user?.role === 'admin' || user?.role === 'faculty') && (
           <button
@@ -189,7 +189,7 @@ export default function Performance() {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Add Performance Record</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Student</label>
                 <select
@@ -298,7 +298,8 @@ export default function Performance() {
       )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+        <div className="overflow-x-auto">
+        <table className="min-w-[880px] w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
@@ -347,6 +348,7 @@ export default function Performance() {
             ))}
           </tbody>
         </table>
+        </div>
         {records.length === 0 && (
           <div className="text-center py-12 text-gray-500">
             No performance records found. Click "Add Performance Record" to create one.

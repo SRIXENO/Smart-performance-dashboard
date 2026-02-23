@@ -86,7 +86,7 @@ export default function IndividualStudentDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -94,7 +94,7 @@ export default function IndividualStudentDashboard() {
 
   if (!student) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <p className="text-gray-500">Student not found</p>
           <button onClick={() => router.push('/dashboard')} className="mt-4 text-blue-600 hover:text-blue-800">
@@ -108,7 +108,7 @@ export default function IndividualStudentDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <button onClick={() => router.push('/dashboard')} className="flex items-center text-gray-600 hover:text-gray-900 mb-4">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -116,7 +116,7 @@ export default function IndividualStudentDashboard() {
             Back to Dashboard
           </button>
           
-          <div className="flex items-center space-x-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:space-x-6">
             <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
               <span className="text-3xl font-bold text-blue-600">{student.name.charAt(0)}</span>
             </div>
@@ -128,8 +128,8 @@ export default function IndividualStudentDashboard() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
-        <div className="grid grid-cols-4 gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <p className="text-sm text-gray-500 mb-1">Total Credits</p>
             <p className="text-3xl font-bold text-gray-900">{creditsHistory[creditsHistory.length - 1]?.cumulative || 0}</p>
@@ -149,7 +149,7 @@ export default function IndividualStudentDashboard() {
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
               <select value={dateRange} onChange={(e) => setDateRange(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-md text-sm">
@@ -172,7 +172,7 @@ export default function IndividualStudentDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Credits Earned Over Time</h3>
             <div style={{ height: '300px' }}>
@@ -244,7 +244,7 @@ export default function IndividualStudentDashboard() {
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Academic Performance - Assigned Subjects</h3>
           {assignedSubjects.length > 0 ? (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {assignedSubjects.map((subject) => (
                 <div key={subject.code} className="border border-gray-200 rounded-lg p-4">
                   <p className="text-xs text-gray-500 mb-1">{subject.code}</p>

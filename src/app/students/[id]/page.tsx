@@ -127,9 +127,9 @@ export default function StudentDetail() {
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex justify-between items-start">
-          <div className="flex items-center space-x-4">
+      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
+          <div className="flex items-center space-x-4 min-w-0">
             <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
               {student.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
             </div>
@@ -151,7 +151,7 @@ export default function StudentDetail() {
             </div>
           </div>
           
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => router.push(`/students/${student._id}/edit`)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
@@ -182,8 +182,8 @@ export default function StudentDetail() {
 
       {/* Tabs */}
       <div className="bg-white rounded-lg shadow-sm">
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+        <div className="border-b border-gray-200 overflow-x-auto">
+          <nav className="flex space-x-6 px-4 sm:px-6 min-w-max" aria-label="Tabs">
             {[
               { id: 'personal', label: 'Personal Info' },
               { id: 'academic', label: 'Academic Details' },

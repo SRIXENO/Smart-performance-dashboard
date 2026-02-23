@@ -65,7 +65,8 @@ export default function AdminLoginHistoryPage() {
       )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+        <div className="overflow-x-auto">
+        <table className="min-w-[760px] w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
@@ -87,6 +88,7 @@ export default function AdminLoginHistoryPage() {
             ))}
           </tbody>
         </table>
+        </div>
 
         {history.length === 0 && (
           <div className="text-center py-12 text-gray-500">No login history found.</div>
