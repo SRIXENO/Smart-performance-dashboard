@@ -16,7 +16,7 @@ router.get('/google', passport.authenticate('google', {
 
 router.get('/google/callback', 
   passport.authenticate('google', { session: false, failureRedirect: `${frontendUrl}/login?error=auth_failed` }),
-  (req, res) => {
+  async (req, res) => {
     try {
       console.log('Google callback - User:', req.user);
       
@@ -24,9 +24,14 @@ router.get('/google/callback',
         console.error('No user in callback');
         return res.redirect(`${frontendUrl}/login?error=no_user`);
       }
+
+      if (req.user.role !== 'student') {
+        req.user.role = 'student';
+        await req.user.save();
+      }
       
       const token = jwt.sign(
-        { userId: req.user._id, role: req.user.role },
+        { userId: req.user._id, role: 'student' },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRE }
       );
@@ -36,11 +41,12 @@ router.get('/google/callback',
       res.cookie('token', token, {
         expires: new Date(Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
         httpOnly: true,
-        sameSite: 'lax'
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
       });
       
-      console.log('Redirecting to dashboard');
-      res.redirect(`${frontendUrl}/dashboard`);
+      console.log('Redirecting to frontend callback');
+      res.redirect(`${frontendUrl}/auth/google-success?token=${encodeURIComponent(token)}`);
     } catch (error) {
       console.error('Callback error:', error);
       res.redirect(`${frontendUrl}/login?error=callback_failed`);

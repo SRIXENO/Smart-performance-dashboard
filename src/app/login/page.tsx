@@ -92,6 +92,11 @@ export default function Login() {
           <div>
             <a
               href={GOOGLE_AUTH_URL}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  localStorage.removeItem('token');
+                }
+              }}
               className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
