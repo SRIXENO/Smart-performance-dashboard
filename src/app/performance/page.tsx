@@ -1,16 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { studentsAPI, subjectsAPI } from '@/lib/api';
-import axios from 'axios';
+import api, { studentsAPI, subjectsAPI } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import SuccessToast from '@/components/SuccessToast';
 import { useAuth } from '@/context/AuthContext';
-
-const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
-  withCredentials: true,
-});
 
 export default function Performance() {
   const { user } = useAuth();

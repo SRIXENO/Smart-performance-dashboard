@@ -4,19 +4,25 @@ const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
+const normalizeUrl = (value) => (value || '').trim().replace(/\/+$/, '');
+const frontendUrl =
+  normalizeUrl(process.env.FRONTEND_URL) ||
+  normalizeUrl((process.env.FRONTEND_URLS || '').split(',')[0]) ||
+  'http://localhost:3000';
+
 router.get('/google', passport.authenticate('google', {
   scope: ['profile', 'email']
 }));
 
 router.get('/google/callback', 
-  passport.authenticate('google', { session: false, failureRedirect: `${process.env.FRONTEND_URL}/login?error=auth_failed` }),
+  passport.authenticate('google', { session: false, failureRedirect: `${frontendUrl}/login?error=auth_failed` }),
   (req, res) => {
     try {
       console.log('Google callback - User:', req.user);
       
       if (!req.user) {
         console.error('No user in callback');
-        return res.redirect(`${process.env.FRONTEND_URL}/login?error=no_user`);
+        return res.redirect(`${frontendUrl}/login?error=no_user`);
       }
       
       const token = jwt.sign(
@@ -34,10 +40,10 @@ router.get('/google/callback',
       });
       
       console.log('Redirecting to dashboard');
-      res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+      res.redirect(`${frontendUrl}/dashboard`);
     } catch (error) {
       console.error('Callback error:', error);
-      res.redirect(`${process.env.FRONTEND_URL}/login?error=callback_failed`);
+      res.redirect(`${frontendUrl}/login?error=callback_failed`);
     }
   }
 );

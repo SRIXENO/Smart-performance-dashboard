@@ -22,14 +22,32 @@ const app = express();
 // Connect to database (non-blocking)
 connectDB();
 
+const normalizeOrigin = (value) => (value || '').trim().replace(/\/+$/, '');
+const configuredOrigins = [
+  process.env.FRONTEND_URL,
+  ...(process.env.FRONTEND_URLS || '').split(',')
+]
+  .map(normalizeOrigin)
+  .filter(Boolean);
+
 // Middleware
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (origin.includes('vercel.app') || origin === process.env.FRONTEND_URL) {
+
+    const normalizedOrigin = normalizeOrigin(origin);
+    const isAllowed =
+      normalizedOrigin.includes('vercel.app') ||
+      normalizedOrigin.includes('localhost') ||
+      configuredOrigins.includes(normalizedOrigin);
+
+    if (isAllowed) {
       return callback(null, true);
     }
-    callback(new Error('Not allowed by CORS'));
+
+    // Do not throw an error here; return false so disallowed origins are blocked
+    // by the browser without turning the API response into a 500.
+    return callback(null, false);
   },
   credentials: true
 }));
@@ -69,5 +87,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Accepting Vercel and configured origins`);
+  console.log(`Allowed origins: ${configuredOrigins.join(', ') || 'vercel.app, localhost'}`);
 });

@@ -1,7 +1,19 @@
 import axios from 'axios';
 
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === 'development' ? 'http://localhost:5000/api' : '/api');
+
+const normalizedApiBase = API_BASE_URL.replace(/\/+$/, '');
+const apiOrigin = normalizedApiBase.endsWith('/api')
+  ? normalizedApiBase.slice(0, -4)
+  : normalizedApiBase;
+
+export const GOOGLE_AUTH_URL =
+  normalizedApiBase === '/api' ? '/api/auth/google' : `${apiOrigin}/api/auth/google`;
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  baseURL: normalizedApiBase,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

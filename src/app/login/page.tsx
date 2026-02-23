@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { GOOGLE_AUTH_URL } from '@/lib/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -90,7 +91,7 @@ export default function Login() {
 
           <div>
             <a
-              href="http://localhost:5000/api/auth/google"
+              href={GOOGLE_AUTH_URL}
               className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
