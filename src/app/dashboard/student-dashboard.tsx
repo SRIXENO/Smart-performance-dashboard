@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bar } from 'react-chartjs-2';
 import {
@@ -10,36 +10,60 @@ import {
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 } from 'chart.js';
 import { studentsAPI } from '@/lib/api';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
+type StudentRow = {
+  _id: string;
+  studentId?: string;
+  name: string;
+  email?: string;
+  gender?: string;
+  year?: number;
+  department?: string;
+  cgpa?: string | number;
+  attendance?: string | number;
+  status?: string;
+};
+
+type SortKey = 'name' | 'year' | 'cgpa' | 'attendance';
+type ViewMode = 'table' | 'cards';
+
 export default function StudentDashboard() {
   const router = useRouter();
-  const [students, setStudents] = useState<any[]>([]);
-  const [filteredStudents, setFilteredStudents] = useState<any[]>([]);
-  const [selectedYear, setSelectedYear] = useState('All');
-  const [selectedGrade, setSelectedGrade] = useState('All');
-  const [sortOrder, setSortOrder] = useState('asc');
-  const [lastRefreshed, setLastRefreshed] = useState(new Date());
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [students, setStudents] = useState<StudentRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingStudent, setEditingStudent] = useState<any>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState(new Date());
+  const [now, setNow] = useState(new Date());
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedYear, setSelectedYear] = useState<'All' | number>('All');
+  const [selectedStatus, setSelectedStatus] = useState<'All' | string>('All');
+  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [showFilters, setShowFilters] = useState(true);
 
   useEffect(() => {
     fetchStudents();
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
   const fetchStudents = async () => {
     setLoading(true);
     try {
       const response = await studentsAPI.getAll({ limit: 1000 });
-      const studentData = response.data.data.students || [];
+      const studentData = response.data?.data?.students || [];
       setStudents(studentData);
-      setFilteredStudents(studentData);
+      setLastRefreshed(new Date());
     } catch (error) {
       console.error('Failed to fetch students:', error);
     } finally {
@@ -47,341 +71,417 @@ export default function StudentDashboard() {
     }
   };
 
-  useEffect(() => {
-    filterStudents();
-  }, [selectedYear, selectedGrade, students]);
-
-  const filterStudents = () => {
-    let filtered = [...students];
-    if (selectedYear !== 'All') {
-      const yearNum = parseInt(selectedYear.split(' ')[1]);
-      filtered = filtered.filter(s => s.year === yearNum);
-    }
-    if (selectedGrade !== 'All') {
-      const gradeNum = parseInt(selectedGrade.split(' ')[1]);
-      filtered = filtered.filter(s => s.grade === gradeNum);
-    }
-    setFilteredStudents(filtered);
-  };
-
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await fetchStudents();
-    setLastRefreshed(new Date());
     setIsRefreshing(false);
   };
 
-  const handleSort = () => {
-    const sorted = [...filteredStudents].sort((a, b) => {
-      return sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+  const years = useMemo(() => {
+    return ['All', ...Array.from(new Set(students.map((s) => s.year).filter(Boolean))).sort()] as Array<'All' | number>;
+  }, [students]);
+
+  const statuses = useMemo(() => {
+    return ['All', ...Array.from(new Set(students.map((s) => s.status).filter(Boolean)))] as Array<'All' | string>;
+  }, [students]);
+
+  const filteredStudents = useMemo(() => {
+    const normalized = searchTerm.trim().toLowerCase();
+    const filtered = students.filter((student) => {
+      const matchesSearch =
+        !normalized ||
+        student.name?.toLowerCase().includes(normalized) ||
+        student.studentId?.toLowerCase().includes(normalized) ||
+        student.department?.toLowerCase().includes(normalized) ||
+        student.email?.toLowerCase().includes(normalized);
+
+      const matchesYear = selectedYear === 'All' || student.year === selectedYear;
+      const matchesStatus = selectedStatus === 'All' || (student.status || '').toLowerCase() === selectedStatus.toLowerCase();
+
+      return matchesSearch && matchesYear && matchesStatus;
     });
-    setFilteredStudents(sorted);
-    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-  };
 
-  const handleEditStudent = (student: any) => {
-    setEditingStudent({...student});
-    setShowEditModal(true);
-  };
-
-  const handleSaveEdit = () => {
-    if (!editingStudent) return;
-    const updatedStudents = students.map(s => 
-      s.id === editingStudent.id ? editingStudent : s
-    );
-    setStudents(updatedStudents);
-    setShowEditModal(false);
-  };
-
-  const handleSubjectChange = (subject: string, value: string) => {
-    const updatedSubjects = {...editingStudent.subjects, [subject]: parseFloat(value) || 0};
-    const subjectValues = Object.values(updatedSubjects) as number[];
-    const averageMarks = subjectValues.reduce((a, b) => a + b, 0) / subjectValues.length;
-    setEditingStudent({
-      ...editingStudent,
-      subjects: updatedSubjects,
-      averageMarks: Math.round(averageMarks)
-    });
-  };
-
-
-  const gradeGenderData = {
-    labels: ['Year 1', 'Year 2', 'Year 3', 'Year 4'],
-    datasets: [
-      {
-        label: 'Male',
-        data: [1, 2, 3, 4].map(year => 
-          filteredStudents.filter(s => s.year === year && (s.gender === 'Male' || s.gender === 'male')).length
-        ),
-        backgroundColor: '#3b82f6',
-        borderRadius: 4
-      },
-      {
-        label: 'Female',
-        data: [1, 2, 3, 4].map(year => 
-          filteredStudents.filter(s => s.year === year && (s.gender === 'Female' || s.gender === 'female')).length
-        ),
-        backgroundColor: '#ec4899',
-        borderRadius: 4
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortKey === 'name') {
+        return sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
       }
-    ]
-  };
+      if (sortKey === 'year') {
+        const aYear = a.year || 0;
+        const bYear = b.year || 0;
+        return sortOrder === 'asc' ? aYear - bYear : bYear - aYear;
+      }
+      if (sortKey === 'cgpa') {
+        const aCgpa = Number(a.cgpa) || 0;
+        const bCgpa = Number(b.cgpa) || 0;
+        return sortOrder === 'asc' ? aCgpa - bCgpa : bCgpa - aCgpa;
+      }
+      const aAttendance = Number(a.attendance) || 0;
+      const bAttendance = Number(b.attendance) || 0;
+      return sortOrder === 'asc' ? aAttendance - bAttendance : bAttendance - aAttendance;
+    });
 
+    return sorted;
+  }, [searchTerm, selectedYear, selectedStatus, sortKey, sortOrder, students]);
+
+  const stats = useMemo(() => {
+    const total = filteredStudents.length;
+    const active = filteredStudents.filter((s) => (s.status || '').toLowerCase() === 'active').length;
+    const departments = new Set(filteredStudents.map((s) => s.department).filter(Boolean)).size;
+    const cgpas = filteredStudents.map((s) => Number(s.cgpa)).filter((n) => !Number.isNaN(n) && n > 0);
+    const attendance = filteredStudents.map((s) => Number(s.attendance)).filter((n) => !Number.isNaN(n) && n > 0);
+    const avgCgpa = cgpas.length ? (cgpas.reduce((sum, n) => sum + n, 0) / cgpas.length).toFixed(2) : 'N/A';
+    const avgAttendance = attendance.length ? `${(attendance.reduce((sum, n) => sum + n, 0) / attendance.length).toFixed(1)}%` : 'N/A';
+    const atRisk = filteredStudents.filter((s) => {
+      const lowAttendance = (Number(s.attendance) || 0) > 0 && (Number(s.attendance) || 0) < 75;
+      const lowCgpa = (Number(s.cgpa) || 0) > 0 && (Number(s.cgpa) || 0) < 6;
+      return lowAttendance || lowCgpa;
+    }).length;
+    return { total, active, departments, avgCgpa, avgAttendance, atRisk };
+  }, [filteredStudents]);
+
+  const departmentChartData = useMemo(() => {
+    const labels = Array.from(new Set(filteredStudents.map((s) => s.department).filter(Boolean)));
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Students',
+          data: labels.map((dept) => filteredStudents.filter((s) => s.department === dept).length),
+          backgroundColor: ['#22d3ee', '#34d399', '#a78bfa', '#f59e0b', '#f472b6', '#60a5fa'],
+          borderRadius: 10,
+          borderSkipped: false,
+        },
+      ],
+    };
+  }, [filteredStudents]);
+
+  const yearGenderChartData = useMemo(() => {
+    const yearLabels = [1, 2, 3, 4];
+    return {
+      labels: yearLabels.map((year) => `Year ${year}`),
+      datasets: [
+        {
+          label: 'Male',
+          data: yearLabels.map(
+            (year) => filteredStudents.filter((s) => s.year === year && (s.gender || '').toLowerCase() === 'male').length,
+          ),
+          backgroundColor: '#38bdf8',
+          borderRadius: 10,
+          borderSkipped: false,
+        },
+        {
+          label: 'Female',
+          data: yearLabels.map(
+            (year) => filteredStudents.filter((s) => s.year === year && (s.gender || '').toLowerCase() === 'female').length,
+          ),
+          backgroundColor: '#f472b6',
+          borderRadius: 10,
+          borderSkipped: false,
+        },
+      ],
+    };
+  }, [filteredStudents]);
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: { display: true, position: 'top' as const },
-      tooltip: { enabled: true }
+      tooltip: { enabled: true, backgroundColor: 'rgba(15, 23, 42, 0.9)', padding: 12, cornerRadius: 10 },
     },
     scales: {
-      y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
-      x: { grid: { display: false } }
+      y: { beginAtZero: true, grid: { color: '#e2e8f0' } },
+      x: { grid: { display: false } },
+    },
+  };
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      return;
     }
+    setSortKey(key);
+    setSortOrder('asc');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <div className="w-16 h-16 rounded-full border-4 border-cyan-200 border-t-cyan-500 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-950 via-slate-900 to-cyan-900 px-6 py-6 text-white shadow-lg">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.35),_transparent_45%)] pointer-events-none" />
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <p className="text-cyan-300 text-xs uppercase tracking-[0.2em] mb-2">Realtime Command Center</p>
+            <h2 className="text-3xl font-black tracking-tight">Student Performance Dashboard</h2>
+            <p className="text-slate-300 mt-2">
+              {filteredStudents.length} records in view • Last refresh {lastRefreshed.toLocaleTimeString()}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xs">{now.toLocaleString()}</span>
+            <button
+              onClick={() => setShowFilters((prev) => !prev)}
+              className="rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 text-sm font-semibold transition"
+            >
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </button>
+            <button
+              onClick={() => setViewMode((prev) => (prev === 'table' ? 'cards' : 'table'))}
+              className="rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 text-sm font-semibold transition"
+            >
+              {viewMode === 'table' ? 'Card View' : 'Table View'}
+            </button>
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="rounded-xl bg-cyan-400 text-slate-900 hover:bg-cyan-300 px-4 py-2 text-sm font-bold transition disabled:opacity-70"
+            >
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {showFilters && (
+        <section className="rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-sm p-4 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Search</label>
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Name, ID, email, department..."
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Year</label>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value === 'All' ? 'All' : Number(e.target.value))}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              >
+                {years.map((year) => (
+                  <option key={String(year)} value={String(year)}>
+                    {year === 'All' ? 'All Years' : `Year ${year}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Status</label>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              >
+                {statuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status === 'All' ? 'All Statuses' : status}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedYear('All');
+                  setSelectedStatus('All');
+                }}
+                className="w-full rounded-xl border border-slate-300 bg-slate-100 hover:bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition"
+              >
+                Reset Filters
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4">
+        <Kpi title="Total Students" value={String(stats.total)} tone="cyan" />
+        <Kpi title="Active" value={String(stats.active)} tone="emerald" />
+        <Kpi title="Departments" value={String(stats.departments)} tone="violet" />
+        <Kpi title="Avg CGPA" value={stats.avgCgpa} tone="amber" />
+        <Kpi title="Avg Attendance" value={stats.avgAttendance} tone="rose" />
+        <Kpi title="At Risk" value={String(stats.atRisk)} tone="slate" />
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-900">Student Directory</h3>
+          <div className="text-xs text-slate-500">Sorted by {sortKey} ({sortOrder})</div>
+        </div>
+
+        {viewMode === 'table' ? (
+          <div className="overflow-auto">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
+                <tr>
+                  <Th label="Student ID" />
+                  <Th label="Student Name" onClick={() => toggleSort('name')} active={sortKey === 'name'} order={sortOrder} />
+                  <Th label="Gender" />
+                  <Th label="Year" onClick={() => toggleSort('year')} active={sortKey === 'year'} order={sortOrder} />
+                  <Th label="Department" />
+                  <Th label="CGPA" onClick={() => toggleSort('cgpa')} active={sortKey === 'cgpa'} order={sortOrder} />
+                  <Th label="Attendance" onClick={() => toggleSort('attendance')} active={sortKey === 'attendance'} order={sortOrder} />
+                  <Th label="Status" />
+                  <Th label="Actions" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredStudents.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="px-6 py-14 text-center text-slate-500">
+                      No students found for the selected filters.
+                    </td>
+                  </tr>
+                )}
+                {filteredStudents.map((student, idx) => (
+                  <tr key={student._id} className={`transition-colors hover:bg-cyan-50/40 ${idx % 2 ? 'bg-slate-50/50' : 'bg-white'}`}>
+                    <td className="px-5 py-4 text-sm text-slate-700">{student.studentId || 'N/A'}</td>
+                    <td className="px-5 py-4 text-sm font-semibold text-slate-900">{student.name}</td>
+                    <td className="px-5 py-4 text-sm text-slate-600">{student.gender || 'N/A'}</td>
+                    <td className="px-5 py-4 text-sm text-slate-600">{student.year ? `Year ${student.year}` : 'N/A'}</td>
+                    <td className="px-5 py-4 text-sm text-slate-600">{student.department || 'N/A'}</td>
+                    <td className="px-5 py-4 text-sm text-slate-900">{student.cgpa || 'N/A'}</td>
+                    <td className="px-5 py-4 text-sm text-slate-900">{student.attendance ? `${student.attendance}%` : 'N/A'}</td>
+                    <td className="px-5 py-4">
+                      <StatusPill status={student.status || 'unknown'} />
+                    </td>
+                    <td className="px-5 py-4 text-sm">
+                      <button
+                        onClick={() => router.push(`/dashboard/student/${student._id}`)}
+                        className="rounded-lg bg-slate-900 text-white px-3 py-1.5 hover:bg-black transition"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredStudents.map((student) => (
+              <article key={student._id} className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 hover:shadow-md transition">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-bold text-slate-900">{student.name}</h4>
+                    <p className="text-xs text-slate-500 mt-1">{student.studentId || 'No ID'}</p>
+                  </div>
+                  <StatusPill status={student.status || 'unknown'} />
+                </div>
+                <div className="mt-4 space-y-1 text-sm text-slate-600">
+                  <p>Department: {student.department || 'N/A'}</p>
+                  <p>Year: {student.year ? `Year ${student.year}` : 'N/A'}</p>
+                  <p>CGPA: {student.cgpa || 'N/A'}</p>
+                  <p>Attendance: {student.attendance ? `${student.attendance}%` : 'N/A'}</p>
+                </div>
+                <button
+                  onClick={() => router.push(`/dashboard/student/${student._id}`)}
+                  className="mt-4 w-full rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-semibold px-3 py-2 transition"
+                >
+                  Open Profile
+                </button>
+              </article>
+            ))}
+            {filteredStudents.length === 0 && (
+              <div className="col-span-full text-center py-10 text-slate-500">No students found for the selected filters.</div>
+            )}
+          </div>
+        )}
+      </section>
+
+      <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900">Students by Department</h3>
+          <p className="text-sm text-slate-500 mb-4">Distribution based on active filters</p>
+          <div className="h-[320px]">
+            <Bar data={departmentChartData} options={chartOptions} />
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900">Year and Gender Mix</h3>
+          <p className="text-sm text-slate-500 mb-4">Year-wise gender trend</p>
+          <div className="h-[320px]">
+            <Bar data={yearGenderChartData} options={chartOptions} />
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Kpi({
+  title,
+  value,
+  tone,
+}: {
+  title: string;
+  value: string;
+  tone: 'cyan' | 'emerald' | 'violet' | 'amber' | 'rose' | 'slate';
+}) {
+  const tones: Record<string, string> = {
+    cyan: 'from-cyan-100 to-cyan-50 border-cyan-200 text-cyan-900',
+    emerald: 'from-emerald-100 to-emerald-50 border-emerald-200 text-emerald-900',
+    violet: 'from-violet-100 to-violet-50 border-violet-200 text-violet-900',
+    amber: 'from-amber-100 to-amber-50 border-amber-200 text-amber-900',
+    rose: 'from-rose-100 to-rose-50 border-rose-200 text-rose-900',
+    slate: 'from-slate-200 to-slate-50 border-slate-300 text-slate-900',
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {loading ? (
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      ) : (
-        <>
-      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">Student Performance Dashboard</h1>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">Data refreshed at {lastRefreshed.toLocaleString()}</span>
-              <button onClick={handleRefresh} disabled={isRefreshing} className="p-2 hover:bg-gray-100 rounded-lg">
-                <svg className={`w-5 h-5 text-gray-600 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
-              <button className="p-2 hover:bg-gray-100 rounded-lg">
-                <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-2">
-            <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-2">Select Year</label>
-                <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                  <option>All</option>
-                  <option>Year 1</option>
-                  <option>Year 2</option>
-                  <option>Year 3</option>
-                  <option>Year 4</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-2">Select Grade</label>
-                <select value={selectedGrade} onChange={(e) => setSelectedGrade(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                  <option>All</option>
-                  <option>Grade 1</option>
-                  <option>Grade 2</option>
-                  <option>Grade 3</option>
-                  <option>Grade 4</option>
-                  <option>Grade 5</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="col-span-10 space-y-6">
-            <div className="grid grid-cols-5 gap-4">
-              <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Total Students</p>
-                    <p className="text-2xl font-bold text-gray-900">{filteredStudents.length}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                      <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Active Students</p>
-                    <p className="text-2xl font-bold text-gray-900">{filteredStudents.filter(s => s.status === 'active').length}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Departments</p>
-                    <p className="text-2xl font-bold text-gray-900">{new Set(students.map(s => s.department)).size}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Avg CGPA</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {filteredStudents.filter(s => s.cgpa).length > 0 
-                        ? (filteredStudents.reduce((sum, s) => sum + (parseFloat(s.cgpa) || 0), 0) / filteredStudents.filter(s => s.cgpa).length).toFixed(2)
-                        : 'N/A'
-                      }
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Avg Attendance</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {filteredStudents.filter(s => s.attendance).length > 0
-                        ? (filteredStudents.reduce((sum, s) => sum + (parseFloat(s.attendance) || 0), 0) / filteredStudents.filter(s => s.attendance).length).toFixed(1) + '%'
-                        : 'N/A'
-                      }
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-base font-semibold text-gray-900">Academic Details of Students</h2>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        <button onClick={handleSort} className="flex items-center space-x-1 hover:text-gray-700">
-                          <span>Student Name</span>
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M5 12a1 1 0 102 0V6.414l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L5 6.414V12zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z" />
-                          </svg>
-                        </button>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gender</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Year</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CGPA</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Attendance</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredStudents.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                          No students found. Add students to see them here.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredStudents.map((student, idx) => (
-                      <tr key={student._id} className={`hover:bg-gray-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{student.studentId}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{student.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{student.gender || 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Year {student.year}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{student.department}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{student.cgpa || 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{student.attendance ? student.attendance + '%' : 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            student.status === 'active' ? 'bg-green-100 text-green-700' :
-                            student.status === 'inactive' ? 'bg-gray-100 text-gray-700' :
-                            student.status === 'graduated' ? 'bg-blue-100 text-blue-700' :
-                            'bg-red-100 text-red-700'
-                          }`}>
-                            {student.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button onClick={() => router.push(`/dashboard/student/${student._id}`)} className="text-blue-600 hover:text-blue-800 font-medium">
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">Students by Department</h3>
-                <p className="text-xs text-gray-500 mb-4">Distribution across departments</p>
-                <div style={{ height: '300px' }}>
-                  <Bar data={{
-                    labels: Array.from(new Set(students.map(s => s.department))),
-                    datasets: [{
-                      label: 'Students',
-                      data: Array.from(new Set(students.map(s => s.department))).map(dept => 
-                        filteredStudents.filter(s => s.department === dept).length
-                      ),
-                      backgroundColor: '#3b82f6',
-                      borderRadius: 4
-                    }]
-                  }} options={chartOptions} />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">Students by Year and Gender</h3>
-                <p className="text-xs text-gray-500 mb-4">Year-wise gender distribution</p>
-                <div style={{ height: '300px' }}>
-                  <Bar data={gradeGenderData} options={chartOptions} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-        </>
-      )}
+    <div className={`rounded-2xl border bg-gradient-to-br p-4 shadow-sm transition-transform hover:-translate-y-0.5 ${tones[tone]}`}>
+      <p className="text-xs uppercase tracking-[0.12em] opacity-80">{title}</p>
+      <p className="mt-2 text-3xl font-black">{value}</p>
     </div>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const normalized = status.toLowerCase();
+  const tone =
+    normalized === 'active'
+      ? 'bg-emerald-100 text-emerald-700'
+      : normalized === 'inactive'
+      ? 'bg-slate-100 text-slate-700'
+      : normalized === 'graduated'
+      ? 'bg-cyan-100 text-cyan-700'
+      : 'bg-rose-100 text-rose-700';
+
+  return <span className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${tone}`}>{status}</span>;
+}
+
+function Th({
+  label,
+  onClick,
+  active,
+  order,
+}: {
+  label: string;
+  onClick?: () => void;
+  active?: boolean;
+  order?: 'asc' | 'desc';
+}) {
+  if (!onClick) {
+    return <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</th>;
+  }
+
+  return (
+    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <button onClick={onClick} className="inline-flex items-center gap-1 hover:text-slate-700">
+        {label}
+        <span className={`text-[10px] ${active ? 'opacity-100' : 'opacity-40'}`}>{order === 'asc' ? '▲' : '▼'}</span>
+      </button>
+    </th>
   );
 }

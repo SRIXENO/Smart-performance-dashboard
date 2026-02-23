@@ -33,11 +33,12 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-slate-100">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="relative flex-1 flex flex-col overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(14,165,233,0.12),_transparent_40%),radial-gradient(circle_at_bottom_left,_rgba(56,189,248,0.08),_transparent_45%)]" />
         <Topbar />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+        <main className="relative flex-1 overflow-x-hidden overflow-y-auto p-6">
           {children}
         </main>
       </div>
