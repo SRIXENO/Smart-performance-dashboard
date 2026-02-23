@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const ActivityLog = require('../models/ActivityLog');
 
 const generateToken = (userId, role) => {
   return jwt.sign({ userId, role }, process.env.JWT_SECRET, {
@@ -68,6 +69,22 @@ const login = async (req, res) => {
     }
 
     const token = generateToken(user._id, user.role);
+
+    await ActivityLog.log({
+      userId: user._id,
+      userRole: user.role,
+      userName: user.name,
+      action: 'login',
+      targetType: 'system',
+      description: 'User logged in with email and password',
+      metadata: {
+        email: user.email,
+        loginMethod: 'local'
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      status: 'success'
+    });
     
     res.cookie('token', token, {
       httpOnly: true,

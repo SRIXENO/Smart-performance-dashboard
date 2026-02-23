@@ -1,6 +1,7 @@
 const express = require('express');
 const passport = require('../config/passport');
 const jwt = require('jsonwebtoken');
+const ActivityLog = require('../models/ActivityLog');
 
 const router = express.Router();
 
@@ -35,6 +36,22 @@ router.get('/google/callback',
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRE }
       );
+
+      await ActivityLog.log({
+        userId: req.user._id,
+        userRole: 'student',
+        userName: req.user.name,
+        action: 'login',
+        targetType: 'system',
+        description: 'User logged in with Google OAuth',
+        metadata: {
+          email: req.user.email,
+          loginMethod: 'google'
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        status: 'success'
+      });
       
       console.log('Token created:', token);
       

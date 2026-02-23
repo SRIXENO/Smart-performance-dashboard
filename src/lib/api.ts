@@ -84,6 +84,7 @@ export const activityAPI = {
   getStudentTimeline: (studentId: string, params?: any) => api.get(`/activities/student/${studentId}`, { params }),
   getRecentActivities: (params?: any) => api.get('/activities/recent', { params }),
   getByAction: (action: string, params?: any) => api.get(`/activities/by-action/${action}`, { params }),
+  getLoginHistory: (params?: any) => api.get('/activities/login-history', { params }),
 };
 
 export const subjectsAPI = {

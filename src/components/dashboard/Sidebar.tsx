@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: '📊' },
@@ -13,6 +14,10 @@ const navigation = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const items = user?.role === 'admin'
+    ? [...navigation, { name: 'Login History', href: '/admin/login-history', icon: 'A' }]
+    : navigation;
 
   return (
     <div className="bg-gray-800 text-white w-64 min-h-screen p-4">
@@ -21,7 +26,7 @@ export default function Sidebar() {
       </div>
       
       <nav className="space-y-2">
-        {navigation.map((item) => {
+        {items.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link

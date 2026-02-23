@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const ActivityLog = require('../models/ActivityLog');
+const authMiddleware = require('../middleware/authMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware');
 
 // Get student timeline
 router.get('/student/:studentId', async (req, res) => {
@@ -41,6 +43,31 @@ router.get('/by-action/:action', async (req, res) => {
       .lean();
     
     res.json({ success: true, data: activities });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin-only login history
+router.get('/login-history', authMiddleware, roleMiddleware(['admin']), async (req, res) => {
+  try {
+    const { limit = 100 } = req.query;
+
+    const logs = await ActivityLog.find({ action: 'login' })
+      .sort({ timestamp: -1 })
+      .limit(parseInt(limit, 10))
+      .populate('userId', 'name email')
+      .lean();
+
+    const history = logs.map((log) => ({
+      id: log._id,
+      userName: log.userName || log.userId?.name || 'Unknown',
+      email: log.metadata?.email || log.userId?.email || 'N/A',
+      date: log.timestamp,
+      loginMethod: log.metadata?.loginMethod || 'unknown'
+    }));
+
+    res.json({ success: true, data: history });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
