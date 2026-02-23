@@ -14,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "My First Project - Modern Next.js App",
-  description: "A complete Next.js application with TypeScript and Tailwind CSS",
+  title: "SPID",
+  description: "SPID Dashboard",
+  applicationName: "SPID",
 };
 
 export default function RootLayout({

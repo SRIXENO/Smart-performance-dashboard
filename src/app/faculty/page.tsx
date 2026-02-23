@@ -16,6 +16,16 @@ type FacultyMember = {
   expertise?: string[];
 };
 
+const DEPARTMENTS = [
+  'Computer Science',
+  'Information Technology',
+  'Electrical and Communication Engineering',
+  'Electrical and Electronic Engineering',
+  'Mechanical',
+  'Civil',
+  'Biotechnology',
+];
+
 export default function FacultyPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
@@ -55,10 +65,10 @@ export default function FacultyPage() {
     loadFaculty();
   }, [departmentFilter, search]);
 
-  const departments = useMemo(
-    () => Array.from(new Set(faculty.map((f) => f.department).filter((d): d is string => Boolean(d)))).sort(),
-    [faculty]
-  );
+  const departments = useMemo(() => {
+    const fromData = Array.from(new Set(faculty.map((f) => f.department).filter((d): d is string => Boolean(d))));
+    return Array.from(new Set([...DEPARTMENTS, ...fromData]));
+  }, [faculty]);
 
   const resetForm = () => {
     setForm({ name: '', email: '', password: '', department: '', designation: '', bio: '', profilePhoto: '', expertiseText: '' });
@@ -139,7 +149,18 @@ export default function FacultyPage() {
             <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Name" className="px-3 py-2 border rounded-md" />
             <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email" className="px-3 py-2 border rounded-md" />
             <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={editing ? 'Leave blank to keep password' : 'Password'} className="px-3 py-2 border rounded-md" />
-            <input value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} placeholder="Department" className="px-3 py-2 border rounded-md" />
+            <select
+              value={form.department}
+              onChange={(e) => setForm({ ...form, department: e.target.value })}
+              className="px-3 py-2 border rounded-md"
+            >
+              <option value="">Select Department</option>
+              {DEPARTMENTS.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
             <input value={form.designation} onChange={(e) => setForm({ ...form, designation: e.target.value })} placeholder="Designation" className="px-3 py-2 border rounded-md" />
             <input value={form.profilePhoto} onChange={(e) => setForm({ ...form, profilePhoto: e.target.value })} placeholder="Profile Photo URL or base64" className="px-3 py-2 border rounded-md" />
             <input value={form.expertiseText} onChange={(e) => setForm({ ...form, expertiseText: e.target.value })} placeholder="Expertise (comma separated)" className="md:col-span-2 px-3 py-2 border rounded-md" />
