@@ -29,6 +29,7 @@ type StudentRow = {
   cgpa?: string | number;
   attendance?: string | number;
   status?: string;
+  enrollmentDate?: string;
 };
 
 type SortKey = 'name' | 'year' | 'cgpa' | 'attendance';
@@ -36,6 +37,7 @@ type ViewMode = 'table' | 'cards';
 type DeptMetric = 'count' | 'cgpa' | 'attendance';
 type DeptChartType = 'bar' | 'line';
 type GenderMode = 'grouped' | 'stacked' | 'male' | 'female';
+type TimeRange = 'all' | '30d' | '90d' | '365d';
 
 export default function StudentDashboard() {
   const router = useRouter();
@@ -49,6 +51,7 @@ export default function StudentDashboard() {
   const [selectedYear, setSelectedYear] = useState<'All' | number>('All');
   const [selectedStatus, setSelectedStatus] = useState<'All' | string>('All');
   const [selectedDepartment, setSelectedDepartment] = useState<'All' | string>('All');
+  const [timeRange, setTimeRange] = useState<TimeRange>('all');
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -70,7 +73,7 @@ export default function StudentDashboard() {
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const response = await studentsAPI.getAll({ limit: 1000 });
+      const response = await studentsAPI.getAll({ limit: 2000 });
       const studentData = response.data?.data?.students || [];
       setStudents(studentData);
       setLastRefreshed(new Date());
@@ -99,9 +102,23 @@ export default function StudentDashboard() {
     return ['All', ...Array.from(new Set(students.map((s) => s.department).filter(Boolean))).sort()] as Array<'All' | string>;
   }, [students]);
 
+  const rangeFilteredStudents = useMemo(() => {
+    if (timeRange === 'all') return students;
+    const days = timeRange === '30d' ? 30 : timeRange === '90d' ? 90 : 365;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const withDates = students.filter((s) => s.enrollmentDate);
+    if (!withDates.length) return students;
+    return students.filter((s) => {
+      if (!s.enrollmentDate) return true;
+      const dt = new Date(s.enrollmentDate);
+      return !Number.isNaN(dt.getTime()) && dt >= cutoff;
+    });
+  }, [students, timeRange]);
+
   const filteredStudents = useMemo(() => {
     const normalized = searchTerm.trim().toLowerCase();
-    const filtered = students.filter((student) => {
+    const filtered = rangeFilteredStudents.filter((student) => {
       const matchesSearch =
         !normalized ||
         student.name?.toLowerCase().includes(normalized) ||
@@ -117,89 +134,37 @@ export default function StudentDashboard() {
       return matchesSearch && matchesYear && matchesStatus && matchesDepartment;
     });
 
-    const sorted = [...filtered].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       if (sortKey === 'name') {
         return sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
       }
       if (sortKey === 'year') {
-        const aYear = a.year || 0;
-        const bYear = b.year || 0;
-        return sortOrder === 'asc' ? aYear - bYear : bYear - aYear;
+        return sortOrder === 'asc' ? (a.year || 0) - (b.year || 0) : (b.year || 0) - (a.year || 0);
       }
       if (sortKey === 'cgpa') {
-        const aCgpa = Number(a.cgpa) || 0;
-        const bCgpa = Number(b.cgpa) || 0;
-        return sortOrder === 'asc' ? aCgpa - bCgpa : bCgpa - aCgpa;
+        return sortOrder === 'asc' ? (Number(a.cgpa) || 0) - (Number(b.cgpa) || 0) : (Number(b.cgpa) || 0) - (Number(a.cgpa) || 0);
       }
-      const aAttendance = Number(a.attendance) || 0;
-      const bAttendance = Number(b.attendance) || 0;
-      return sortOrder === 'asc' ? aAttendance - bAttendance : bAttendance - aAttendance;
+      return sortOrder === 'asc'
+        ? (Number(a.attendance) || 0) - (Number(b.attendance) || 0)
+        : (Number(b.attendance) || 0) - (Number(a.attendance) || 0);
     });
+  }, [searchTerm, selectedYear, selectedStatus, selectedDepartment, sortKey, sortOrder, rangeFilteredStudents]);
 
-    return sorted;
-  }, [searchTerm, selectedYear, selectedStatus, selectedDepartment, sortKey, sortOrder, students]);
+  const baseStats = useMemo(() => computeStats(rangeFilteredStudents), [rangeFilteredStudents]);
+  const stats = useMemo(() => computeStats(filteredStudents), [filteredStudents]);
 
-  const stats = useMemo(() => {
-    const total = filteredStudents.length;
-    const active = filteredStudents.filter((s) => (s.status || '').toLowerCase() === 'active').length;
-    const activeDepartments = new Set(filteredStudents.map((s) => s.department).filter(Boolean)).size;
-    const cgpas = filteredStudents.map((s) => Number(s.cgpa)).filter((n) => !Number.isNaN(n) && n > 0);
-    const attendance = filteredStudents.map((s) => Number(s.attendance)).filter((n) => !Number.isNaN(n) && n > 0);
-    const avgCgpa = cgpas.length ? (cgpas.reduce((sum, n) => sum + n, 0) / cgpas.length).toFixed(2) : 'N/A';
-    const avgAttendance = attendance.length ? `${(attendance.reduce((sum, n) => sum + n, 0) / attendance.length).toFixed(1)}%` : 'N/A';
-    const atRisk = filteredStudents.filter((s) => {
-      const lowAttendance = (Number(s.attendance) || 0) > 0 && (Number(s.attendance) || 0) < 75;
-      const lowCgpa = (Number(s.cgpa) || 0) > 0 && (Number(s.cgpa) || 0) < 6;
-      return lowAttendance || lowCgpa;
-    }).length;
-    return { total, active, activeDepartments, avgCgpa, avgAttendance, atRisk };
-  }, [filteredStudents]);
-
-  const departmentLabels = useMemo(() => {
-    return Array.from(new Set(filteredStudents.map((s) => s.department).filter((dept): dept is string => Boolean(dept))));
-  }, [filteredStudents]);
+  const departmentLabels = useMemo(
+    () => Array.from(new Set(filteredStudents.map((s) => s.department).filter((dept): dept is string => Boolean(dept)))),
+    [filteredStudents],
+  );
 
   const departmentMetricData = useMemo(() => {
-    if (deptMetric === 'count') {
-      return departmentLabels.map((dept) => filteredStudents.filter((s) => s.department === dept).length);
-    }
+    if (deptMetric === 'count') return departmentLabels.map((dept) => filteredStudents.filter((s) => s.department === dept).length);
     if (deptMetric === 'cgpa') {
-      return departmentLabels.map((dept) => {
-        const values = filteredStudents
-          .filter((s) => s.department === dept)
-          .map((s) => Number(s.cgpa))
-          .filter((v) => !Number.isNaN(v) && v > 0);
-        if (!values.length) return 0;
-        return Number((values.reduce((sum, v) => sum + v, 0) / values.length).toFixed(2));
-      });
+      return departmentLabels.map((dept) => avg(filteredStudents.filter((s) => s.department === dept).map((s) => Number(s.cgpa) || 0)));
     }
-    return departmentLabels.map((dept) => {
-      const values = filteredStudents
-        .filter((s) => s.department === dept)
-        .map((s) => Number(s.attendance))
-        .filter((v) => !Number.isNaN(v) && v > 0);
-      if (!values.length) return 0;
-      return Number((values.reduce((sum, v) => sum + v, 0) / values.length).toFixed(2));
-    });
-  }, [deptMetric, departmentLabels, filteredStudents]);
-
-  const departmentChartData = useMemo(() => {
-    return {
-      labels: departmentLabels,
-      datasets: [
-        {
-          label: deptMetric === 'count' ? 'Students' : deptMetric === 'cgpa' ? 'Avg CGPA' : 'Avg Attendance',
-          data: departmentMetricData,
-          backgroundColor: ['#22d3ee', '#34d399', '#a78bfa', '#f59e0b', '#f472b6', '#60a5fa'],
-          borderColor: '#0f172a',
-          borderWidth: deptChartType === 'line' ? 2 : 0,
-          borderRadius: deptChartType === 'bar' ? 10 : 0,
-          tension: 0.35,
-          fill: deptChartType === 'line',
-        },
-      ],
-    };
-  }, [deptChartType, deptMetric, departmentLabels, departmentMetricData]);
+    return departmentLabels.map((dept) => avg(filteredStudents.filter((s) => s.department === dept).map((s) => Number(s.attendance) || 0)));
+  }, [departmentLabels, deptMetric, filteredStudents]);
 
   const yearLabels = [1, 2, 3, 4];
   const maleData = yearLabels.map(
@@ -208,6 +173,27 @@ export default function StudentDashboard() {
   const femaleData = yearLabels.map(
     (year) => filteredStudents.filter((s) => s.year === year && (s.gender || '').toLowerCase() === 'female').length,
   );
+
+  const departmentChartData = useMemo(() => {
+    const palette = ['#22d3ee', '#06b6d4', '#34d399', '#a78bfa', '#f59e0b', '#f472b6'];
+    return {
+      labels: departmentLabels,
+      datasets: [
+        {
+          label: deptMetric === 'count' ? 'Students' : deptMetric === 'cgpa' ? 'Average CGPA' : 'Average Attendance (%)',
+          data: departmentMetricData,
+          backgroundColor: palette,
+          borderColor: '#0f172a',
+          borderWidth: deptChartType === 'line' ? 2 : 0,
+          borderRadius: deptChartType === 'bar' ? 12 : 0,
+          fill: deptChartType === 'line',
+          tension: 0.35,
+          pointRadius: deptChartType === 'line' ? 4 : 0,
+          pointHoverRadius: deptChartType === 'line' ? 6 : 0,
+        },
+      ],
+    };
+  }, [departmentLabels, departmentMetricData, deptMetric, deptChartType]);
 
   const yearGenderChartData = useMemo(() => {
     const datasets = [];
@@ -229,18 +215,52 @@ export default function StudentDashboard() {
         borderSkipped: false,
       });
     }
+    return { labels: yearLabels.map((year) => `Year ${year}`), datasets };
+  }, [femaleData, genderMode, maleData]);
+
+  const trendData = useMemo(() => {
     return {
       labels: yearLabels.map((year) => `Year ${year}`),
-      datasets,
+      datasets: [
+        {
+          label: 'Avg CGPA',
+          data: yearLabels.map((year) => avg(filteredStudents.filter((s) => s.year === year).map((s) => Number(s.cgpa) || 0))),
+          borderColor: '#22d3ee',
+          backgroundColor: 'rgba(34,211,238,0.15)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3,
+        },
+        {
+          label: 'Avg Attendance',
+          data: yearLabels.map((year) => avg(filteredStudents.filter((s) => s.year === year).map((s) => Number(s.attendance) || 0))),
+          borderColor: '#a78bfa',
+          backgroundColor: 'rgba(167,139,250,0.12)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3,
+        },
+      ],
     };
-  }, [femaleData, genderMode, maleData]);
+  }, [filteredStudents]);
 
   const departmentChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: { mode: 'index' as const, intersect: false },
     plugins: {
-      legend: { display: true, position: 'top' as const },
-      tooltip: { enabled: true, backgroundColor: 'rgba(15, 23, 42, 0.9)', padding: 12, cornerRadius: 10 },
+      legend: { position: 'top' as const, labels: { usePointStyle: true, boxWidth: 8 } },
+      tooltip: {
+        backgroundColor: 'rgba(15, 23, 42, 0.94)',
+        padding: 12,
+        cornerRadius: 10,
+      },
+    },
+    onClick: (_event: unknown, elements: Array<{ index: number }>) => {
+      if (!elements.length) return;
+      const index = elements[0].index;
+      const dept = departmentLabels[index];
+      if (dept) setSelectedDepartment(dept);
     },
     scales: {
       y: {
@@ -256,12 +276,26 @@ export default function StudentDashboard() {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { display: true, position: 'top' as const },
-      tooltip: { enabled: true, backgroundColor: 'rgba(15, 23, 42, 0.9)', padding: 12, cornerRadius: 10 },
+      legend: { position: 'top' as const, labels: { usePointStyle: true, boxWidth: 8 } },
+      tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.94)', padding: 12, cornerRadius: 10 },
     },
     scales: {
       x: { stacked: genderMode === 'stacked', grid: { display: false } },
       y: { beginAtZero: true, stacked: genderMode === 'stacked', grid: { color: '#e2e8f0' } },
+    },
+  };
+
+  const trendOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index' as const, intersect: false },
+    plugins: {
+      legend: { position: 'top' as const, labels: { usePointStyle: true, boxWidth: 8 } },
+      tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.94)', padding: 12, cornerRadius: 10 },
+    },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#e2e8f0' } },
+      x: { grid: { display: false } },
     },
   };
 
@@ -288,10 +322,10 @@ export default function StudentDashboard() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.35),_transparent_45%)] pointer-events-none" />
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <p className="text-cyan-300 text-xs uppercase tracking-[0.2em] mb-2">Realtime Command Center</p>
-            <h2 className="text-3xl font-black tracking-tight">Student Performance Dashboard</h2>
+            <p className="text-cyan-300 text-xs uppercase tracking-[0.2em] mb-2">Analytics Studio</p>
+            <h2 className="text-3xl font-black tracking-tight">Student Intelligence Dashboard</h2>
             <p className="text-slate-300 mt-2">
-              {filteredStudents.length} records in view • Last refresh {lastRefreshed.toLocaleTimeString()}
+              {filteredStudents.length} records in scope • Last refresh {lastRefreshed.toLocaleTimeString()}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -321,18 +355,17 @@ export default function StudentDashboard() {
 
       {showFilters && (
         <section className="rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-sm p-4 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Search</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+            <FilterLabel title="Search">
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Name, ID, email, department..."
+                placeholder="Name, ID, email..."
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Year</label>
+            </FilterLabel>
+
+            <FilterLabel title="Year">
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value === 'All' ? 'All' : Number(e.target.value))}
@@ -344,9 +377,9 @@ export default function StudentDashboard() {
                   </option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Status</label>
+            </FilterLabel>
+
+            <FilterLabel title="Status">
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
@@ -358,9 +391,9 @@ export default function StudentDashboard() {
                   </option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Department</label>
+            </FilterLabel>
+
+            <FilterLabel title="Department">
               <select
                 value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
@@ -372,7 +405,21 @@ export default function StudentDashboard() {
                   </option>
                 ))}
               </select>
-            </div>
+            </FilterLabel>
+
+            <FilterLabel title="Time Window">
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value as TimeRange)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              >
+                <option value="all">All Time</option>
+                <option value="30d">Last 30 Days</option>
+                <option value="90d">Last 90 Days</option>
+                <option value="365d">Last 12 Months</option>
+              </select>
+            </FilterLabel>
+
             <div className="flex items-end">
               <button
                 onClick={() => {
@@ -380,10 +427,11 @@ export default function StudentDashboard() {
                   setSelectedYear('All');
                   setSelectedStatus('All');
                   setSelectedDepartment('All');
+                  setTimeRange('all');
                 }}
                 className="w-full rounded-xl border border-slate-300 bg-slate-100 hover:bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition"
               >
-                Reset Filters
+                Reset
               </button>
             </div>
           </div>
@@ -391,12 +439,12 @@ export default function StudentDashboard() {
       )}
 
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4">
-        <Kpi title="Total Students" value={String(stats.total)} tone="cyan" />
-        <Kpi title="Active" value={String(stats.active)} tone="emerald" />
-        <Kpi title="Departments" value={String(stats.activeDepartments)} tone="violet" />
-        <Kpi title="Avg CGPA" value={stats.avgCgpa} tone="amber" />
-        <Kpi title="Avg Attendance" value={stats.avgAttendance} tone="rose" />
-        <Kpi title="At Risk" value={String(stats.atRisk)} tone="slate" />
+        <Kpi title="Total Students" value={String(stats.total)} baseValue={baseStats.total} tone="cyan" />
+        <Kpi title="Active" value={String(stats.active)} baseValue={baseStats.active} tone="emerald" />
+        <Kpi title="Departments" value={String(stats.activeDepartments)} baseValue={baseStats.activeDepartments} tone="violet" />
+        <Kpi title="Avg CGPA" value={stats.avgCgpa} baseValue={baseStats.avgCgpa} tone="amber" />
+        <Kpi title="Avg Attendance" value={stats.avgAttendance} baseValue={baseStats.avgAttendance} tone="rose" />
+        <Kpi title="At Risk" value={String(stats.atRisk)} baseValue={baseStats.atRisk} tone="slate" />
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -490,8 +538,8 @@ export default function StudentDashboard() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
-              <h3 className="text-lg font-bold text-slate-900">Students by Department</h3>
-              <p className="text-sm text-slate-500">Dynamic metric and chart type controls</p>
+              <h3 className="text-lg font-bold text-slate-900">Department Analytics</h3>
+              <p className="text-sm text-slate-500">Click chart bars or points to filter department</p>
             </div>
             <div className="flex items-center gap-2">
               <select
@@ -499,9 +547,9 @@ export default function StudentDashboard() {
                 onChange={(e) => setDeptMetric(e.target.value as DeptMetric)}
                 className="px-3 py-2 rounded-lg border border-slate-300 text-sm"
               >
-                <option value="count">Count</option>
-                <option value="cgpa">Average CGPA</option>
-                <option value="attendance">Average Attendance</option>
+                <option value="count">Students</option>
+                <option value="cgpa">Avg CGPA</option>
+                <option value="attendance">Avg Attendance</option>
               </select>
               <select
                 value={deptChartType}
@@ -514,29 +562,7 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-4">
-            <button
-              onClick={() => setSelectedDepartment('All')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
-                selectedDepartment === 'All' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'
-              }`}
-            >
-              All
-            </button>
-            {departmentLabels.map((dept) => (
-              <button
-                key={dept}
-                onClick={() => setSelectedDepartment(dept)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                  selectedDepartment === dept ? 'bg-cyan-500 text-slate-900 border-cyan-500' : 'bg-white text-slate-700 border-slate-300'
-                }`}
-              >
-                {dept}
-              </button>
-            ))}
-          </div>
-
-          <div className="h-[320px]">
+          <div className="h-[340px]">
             {deptChartType === 'bar' ? (
               <Bar key={`dept-bar-${deptMetric}-${selectedDepartment}`} data={departmentChartData} options={departmentChartOptions} />
             ) : (
@@ -548,8 +574,8 @@ export default function StudentDashboard() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
-              <h3 className="text-lg font-bold text-slate-900">Year and Gender Mix</h3>
-              <p className="text-sm text-slate-500">Switch grouped, stacked, or single-gender view</p>
+              <h3 className="text-lg font-bold text-slate-900">Cohort & Trend Analytics</h3>
+              <p className="text-sm text-slate-500">Gender mix and academic movement by year</p>
             </div>
             <select
               value={genderMode}
@@ -562,8 +588,11 @@ export default function StudentDashboard() {
               <option value="female">Female Only</option>
             </select>
           </div>
-          <div className="h-[320px]">
-            <Bar key={`year-gender-${genderMode}-${selectedDepartment}`} data={yearGenderChartData} options={yearGenderChartOptions} />
+          <div className="h-[160px] mb-4">
+            <Bar key={`year-gender-${genderMode}`} data={yearGenderChartData} options={yearGenderChartOptions} />
+          </div>
+          <div className="h-[160px]">
+            <Line key={`year-trend-${selectedDepartment}-${timeRange}`} data={trendData} options={trendOptions} />
           </div>
         </div>
       </section>
@@ -571,13 +600,52 @@ export default function StudentDashboard() {
   );
 }
 
+function computeStats(list: StudentRow[]) {
+  const total = list.length;
+  const active = list.filter((s) => (s.status || '').toLowerCase() === 'active').length;
+  const activeDepartments = new Set(list.map((s) => s.department).filter(Boolean)).size;
+  const avgCgpaValue = avg(list.map((s) => Number(s.cgpa) || 0));
+  const avgAttendanceValue = avg(list.map((s) => Number(s.attendance) || 0));
+  const atRisk = list.filter((s) => {
+    const lowAttendance = (Number(s.attendance) || 0) > 0 && (Number(s.attendance) || 0) < 75;
+    const lowCgpa = (Number(s.cgpa) || 0) > 0 && (Number(s.cgpa) || 0) < 6;
+    return lowAttendance || lowCgpa;
+  }).length;
+
+  return {
+    total,
+    active,
+    activeDepartments,
+    avgCgpa: avgCgpaValue > 0 ? avgCgpaValue.toFixed(2) : 'N/A',
+    avgAttendance: avgAttendanceValue > 0 ? `${avgAttendanceValue.toFixed(1)}%` : 'N/A',
+    atRisk,
+  };
+}
+
+function avg(values: number[]) {
+  const clean = values.filter((n) => !Number.isNaN(n) && n > 0);
+  if (!clean.length) return 0;
+  return clean.reduce((sum, n) => sum + n, 0) / clean.length;
+}
+
+function FilterLabel({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">{title}</label>
+      {children}
+    </div>
+  );
+}
+
 function Kpi({
   title,
   value,
+  baseValue,
   tone,
 }: {
   title: string;
   value: string;
+  baseValue: string | number;
   tone: 'cyan' | 'emerald' | 'violet' | 'amber' | 'rose' | 'slate';
 }) {
   const tones: Record<string, string> = {
@@ -589,12 +657,24 @@ function Kpi({
     slate: 'from-slate-200 to-slate-50 border-slate-300 text-slate-900',
   };
 
+  const delta = getDelta(value, String(baseValue));
+
   return (
     <div className={`rounded-2xl border bg-gradient-to-br p-4 shadow-sm transition-transform hover:-translate-y-0.5 ${tones[tone]}`}>
       <p className="text-xs uppercase tracking-[0.12em] opacity-80">{title}</p>
       <p className="mt-2 text-3xl font-black">{value}</p>
+      <p className="mt-2 text-xs font-semibold opacity-75">{delta}</p>
     </div>
   );
+}
+
+function getDelta(current: string, base: string) {
+  const currentNum = Number(String(current).replace('%', ''));
+  const baseNum = Number(String(base).replace('%', ''));
+  if (Number.isNaN(currentNum) || Number.isNaN(baseNum) || baseNum === 0) return 'Scope adjusted';
+  const percent = ((currentNum - baseNum) / baseNum) * 100;
+  if (Math.abs(percent) < 0.1) return 'No material change';
+  return `${percent > 0 ? '+' : ''}${percent.toFixed(1)}% vs scope baseline`;
 }
 
 function StatusPill({ status }: { status: string }) {
