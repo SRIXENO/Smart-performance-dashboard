@@ -52,14 +52,18 @@ router.get('/by-action/:action', async (req, res) => {
 // Admin-only login history
 router.get('/login-history', authMiddleware, roleMiddleware(['admin']), async (req, res) => {
   try {
-    const { limit = 100 } = req.query;
-    const parsedLimit = parseInt(limit, 10);
+    const { limit } = req.query;
+    const parsedLimit = limit ? parseInt(limit, 10) : null;
 
-    const users = await User.find({})
+    let usersQuery = User.find({})
       .select('name email createdAt')
-      .sort({ createdAt: -1 })
-      .limit(parsedLimit)
-      .lean();
+      .sort({ createdAt: -1 });
+
+    if (parsedLimit && parsedLimit > 0) {
+      usersQuery = usersQuery.limit(parsedLimit);
+    }
+
+    const users = await usersQuery.lean();
 
     const emails = users.map((user) => user.email).filter(Boolean);
     const recentLogins = await ActivityLog.aggregate([

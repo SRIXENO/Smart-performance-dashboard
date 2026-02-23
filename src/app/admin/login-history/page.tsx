@@ -31,7 +31,7 @@ export default function AdminLoginHistoryPage() {
       if (user?.role !== 'admin') return;
 
       try {
-        const response = await activityAPI.getLoginHistory({ limit: 200 });
+        const response = await activityAPI.getLoginHistory();
         setHistory(response.data.data || []);
       } catch (err: any) {
         setError(err.response?.data?.error || 'Failed to load login history');
