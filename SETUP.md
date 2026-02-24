@@ -1,70 +1,49 @@
-# Setup Reference
+# Setup Guide
 
-## 1. Purpose
+This document provides complete setup guidance for developers and maintainers.
 
-This document provides implementation-oriented setup guidance for local development and validation.
-
-## 2. Current Implementation Scope
-
-The project includes:
-
-- Authentication and role-based access control
-- Student and subject management flows
-- Performance tracking workflows
-- Academic record logic (SGPA/CGPA)
-- Analytics endpoints and dashboard views
-- Activity logging and timeline retrieval
-
-## 3. Prerequisites
-
+## 1. Environment Requirements
 - Node.js 18+
-- npm
-- MongoDB Atlas connection string (or compatible MongoDB instance)
-- Windows PowerShell (for batch-script workflow)
+- npm 9+
+- MongoDB Atlas account
+- Windows PowerShell or compatible shell
 
-## 4. Environment Configuration
+## 2. Initial Setup
+### Clone and open project
+```bash
+git clone <repository-url>
+cd "PROJECT 1"
+```
 
-Create local env files from templates:
-
+### Create env files
 ```powershell
 Copy-Item .env.example .env
 Copy-Item server/.env.example server/.env
 ```
 
-Populate values in:
+### Configure frontend env
+In root `.env.local` (or Vercel env):
+- `NEXT_PUBLIC_API_URL`
+- `NEXT_PUBLIC_APP_NAME`
 
-- `.env`
-- `server/.env`
+### Configure backend env
+In `server/.env`:
+- `NODE_ENV`
+- `PORT`
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `JWT_EXPIRE`
+- `COOKIE_EXPIRE`
+- `FRONTEND_URL`
+- Google OAuth keys (if enabled)
 
-Required backend keys are documented in `server/.env.example` (for example: `MONGODB_URI`, `JWT_SECRET`, OAuth-related keys).
-
-Security policy:
-
-- Real env files remain local only
-- Only template env files are committed
-
-If needed, untrack accidentally committed env files:
-
-```powershell
-git rm --cached --ignore-unmatch .env .env.local server/.env
-```
-
-## 5. Installation
-
-### Recommended (Windows batch)
-
+## 3. Install Dependencies
+### Automated
 ```powershell
 .\install_all.bat
 ```
 
-This script:
-
-- Installs frontend dependencies in root
-- Installs backend dependencies in `server/`
-- Seeds initial backend data
-
-### Manual installation
-
+### Manual
 ```bash
 npm install
 cd server
@@ -72,96 +51,58 @@ npm install
 npm run seed
 ```
 
-## 6. Startup
-
-### Recommended (Windows batch)
-
+## 4. Run Development Servers
+### Automated
 ```powershell
 .\start_project.bat
 ```
 
-This starts:
-
-- Backend dev server in one terminal (`server/`)
-- Frontend dev server in another terminal (project root)
-
-### Manual startup
-
-Backend terminal:
-
+### Manual
+Backend:
 ```bash
 cd server
 npm run dev
 ```
 
-Frontend terminal:
-
+Frontend:
 ```bash
 npm run dev
 ```
 
-## 7. Local Endpoints
+## 5. Verification Checklist
+- [ ] Backend health returns success
+- [ ] Login works
+- [ ] Dashboard loads
+- [ ] Student list loads
+- [ ] Role restrictions work as expected
+- [ ] Dark/light mode toggles correctly
 
-- Frontend: `http://localhost:3000`
-- Dashboard: `http://localhost:3000/dashboard`
-- Backend API: `http://localhost:5000/api`
-- Health endpoint: `http://localhost:5000/api/health`
+## 6. Common Configuration Mistakes
+- Missing `/api` in `NEXT_PUBLIC_API_URL`
+- Wrong Vercel URL in Render `FRONTEND_URL`
+- Expired/invalid MongoDB credentials
+- OAuth callback URL mismatch
 
-## 8. Validation Checklist
+## 7. Build and Release Checks
+Frontend build:
+```bash
+npm run build
+```
 
-After startup, verify:
+Recommended before push:
+1. Run local build.
+2. Confirm no TypeScript errors.
+3. Validate critical user flows.
+4. Push and verify Vercel/Render deployments.
 
-1. Health endpoint returns success
-2. Authentication flow works (login/session)
-3. Dashboard renders with API-backed data
-4. Student workflows (list/create/update/delete) function
-5. Academic endpoints respond for SGPA/CGPA workflows
-6. Activity endpoints return data
+## 8. Security Practices
+- Keep secrets out of Git
+- Use `.env.example` only for templates
+- Rotate JWT and OAuth secrets periodically
+- Restrict DB and CORS settings for hardened production
 
-## 9. Script Reference
-
-### Frontend (root)
-
-- `npm run dev`
-- `npm run build`
-- `npm run start`
-- `npm run lint`
-
-### Backend (`server/`)
-
-- `npm run dev`
-- `npm run start`
-- `npm run seed`
-
-## 10. Common Issues
-
-### Backend startup failure
-
-- Check `server/.env` values
-- Verify MongoDB connectivity and network allowlist
-- Confirm port `5000` availability
-
-### Frontend startup failure
-
-- Confirm port `3000` availability
-- Reinstall root dependencies
-- Clear `.next` cache and restart
-
-### Seed failure
-
-- Re-check DB credentials and permissions
-- Run `npm run seed` directly in `server/` for full error output
-
-### API/CORS errors
-
-- Ensure backend is running
-- Verify frontend API base URL configuration
-- Check backend logs for route or middleware errors
-
-## 11. Related Documents
-
-- `README.md`
-- `QUICK_START.md`
-- `ARCHITECTURE.md`
-- `ENTERPRISE_TRANSFORMATION.md`
-- `DOCUMENTATION_INDEX.md`
+## 9. Core URLs
+- Local frontend: `http://localhost:3000`
+- Local API: `http://localhost:5000/api`
+- Production frontend: `https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app`
+- Transformation summary: `https://github.com/SRIXENO/Smart-performance-dashboard/blob/main/PROJECT%201/TRANSFORMATION_SUMMARY.md`

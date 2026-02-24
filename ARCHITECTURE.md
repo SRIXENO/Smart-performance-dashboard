@@ -1,233 +1,128 @@
-# Smart Performance Dashboard Architecture
+# Architecture Guide
 
-## 1. Purpose
+## 1. System Overview
+Smart Performance Dashboard is a three-tier web application:
+- Presentation layer: Next.js frontend
+- Service layer: Express API backend
+- Data layer: MongoDB Atlas
 
-This document describes the technical architecture of the Smart Performance Dashboard, including system boundaries, runtime components, data flow, and operational characteristics.
+The system is designed for college operations with role-aware access and analytics-focused workflows.
 
-## 2. System Context
+## 2. High-Level Topology
+```text
+Browser (Vercel)
+  -> Next.js frontend
+    -> REST API calls (/api/*)
+      -> Express backend (Render)
+        -> MongoDB Atlas
+```
 
-The platform is a web-based student performance system with:
+## 3. Runtime Components
+### Frontend
+- Framework: Next.js App Router
+- Main responsibilities:
+  - Routing and UI composition
+  - Authentication state handling
+  - Role-based UI rendering
+  - Analytics dashboard visualization
 
-- Next.js frontend for user-facing workflows and dashboards
-- Express.js backend for REST APIs and business logic
-- MongoDB Atlas for persistent storage
-
-Primary user roles:
-
-- Admin
-- Faculty
-- Student
-
-## 3. Runtime Topology
-
-Development runtime:
-
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:5000` (`/api/*`)
-- Database: MongoDB Atlas cluster
-
-Backend bootstrapping is handled in `server/src/server.js`:
-
-- Environment loading (`dotenv`)
-- Database connection (`connectDB()`)
-- Middleware initialization (CORS, JSON parsing, cookies, logging, passport)
-- Route registration
-- Health endpoint and error handling
-
-## 4. High-Level Architecture
-
-### Frontend Layer (Next.js)
-
-Key responsibilities:
-
-- Authentication-aware navigation and protected routes
-- Dashboard visualizations and analytics pages
-- Student, subject, performance, and import workflows
-- API integration through a centralized client layer (`src/lib/api.ts`)
-
-Representative structure:
-
-- `src/app/dashboard/*`
-- `src/app/students/*`
-- `src/app/subjects/*`
-- `src/app/performance/*`
-- `src/components/dashboard/*`
+Important frontend modules:
 - `src/context/AuthContext.tsx`
+- `src/lib/api.ts`
+- `src/components/dashboard/*`
+- `src/app/*`
 
-### Backend Layer (Express)
+### Backend
+- Framework: Express
+- Main responsibilities:
+  - Authentication and authorization
+  - Domain APIs for students/faculty/subjects/performance
+  - Dashboard aggregation and analytics services
+  - Activity logging and audit-oriented endpoints
 
-Key responsibilities:
+Important backend modules:
+- `server/src/server.js`
+- `server/src/routes/*`
+- `server/src/controllers/*`
+- `server/src/middleware/authMiddleware.js`
+- `server/src/models/*`
 
-- Domain APIs grouped by business area
-- Authentication and authorization
-- Academic and analytics business logic
-- Data persistence via Mongoose models
+### Database
+- MongoDB Atlas with Mongoose models
+- Main entities:
+  - `User`
+  - `Student`
+  - `Subject`
+  - `Performance`
+  - `AcademicRecord`
+  - `ActivityLog`
 
-Main route groups:
+## 4. Request Lifecycle
+1. User action triggers a frontend event.
+2. Frontend calls API via Axios client (`src/lib/api.ts`).
+3. Backend route resolves to controller.
+4. Auth middleware validates token and role.
+5. Controller executes business logic and DB operations.
+6. Response returns JSON payload.
+7. Frontend updates state and UI.
 
-- `/api/auth`
-- `/api/students`
-- `/api/dashboard`
-- `/api/performance`
-- `/api/subjects`
-- `/api/academic`
-- `/api/ai-analytics`
-- `/api/activities`
-
-### Data Layer (MongoDB + Mongoose)
-
-Core entities:
-
-- `User`
-- `Student`
-- `Subject`
-- `SubjectGroup`
-- `Performance`
-- `AcademicRecord`
-- `AIAnalytics`
-- `ActivityLog`
-- `Counter` (ID generation support)
-
-## 5. API and Domain Boundaries
-
-### Authentication Domain
-
-- Registration/login/logout and profile retrieval
-- JWT-based session handling
-- Google OAuth integration (passport-based flow)
-
-### Student and Subject Domain
-
-- Student CRUD and profile views
-- Subject and grouping management
-- Operational data used by dashboard and academic modules
-
-### Academic Domain
-
-- Semester-level academic updates
-- SGPA/CGPA calculations
-- Historical academic progression per student
-
-### Analytics Domain
-
-- Dashboard summary metrics and trends
-- AI/risk-oriented analysis endpoints
-- Activity timeline and recent event retrieval
-
-## 6. Request Lifecycle
-
-Typical request lifecycle:
-
-1. Frontend sends HTTP request through `src/lib/api.ts`
-2. Express route maps request to controller
-3. Controller validates input and applies business logic
-4. Mongoose queries/updates MongoDB
-5. Controller returns normalized JSON response
-6. Frontend updates UI state and components
-
-Cross-cutting concerns:
-
-- Cookie parsing and auth token extraction
-- Role checks in middleware for protected resources
-- Request logging via `morgan`
-- Centralized error fallback (500 handler)
-
-## 7. Data and Computation Flows
-
-### Academic Computation Flow
-
-- Semester data submitted via academic endpoints
-- Grade/credit logic applied in controller/model workflow
-- SGPA and CGPA recalculated based on stored records
-- Student summary fields updated for quick read paths
-- Activity records captured for traceability
-
-### Dashboard Flow
-
-- Dashboard UI issues multiple API calls (often in parallel)
-- Backend returns aggregated metrics and distribution datasets
-- Frontend renders KPI cards, charts, and tables
-
-### AI Analytics Flow
-
-- Student/performance signals are aggregated
-- Risk and trend outputs are computed and stored/retrieved
-- Resulting insights are exposed through `/api/ai-analytics/*`
-
-## 8. Security Architecture
-
-Current security controls:
-
-- JWT-based authentication
-- Cookie-based session transport
+## 5. Security Model
+- JWT token based authentication
+- Cookie + bearer-token support
 - Role-based authorization middleware
-- Environment-variable-based secret/config loading
+- CORS with allowed origin checks
 - Password hashing with bcrypt
 
-Operational note:
+## 6. Role Access Strategy
+- Admin:
+  - Full write access (create/update/delete)
+  - Access to operational monitoring
+- Faculty:
+  - View access across most modules
+  - Limited write access where policy allows
+- Student:
+  - Read-only or scoped access
 
-- Current CORS configuration in development allows broad origins (`origin: true`).
-- Production deployment should restrict origins to trusted frontend hosts.
+## 7. API Domains
+- `/api/auth`: login, register, me, logout, OAuth callbacks
+- `/api/students`: student CRUD and profile operations
+- `/api/faculty`: faculty CRUD and listing
+- `/api/subjects`: subject mapping and management
+- `/api/performance`: marks/attendance and performance records
+- `/api/dashboard`: aggregated dashboard metrics
+- `/api/academic`: SGPA/CGPA and academic progression
+- `/api/ai-analytics`: risk and insight endpoints
+- `/api/activities`: login/activity history
 
-## 9. Reliability and Error Handling
+## 8. Frontend Architecture Patterns
+- Centralized API client with interceptors
+- Auth provider for global user session state
+- Route-level page components under `app/`
+- Reusable dashboard and table components
+- Mobile-first responsive behavior for split-screen and phone usage
 
-- Health endpoint: `GET /api/health`
-- Unknown routes return 404 JSON response
-- Unhandled server errors return 500 JSON response
-- Startup logs indicate binding host/port and runtime status
+## 9. Backend Architecture Patterns
+- Route-controller-model separation
+- Middleware chain for auth and permissions
+- Shared error handling and JSON response style
+- Health endpoint for deployment diagnostics (`/api/health`)
 
-## 10. Performance and Scalability Considerations
+## 10. Deployment Architecture
+- Frontend hosted on Vercel
+- Backend hosted on Render
+- Database hosted on MongoDB Atlas
 
-Implemented patterns:
+Production URL:
+- `https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app`
 
-- Domain-specific route/controller separation for maintainability
-- Aggregation-style analytics endpoints to reduce frontend joins
-- Frontend parallel data fetching for dashboard responsiveness
+## 11. Reliability and Observability
+- Health endpoint for API liveness checks
+- Render logs for backend diagnostics
+- Vercel deployment logs for frontend build/runtime checks
+- Activity history for admin-level traceability
 
-Scalability path:
-
-- Horizontal scaling of stateless API tier
-- MongoDB index tuning for high-frequency queries
-- Optional caching layer (future) for expensive analytics reads
-
-## 11. Deployment View
-
-### Development
-
-- Frontend and backend started independently
-- Database hosted in MongoDB Atlas
-
-### Production (recommended baseline)
-
-- Frontend hosted on SSR-capable Next.js platform
-- Backend hosted as managed Node.js service
-- MongoDB Atlas with production network and credential controls
-- Strict CORS, secure cookie settings, and rotated secrets
-
-## 12. Operations and Local Runbook
-
-### Automated Windows workflow
-
-- `install_all.bat`
-  - Installs root dependencies
-  - Installs `server/` dependencies
-  - Runs backend seed command
-
-- `start_project.bat`
-  - Opens backend dev server window (`npm run dev` in `server/`)
-  - Opens frontend dev server window (`npm run dev` in root)
-
-### Environment handling
-
-- Real secrets must remain in local env files only
-- Template files (`.env.example`, `server/.env.example`) are committed for team onboarding
-
-## 13. Source References
-
-- Entry point: `server/src/server.js`
-- Database init: `server/src/config/database.js`
-- Auth middleware: `server/src/middleware/authMiddleware.js`
-- API client: `src/lib/api.ts`
-- Frontend auth context: `src/context/AuthContext.tsx`
-- Detailed setup: `SETUP.md`
-- Operational guide: `QUICK_START.md`
+## 12. Future Improvements
+- Add integration and end-to-end tests
+- Add caching for heavy analytics endpoints
+- Add centralized structured logging
+- Add rate limiting and stricter production hardening

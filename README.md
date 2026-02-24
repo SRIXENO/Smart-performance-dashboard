@@ -1,122 +1,132 @@
-# Smart Performance Dashboard
+# Smart Performance Dashboard (SPID)
 
-Smart Performance Dashboard is a full-stack student performance platform for academic operations, analytics, and institutional monitoring.
+[![Live App](https://img.shields.io/badge/Live-Vercel-000000?style=for-the-badge&logo=vercel)](https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
+![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-Enabled-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 
-## Overview
+Professional full-stack college performance platform with role-based access, analytics dashboards, student/faculty management, and deployment-ready architecture.
 
-The system combines:
+## Live URLs
+- Application: `https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app`
+- Transformation Summary (document): `https://github.com/SRIXENO/Smart-performance-dashboard/blob/main/PROJECT%201/TRANSFORMATION_SUMMARY.md`
 
-- A Next.js frontend for role-based workflows and dashboards
-- An Express.js API layer organized by domain
-- MongoDB Atlas for persistent data storage
+## Table of Contents
+- [Key Features](#key-features)
+- [Visual Preview](#visual-preview)
+- [Architecture Diagram](#architecture-diagram)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Roles and Access](#roles-and-access)
+- [Local Setup](#local-setup)
+- [Environment Variables](#environment-variables)
+- [API Overview](#api-overview)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
 
-Supported roles:
+## Key Features
+- JWT and cookie-based authentication
+- Google OAuth login support
+- Role-aware controls (`admin`, `faculty`, `student`)
+- Student and faculty management modules
+- Academic and performance analytics
+- Activity and login history tracking
+- Responsive layout for desktop, split-screen, and mobile
+- Light and dark mode support
 
-- Admin
-- Faculty
-- Student
+## Visual Preview
+These visuals are included in the repository (`public/docs`):
 
-## Core Capabilities
+![Dashboard Preview](public/docs/preview-dashboard.svg)
+![Students Preview](public/docs/preview-students.svg)
+![Performance Preview](public/docs/preview-performance.svg)
 
-- Authentication and role-based access control
-- Student, subject, and performance management
-- Academic workflows with SGPA/CGPA computations
-- Dashboard analytics and trend views
-- AI-oriented risk and insight endpoints
-- Activity timeline and audit support
+## Architecture Diagram
+```mermaid
+flowchart LR
+    U[User Browser] --> F[Next.js Frontend on Vercel]
+    F -->|REST /api/*| B[Express API on Render]
+    B --> D[(MongoDB Atlas)]
+    B --> O[Auth + RBAC Middleware]
+    F --> C[Client AuthContext + Axios API Layer]
+```
 
-## Technology Stack
+## Tech Stack
+### Frontend
+- Next.js (App Router)
+- React + TypeScript
+- Tailwind CSS
+- Axios
+- Chart.js
 
-- Frontend: Next.js, React, TypeScript, Tailwind CSS, Chart.js
-- Backend: Node.js, Express.js, Mongoose
-- Database: MongoDB Atlas
-- Security: JWT, bcrypt, cookie-based auth
+### Backend
+- Node.js + Express
+- MongoDB + Mongoose
+- JWT + Cookies
+- Passport (Google OAuth)
 
 ## Project Structure
-
 ```text
 PROJECT 1/
-  src/                          Frontend source
-  server/                       Backend source
-  install_all.bat               Installs dependencies and runs seed
-  start_project.bat             Starts backend + frontend in separate terminals
+  src/                              Next.js frontend
+    app/                            Routes and pages
+    components/                     Reusable UI components
+    context/                        Global auth and state
+    lib/                            API layer and utilities
+  server/                           Express backend
+    src/
+      controllers/                  Business logic
+      middleware/                   Auth and role validation
+      models/                       Mongoose schemas
+      routes/                       API endpoints
+      config/                       DB and passport config
+  public/                           Static assets
+    docs/                           README preview visuals
   README.md
   QUICK_START.md
   SETUP.md
   ARCHITECTURE.md
+  DEPLOYMENT.md
+  DEPLOYMENT_QUICK_REFERENCE.md
+  DEPLOYMENT_CHECKLIST.md
   DOCUMENTATION_INDEX.md
   ENTERPRISE_TRANSFORMATION.md
   TRANSFORMATION_SUMMARY.md
 ```
 
-## Prerequisites
+## Roles and Access
+- Admin:
+  - Full create/update/delete access for protected modules
+  - Access to admin monitoring and history
+- Faculty:
+  - View access across major modules
+  - Limited write actions based on backend policy
+- Student:
+  - View-only access to allowed areas
 
-- Node.js 18+
-- npm
-- MongoDB connection string
-- Windows PowerShell (for `.bat` workflow)
+## Local Setup
+### Prerequisites
+- Node.js `18+`
+- npm `9+`
+- MongoDB Atlas connection string
 
-## Environment Setup
-
-Create local environment files from templates:
-
+### Quick setup (Windows)
 ```powershell
 Copy-Item .env.example .env
 Copy-Item server/.env.example server/.env
-```
-
-Then fill real values in:
-
-- `.env`
-- `server/.env`
-
-Security note:
-
-- Do not commit real secrets
-- Commit only `.env.example` templates
-
-If needed, untrack accidentally committed env files:
-
-```powershell
-git rm --cached --ignore-unmatch .env .env.local server/.env
-```
-
-## Quick Start (Windows)
-
-### 1. Install dependencies and seed data
-
-```powershell
 .\install_all.bat
-```
-
-`install_all.bat` does the following:
-
-- Installs frontend dependencies in root
-- Installs backend dependencies in `server/`
-- Runs backend seed command
-
-### 2. Start backend and frontend
-
-```powershell
 .\start_project.bat
 ```
 
-`start_project.bat` opens two terminals:
-
-- Backend (`server/`): `npm run dev`
-- Frontend (root): `npm run dev`
-
-### 3. Access the app
-
+### Local URLs
 - Frontend: `http://localhost:3000`
-- Dashboard: `http://localhost:3000/dashboard`
 - Backend API: `http://localhost:5000/api`
-- Health endpoint: `http://localhost:5000/api/health`
+- Health: `http://localhost:5000/api/health`
 
-## Manual Startup (Alternative)
-
+### Manual alternative
 Backend:
-
 ```bash
 cd server
 npm install
@@ -124,85 +134,76 @@ npm run seed
 npm run dev
 ```
 
-Frontend (separate terminal):
-
+Frontend:
 ```bash
 npm install
 npm run dev
 ```
 
-## API Domains
+## Environment Variables
+### Frontend (`.env.local` / Vercel)
+- `NEXT_PUBLIC_API_URL` (example: `https://smart-performance-dashboard.onrender.com/api`)
+- `NEXT_PUBLIC_APP_NAME`
 
+### Backend (`server/.env` / Render)
+- `NODE_ENV`
+- `PORT`
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `JWT_EXPIRE`
+- `COOKIE_EXPIRE`
+- `FRONTEND_URL`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_CALLBACK_URL`
+
+## API Overview
 - `/api/auth`
 - `/api/students`
+- `/api/faculty`
 - `/api/subjects`
 - `/api/performance`
-- `/api/academic`
 - `/api/dashboard`
+- `/api/academic`
 - `/api/ai-analytics`
 - `/api/activities`
 
-## Scripts
+## Deployment
+Production deployment model:
+- Frontend: Vercel
+- Backend: Render
+- Database: MongoDB Atlas
 
-Frontend (root):
+Primary production URL:
+- `https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app`
 
-- `npm run dev`
-- `npm run build`
-- `npm run start`
-- `npm run lint`
-
-Backend (`server/`):
-
-- `npm run dev`
-- `npm run start`
-- `npm run seed`
-
-## Documentation Map
-
-- `ARCHITECTURE.md`: system architecture, request/data flow, security, deployment notes
-- `QUICK_START.md`: operational setup and troubleshooting
-- `SETUP.md`: setup reference and validation checklist
-- `ENTERPRISE_TRANSFORMATION.md`: transformation scope and technical impact
-- `TRANSFORMATION_SUMMARY.md`: executive summary and next-stage priorities
-- `DOCUMENTATION_INDEX.md`: reading paths for developers, reviewers, and QA
-- `DEPLOYMENT.md`: complete guide for deploying online (MongoDB Atlas + Render + Vercel)
-- `DEPLOYMENT_QUICK_REFERENCE.md`: quick deployment reference card
-- `DEPLOYMENT_CHECKLIST.md`: step-by-step deployment checklist
-
-## Deploy Online (FREE)
-
-Deploy your app to the cloud and share it worldwide:
-
-**Services Used (All Free):**
-- MongoDB Atlas: Cloud database
-- Render: Backend hosting
-- Vercel: Frontend hosting
-
-**Quick Steps:**
-1. Set up MongoDB Atlas cluster and get connection string
-2. Deploy backend on Render with environment variables
-3. Deploy frontend on Vercel with API URL
-4. Connect frontend URL back to backend
-5. Share your public URL!
-
-**Detailed Instructions:** See `DEPLOYMENT.md` for complete step-by-step guide
-
-**Auto-Deploy:** Every `git push` automatically deploys both frontend and backend
+For full deployment steps, use:
+- `DEPLOYMENT.md`
+- `DEPLOYMENT_CHECKLIST.md`
+- `DEPLOYMENT_QUICK_REFERENCE.md`
 
 ## Troubleshooting
+### App stuck on `Loading...`
+- Verify backend health endpoint responds.
+- Verify `NEXT_PUBLIC_API_URL` includes `/api`.
+- Check browser network for `/auth/me` failures.
+- Check Render logs for cold-start or runtime errors.
 
-**Local Development:**
-- Backend start issues: verify `server/.env`, DB connectivity, port `5000`
-- Frontend start issues: verify dependencies, port `3000`, clear `.next`
-- Seed failures: run `npm run seed` in `server/` and inspect output
-- API errors: confirm backend availability and API base URL settings
+### CORS issues
+- Set backend `FRONTEND_URL` exactly to your Vercel URL.
+- Redeploy backend after env changes.
 
-**Production Deployment:**
-- Backend not responding: check Render logs, verify MongoDB URI
-- CORS errors: ensure FRONTEND_URL is set correctly on Render
-- Database connection failed: verify MongoDB Atlas network access (0.0.0.0/0)
-- Slow first load: normal on free tier (Render sleeps after 15 min inactivity)
+### Login issues
+- Verify JWT/cookie env values are present.
+- Verify OAuth callback URL (if Google login is enabled).
+
+## Documentation
+- `DOCUMENTATION_INDEX.md` - full doc map
+- `ARCHITECTURE.md` - technical architecture
+- `SETUP.md` - detailed setup guide
+- `QUICK_START.md` - fastest local run path
+- `ENTERPRISE_TRANSFORMATION.md` - transformation details
+- `TRANSFORMATION_SUMMARY.md` - executive summary
 
 ## License
-
-Intended for educational and internal demonstration use.
+For academic, portfolio, and demonstration use.

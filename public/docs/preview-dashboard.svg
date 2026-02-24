@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <rect x="40" y="40" width="1200" height="640" rx="24" fill="#ffffff" opacity="0.95"/>
+  <rect x="80" y="100" width="280" height="520" rx="16" fill="#0f172a"/>
+  <rect x="390" y="100" width="810" height="90" rx="14" fill="#e2e8f0"/>
+  <rect x="390" y="210" width="390" height="190" rx="14" fill="#dbeafe"/>
+  <rect x="810" y="210" width="390" height="190" rx="14" fill="#ede9fe"/>
+  <rect x="390" y="420" width="810" height="200" rx="14" fill="#f8fafc"/>
+  <text x="110" y="160" font-family="Segoe UI, Arial" font-size="34" fill="#ffffff" font-weight="700">SPID Dashboard</text>
+  <text x="420" y="155" font-family="Segoe UI, Arial" font-size="42" fill="#0f172a" font-weight="700">Analytics Overview</text>
+</svg>
