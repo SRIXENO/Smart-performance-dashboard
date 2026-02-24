@@ -1,49 +1,45 @@
 # Setup Guide
 
-This document provides complete setup guidance for developers and maintainers.
+## Documentation Hub
+- Main Overview: [`README.md`](README.md)
+- Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- Setup: [`SETUP.md`](SETUP.md)
+- Quick Start: [`QUICK_START.md`](QUICK_START.md)
+- Deployment Guide: [`DEPLOYMENT.md`](DEPLOYMENT.md)
+- Deployment Checklist: [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md)
+- Deployment Quick Reference: [`DEPLOYMENT_QUICK_REFERENCE.md`](DEPLOYMENT_QUICK_REFERENCE.md)
+- Documentation Index: [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md)
+- Enterprise Report: [`ENTERPRISE_TRANSFORMATION.md`](ENTERPRISE_TRANSFORMATION.md)
+- Executive Summary: [`TRANSFORMATION_SUMMARY.md`](TRANSFORMATION_SUMMARY.md)
 
-## 1. Environment Requirements
+## Environment Requirements
 - Node.js 18+
 - npm 9+
-- MongoDB Atlas account
-- Windows PowerShell or compatible shell
+- MongoDB Atlas
 
-## 2. Initial Setup
-### Clone and open project
-```bash
-git clone <repository-url>
-cd "PROJECT 1"
-```
-
-### Create env files
+## Initial Setup
 ```powershell
 Copy-Item .env.example .env
 Copy-Item server/.env.example server/.env
 ```
 
-### Configure frontend env
-In root `.env.local` (or Vercel env):
+Configure frontend env (`.env.local`):
 - `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_APP_NAME`
 
-### Configure backend env
-In `server/.env`:
-- `NODE_ENV`
-- `PORT`
-- `MONGODB_URI`
-- `JWT_SECRET`
-- `JWT_EXPIRE`
-- `COOKIE_EXPIRE`
+Configure backend env (`server/.env`):
+- `NODE_ENV`, `PORT`, `MONGODB_URI`
+- `JWT_SECRET`, `JWT_EXPIRE`, `COOKIE_EXPIRE`
 - `FRONTEND_URL`
-- Google OAuth keys (if enabled)
+- OAuth values if Google login is enabled
 
-## 3. Install Dependencies
-### Automated
+## Install Dependencies
+Automated:
 ```powershell
 .\install_all.bat
 ```
 
-### Manual
+Manual:
 ```bash
 npm install
 cd server
@@ -51,58 +47,34 @@ npm install
 npm run seed
 ```
 
-## 4. Run Development Servers
-### Automated
+## Run Development Servers
+Automated:
 ```powershell
 .\start_project.bat
 ```
 
-### Manual
-Backend:
+Manual:
 ```bash
-cd server
+cd server && npm run dev
+# new terminal
 npm run dev
 ```
 
-Frontend:
-```bash
-npm run dev
-```
+## Validation Checklist
+- [ ] `http://localhost:5000/api/health` works
+- [ ] Login/logout works
+- [ ] Dashboard data loads
+- [ ] Role-based actions behave correctly
+- [ ] Mobile/split-screen views are usable
 
-## 5. Verification Checklist
-- [ ] Backend health returns success
-- [ ] Login works
-- [ ] Dashboard loads
-- [ ] Student list loads
-- [ ] Role restrictions work as expected
-- [ ] Dark/light mode toggles correctly
-
-## 6. Common Configuration Mistakes
+## Common Mistakes
 - Missing `/api` in `NEXT_PUBLIC_API_URL`
-- Wrong Vercel URL in Render `FRONTEND_URL`
-- Expired/invalid MongoDB credentials
+- Wrong Render `FRONTEND_URL`
 - OAuth callback URL mismatch
+- Expired or invalid MongoDB credentials
 
-## 7. Build and Release Checks
-Frontend build:
-```bash
-npm run build
-```
+## Document Metadata
+- Version: `2.0`
+- Last Updated: `February 24, 2026`
 
-Recommended before push:
-1. Run local build.
-2. Confirm no TypeScript errors.
-3. Validate critical user flows.
-4. Push and verify Vercel/Render deployments.
 
-## 8. Security Practices
-- Keep secrets out of Git
-- Use `.env.example` only for templates
-- Rotate JWT and OAuth secrets periodically
-- Restrict DB and CORS settings for hardened production
-
-## 9. Core URLs
-- Local frontend: `http://localhost:3000`
-- Local API: `http://localhost:5000/api`
-- Production frontend: `https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app`
-- Transformation summary: `https://github.com/SRIXENO/Smart-performance-dashboard/blob/main/PROJECT%201/TRANSFORMATION_SUMMARY.md`

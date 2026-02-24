@@ -1,38 +1,50 @@
 # Deployment Quick Reference
 
-## Production URLs
+## Documentation Hub
+- Main Overview: [`README.md`](README.md)
+- Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- Setup: [`SETUP.md`](SETUP.md)
+- Quick Start: [`QUICK_START.md`](QUICK_START.md)
+- Deployment Guide: [`DEPLOYMENT.md`](DEPLOYMENT.md)
+- Deployment Checklist: [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md)
+- Deployment Quick Reference: [`DEPLOYMENT_QUICK_REFERENCE.md`](DEPLOYMENT_QUICK_REFERENCE.md)
+- Documentation Index: [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md)
+- Enterprise Report: [`ENTERPRISE_TRANSFORMATION.md`](ENTERPRISE_TRANSFORMATION.md)
+- Executive Summary: [`TRANSFORMATION_SUMMARY.md`](TRANSFORMATION_SUMMARY.md)
+
+## Production Links
 - App: `https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app`
-- Transformation Summary: `https://github.com/SRIXENO/Smart-performance-dashboard/blob/main/PROJECT%201/TRANSFORMATION_SUMMARY.md`
+- Summary doc: `https://github.com/SRIXENO/Smart-performance-dashboard/blob/main/PROJECT%201/TRANSFORMATION_SUMMARY.md`
 
 ## Backend (Render)
 - Root directory: `PROJECT 1/server`
-- Build command: `npm install`
-- Start command: `npm start`
-- Required env:
-  - `NODE_ENV=production`
-  - `PORT=10000`
-  - `MONGODB_URI=...`
-  - `JWT_SECRET=...`
-  - `JWT_EXPIRE=3h`
-  - `COOKIE_EXPIRE=0.125`
-  - `FRONTEND_URL=https://<your-vercel-domain>.vercel.app`
+- Build: `npm install`
+- Start: `npm start`
 
-Health check:
+Required env:
+- `NODE_ENV=production`
+- `PORT=10000`
+- `MONGODB_URI=...`
+- `JWT_SECRET=...`
+- `JWT_EXPIRE=3h`
+- `COOKIE_EXPIRE=0.125`
+- `FRONTEND_URL=https://<vercel-domain>.vercel.app`
+
+Health:
 - `https://<render-service>.onrender.com/api/health`
 
 ## Frontend (Vercel)
-- Root directory: `PROJECT 1`
-- Required env:
-  - `NEXT_PUBLIC_API_URL=https://<render-service>.onrender.com/api`
-  - `NEXT_PUBLIC_APP_NAME=Smart Performance Dashboard`
-
-## Fast Verification
-1. Open app URL.
-2. Login.
-3. Confirm dashboard data loads.
-4. Confirm no CORS/auth errors in browser console.
+Required env:
+- `NEXT_PUBLIC_API_URL=https://<render-service>.onrender.com/api`
+- `NEXT_PUBLIC_APP_NAME=Smart Performance Dashboard`
 
 ## Fast Debug
-- Stuck loading: verify backend health and API URL.
-- CORS: verify `FRONTEND_URL` and redeploy backend.
-- Auth issues: verify JWT and cookie env values.
+- Loading stuck: backend health + API URL + `/auth/me`
+- CORS: fix `FRONTEND_URL` and redeploy backend
+- Login: verify JWT/cookie vars and OAuth callback URL
+
+## Document Metadata
+- Version: `2.0`
+- Last Updated: `February 24, 2026`
+
+

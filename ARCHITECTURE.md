@@ -1,128 +1,115 @@
 # Architecture Guide
 
-## 1. System Overview
-Smart Performance Dashboard is a three-tier web application:
-- Presentation layer: Next.js frontend
-- Service layer: Express API backend
-- Data layer: MongoDB Atlas
+## Documentation Hub
+- Main Overview: [`README.md`](README.md)
+- Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- Setup: [`SETUP.md`](SETUP.md)
+- Quick Start: [`QUICK_START.md`](QUICK_START.md)
+- Deployment Guide: [`DEPLOYMENT.md`](DEPLOYMENT.md)
+- Deployment Checklist: [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md)
+- Deployment Quick Reference: [`DEPLOYMENT_QUICK_REFERENCE.md`](DEPLOYMENT_QUICK_REFERENCE.md)
+- Documentation Index: [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md)
+- Enterprise Report: [`ENTERPRISE_TRANSFORMATION.md`](ENTERPRISE_TRANSFORMATION.md)
+- Executive Summary: [`TRANSFORMATION_SUMMARY.md`](TRANSFORMATION_SUMMARY.md)
 
-The system is designed for college operations with role-aware access and analytics-focused workflows.
+## Contents
+- [System Context](#system-context)
+- [Runtime Topology](#runtime-topology)
+- [Layer Responsibilities](#layer-responsibilities)
+- [Request Lifecycle](#request-lifecycle)
+- [Security Model](#security-model)
+- [Domain APIs](#domain-apis)
+- [Deployment View](#deployment-view)
+- [Scalability Notes](#scalability-notes)
 
-## 2. High-Level Topology
-```text
-Browser (Vercel)
-  -> Next.js frontend
-    -> REST API calls (/api/*)
-      -> Express backend (Render)
-        -> MongoDB Atlas
+## System Context
+SPID is a full-stack college performance platform designed for three roles:
+- Admin
+- Faculty
+- Student
+
+It combines operational workflows (records, subjects, performance) with analytics and audit visibility.
+
+## Runtime Topology
+```mermaid
+flowchart LR
+  U[User Browser] --> FE[Next.js Frontend]
+  FE --> API[Express API]
+  API --> DB[(MongoDB Atlas)]
 ```
 
-## 3. Runtime Components
-### Frontend
-- Framework: Next.js App Router
-- Main responsibilities:
-  - Routing and UI composition
-  - Authentication state handling
-  - Role-based UI rendering
-  - Analytics dashboard visualization
+## Layer Responsibilities
+### Frontend (Next.js)
+- Role-aware navigation and page rendering
+- Auth session handling via context
+- Dashboard visualization and responsive UI
+- API communication via centralized Axios client
 
-Important frontend modules:
+Key files:
 - `src/context/AuthContext.tsx`
 - `src/lib/api.ts`
 - `src/components/dashboard/*`
 - `src/app/*`
 
-### Backend
-- Framework: Express
-- Main responsibilities:
-  - Authentication and authorization
-  - Domain APIs for students/faculty/subjects/performance
-  - Dashboard aggregation and analytics services
-  - Activity logging and audit-oriented endpoints
+### Backend (Express)
+- Authentication and authorization
+- Domain-specific REST endpoints
+- Data validation and business logic
+- Activity and login history tracking
 
-Important backend modules:
+Key files:
 - `server/src/server.js`
 - `server/src/routes/*`
 - `server/src/controllers/*`
 - `server/src/middleware/authMiddleware.js`
-- `server/src/models/*`
 
-### Database
-- MongoDB Atlas with Mongoose models
-- Main entities:
-  - `User`
-  - `Student`
-  - `Subject`
-  - `Performance`
-  - `AcademicRecord`
-  - `ActivityLog`
+### Data Layer (MongoDB)
+Primary models:
+- `User`, `Student`, `Faculty`, `Subject`, `Performance`
+- `AcademicRecord`, `ActivityLog`
 
-## 4. Request Lifecycle
-1. User action triggers a frontend event.
-2. Frontend calls API via Axios client (`src/lib/api.ts`).
-3. Backend route resolves to controller.
-4. Auth middleware validates token and role.
-5. Controller executes business logic and DB operations.
-6. Response returns JSON payload.
-7. Frontend updates state and UI.
+## Request Lifecycle
+1. User action triggers frontend event.
+2. Frontend sends request through `src/lib/api.ts`.
+3. Backend route resolves middleware and controller.
+4. Controller runs business logic + DB operations.
+5. API returns JSON response.
+6. Frontend updates state and UI.
 
-## 5. Security Model
-- JWT token based authentication
-- Cookie + bearer-token support
-- Role-based authorization middleware
-- CORS with allowed origin checks
+## Security Model
+- JWT-based authentication
+- Cookie and bearer-token support
+- Role-based API authorization
+- CORS origin validation
 - Password hashing with bcrypt
 
-## 6. Role Access Strategy
-- Admin:
-  - Full write access (create/update/delete)
-  - Access to operational monitoring
-- Faculty:
-  - View access across most modules
-  - Limited write access where policy allows
-- Student:
-  - Read-only or scoped access
+## Domain APIs
+- `/api/auth`
+- `/api/students`
+- `/api/faculty`
+- `/api/subjects`
+- `/api/performance`
+- `/api/dashboard`
+- `/api/academic`
+- `/api/ai-analytics`
+- `/api/activities`
 
-## 7. API Domains
-- `/api/auth`: login, register, me, logout, OAuth callbacks
-- `/api/students`: student CRUD and profile operations
-- `/api/faculty`: faculty CRUD and listing
-- `/api/subjects`: subject mapping and management
-- `/api/performance`: marks/attendance and performance records
-- `/api/dashboard`: aggregated dashboard metrics
-- `/api/academic`: SGPA/CGPA and academic progression
-- `/api/ai-analytics`: risk and insight endpoints
-- `/api/activities`: login/activity history
-
-## 8. Frontend Architecture Patterns
-- Centralized API client with interceptors
-- Auth provider for global user session state
-- Route-level page components under `app/`
-- Reusable dashboard and table components
-- Mobile-first responsive behavior for split-screen and phone usage
-
-## 9. Backend Architecture Patterns
-- Route-controller-model separation
-- Middleware chain for auth and permissions
-- Shared error handling and JSON response style
-- Health endpoint for deployment diagnostics (`/api/health`)
-
-## 10. Deployment Architecture
-- Frontend hosted on Vercel
-- Backend hosted on Render
-- Database hosted on MongoDB Atlas
+## Deployment View
+- Frontend: Vercel
+- Backend: Render
+- Database: MongoDB Atlas
 
 Production URL:
 - `https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app`
 
-## 11. Reliability and Observability
-- Health endpoint for API liveness checks
-- Render logs for backend diagnostics
-- Vercel deployment logs for frontend build/runtime checks
-- Activity history for admin-level traceability
+## Scalability Notes
+- Keep controllers domain-focused.
+- Add caching for heavy analytics endpoints.
+- Add integration and E2E tests for release confidence.
+- Add centralized logging/metrics for production observability.
 
-## 12. Future Improvements
-- Add integration and end-to-end tests
-- Add caching for heavy analytics endpoints
-- Add centralized structured logging
-- Add rate limiting and stricter production hardening
+## Document Metadata
+- Version: `2.0`
+- Last Updated: `February 24, 2026`
+
+

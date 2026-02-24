@@ -1,5 +1,17 @@
 # Smart Performance Dashboard (SPID)
 
+## Documentation Hub
+- Main Overview: [`README.md`](README.md)
+- Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- Setup: [`SETUP.md`](SETUP.md)
+- Quick Start: [`QUICK_START.md`](QUICK_START.md)
+- Deployment Guide: [`DEPLOYMENT.md`](DEPLOYMENT.md)
+- Deployment Checklist: [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md)
+- Deployment Quick Reference: [`DEPLOYMENT_QUICK_REFERENCE.md`](DEPLOYMENT_QUICK_REFERENCE.md)
+- Documentation Index: [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md)
+- Enterprise Report: [`ENTERPRISE_TRANSFORMATION.md`](ENTERPRISE_TRANSFORMATION.md)
+- Executive Summary: [`TRANSFORMATION_SUMMARY.md`](TRANSFORMATION_SUMMARY.md)
+
 [![Live App](https://img.shields.io/badge/Live-Vercel-000000?style=for-the-badge&logo=vercel)](https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
 ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)
@@ -207,3 +219,9 @@ For full deployment steps, use:
 
 ## License
 For academic, portfolio, and demonstration use.
+
+## Document Metadata
+- Version: `2.0`
+- Last Updated: `February 24, 2026`
+
+
