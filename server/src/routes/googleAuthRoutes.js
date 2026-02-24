@@ -10,6 +10,7 @@ const frontendUrl =
   normalizeUrl(process.env.FRONTEND_URL) ||
   normalizeUrl((process.env.FRONTEND_URLS || '').split(',')[0]) ||
   'http://localhost:3000';
+const SESSION_MAX_AGE_MS = 3 * 60 * 60 * 1000; // 3 hours
 
 router.get('/google', passport.authenticate('google', {
   scope: ['profile', 'email']
@@ -56,7 +57,7 @@ router.get('/google/callback',
       console.log('Token created:', token);
       
       res.cookie('token', token, {
-        expires: new Date(Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
+        maxAge: SESSION_MAX_AGE_MS,
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'

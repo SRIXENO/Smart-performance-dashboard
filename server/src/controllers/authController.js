@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Student = require('../models/Student');
 const ActivityLog = require('../models/ActivityLog');
+
+const SESSION_MAX_AGE_MS = 3 * 60 * 60 * 1000; // 3 hours
 
 const generateToken = (userId, role) => {
   return jwt.sign({ userId, role }, process.env.JWT_SECRET, {
@@ -38,7 +41,7 @@ const register = async (req, res) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: SESSION_MAX_AGE_MS,
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     });
 
@@ -57,15 +60,41 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const identifier = (email || '').trim();
 
-    if (!email || !password) {
-      return res.status(400).json({ success: false, error: 'Email and password are required' });
+    if (!identifier || !password) {
+      return res.status(400).json({ success: false, error: 'Email or register number and password are required' });
     }
 
-    const user = await User.findOne({ email });
+    let user = await User.findOne({ email: identifier.toLowerCase() });
+
+    // Allow login by generated userId too
+    if (!user) {
+      user = await User.findOne({ userId: identifier });
+    }
+
+    // Allow student login by register number or studentId
+    if (!user) {
+      const student = await Student.findOne({
+        $or: [{ rollNumber: identifier }, { studentId: identifier }]
+      }).select('email');
+
+      if (student?.email) {
+        user = await User.findOne({ email: student.email.toLowerCase() });
+      }
+    }
     
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ success: false, error: 'Invalid email or password' });
+    let isValidPassword = false;
+    if (user) {
+      try {
+        isValidPassword = await user.comparePassword(password);
+      } catch (_err) {
+        isValidPassword = false;
+      }
+    }
+
+    if (!user || !isValidPassword) {
+      return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
     const token = generateToken(user._id, user.role);
@@ -76,9 +105,10 @@ const login = async (req, res) => {
       userName: user.name,
       action: 'login',
       targetType: 'system',
-      description: 'User logged in with email and password',
+      description: 'User logged in with password',
       metadata: {
         email: user.email,
+        identifier,
         loginMethod: 'local'
       },
       ipAddress: req.ip,
@@ -89,7 +119,7 @@ const login = async (req, res) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: SESSION_MAX_AGE_MS,
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     });
 

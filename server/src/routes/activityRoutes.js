@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const ActivityLog = require('../models/ActivityLog');
-const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 
@@ -52,49 +51,21 @@ router.get('/by-action/:action', async (req, res) => {
 // Admin-only login history
 router.get('/login-history', authMiddleware, roleMiddleware(['admin']), async (req, res) => {
   try {
-    const { limit } = req.query;
-    const parsedLimit = limit ? parseInt(limit, 10) : null;
+    const { limit = 200 } = req.query;
+    const parsedLimit = parseInt(limit, 10);
 
-    let usersQuery = User.find({})
-      .select('name email createdAt')
-      .sort({ createdAt: -1 });
+    const loginEvents = await ActivityLog.find({ action: 'login' })
+      .sort({ timestamp: -1 })
+      .limit(Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 200)
+      .lean();
 
-    if (parsedLimit && parsedLimit > 0) {
-      usersQuery = usersQuery.limit(parsedLimit);
-    }
-
-    const users = await usersQuery.lean();
-
-    const emails = users.map((user) => user.email).filter(Boolean);
-    const recentLogins = await ActivityLog.aggregate([
-      {
-        $match: {
-          action: 'login',
-          'metadata.email': { $in: emails }
-        }
-      },
-      { $sort: { timestamp: -1 } },
-      {
-        $group: {
-          _id: '$metadata.email',
-          date: { $first: '$timestamp' },
-          loginMethod: { $first: '$metadata.loginMethod' },
-          userName: { $first: '$userName' }
-        }
-      }
-    ]);
-
-    const loginByEmail = new Map(recentLogins.map((row) => [row._id, row]));
-    const history = users.map((user) => {
-      const loginInfo = loginByEmail.get(user.email);
-      return {
-        id: user._id,
-        userName: loginInfo?.userName || user.name || 'Unknown',
-        email: user.email || 'N/A',
-        date: loginInfo?.date || user.createdAt,
-        loginMethod: loginInfo?.loginMethod || 'registered'
-      };
-    });
+    const history = loginEvents.map((log) => ({
+      id: String(log._id),
+      userName: log.userName || 'Unknown',
+      email: log.metadata?.email || 'N/A',
+      date: log.timestamp || log.createdAt,
+      loginMethod: log.metadata?.loginMethod || 'local'
+    }));
 
     res.json({ success: true, data: history });
   } catch (error) {
