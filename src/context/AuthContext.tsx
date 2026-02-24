@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await authAPI.me();
       setUser(response.data.user);
     } catch (error) {
-      console.log('Not authenticated');
+      console.log('Auth check failed:', error);
       setUser(null);
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');
@@ -70,6 +70,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     checkAuth();
+  }, []);
+
+  useEffect(() => {
+    // Prevent infinite loading if upstream API hangs or cold-start is too slow.
+    const failSafe = setTimeout(() => {
+      setLoading(false);
+    }, 15000);
+
+    return () => clearTimeout(failSafe);
   }, []);
 
   return (

@@ -14,6 +14,7 @@ export const GOOGLE_AUTH_URL =
 
 const api = axios.create({
   baseURL: normalizedApiBase,
+  timeout: 12000,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
