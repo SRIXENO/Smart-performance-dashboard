@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import styles from './RegisterForm.module.css';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -36,70 +38,71 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div className="floating-input-container">
-              <input
-                id="register-name"
-                type="text"
-                name="name"
-                required
-                autoComplete="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="floating-input-field"
-                placeholder=" "
-              />
-              <label className="floating-input-label" htmlFor="register-name">
-                Name
-              </label>
-            </div>
+      <div className={styles.formShell}>
+        <h2 className={styles.title}>Create your account</h2>
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <div className={styles.flexColumn}>
+            <label htmlFor="register-name">Name</label>
+          </div>
+          <div className={styles.inputForm}>
             <input
+              id="register-name"
+              type="text"
+              name="name"
+              required
+              autoComplete="name"
+              value={formData.name}
+              onChange={handleChange}
+              className={styles.input}
+              placeholder="Enter your name"
+            />
+          </div>
+
+          <div className={styles.flexColumn}>
+            <label htmlFor="register-email">Email</label>
+          </div>
+          <div className={styles.inputForm}>
+            <input
+              id="register-email"
               type="email"
               name="email"
               required
               value={formData.email}
               onChange={handleChange}
-              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="Email address"
+              className={styles.input}
+              placeholder="Enter your email"
             />
+          </div>
+
+          <div className={styles.flexColumn}>
+            <label htmlFor="register-password">Password</label>
+          </div>
+          <div className={styles.inputForm}>
             <input
+              id="register-password"
               type="password"
               name="password"
               required
               minLength={8}
               value={formData.password}
               onChange={handleChange}
-              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="Password (min 8 characters)"
+              className={styles.input}
+              placeholder="Enter your password (min 8 characters)"
             />
           </div>
 
-          {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
-          )}
+          {error && <div className={styles.errorBox}>{error}</div>}
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-            >
-              {loading ? 'Creating account...' : 'Create account'}
-            </button>
-          </div>
+          <button type="submit" disabled={loading} className={styles.buttonSubmit}>
+            {loading ? 'Creating account...' : 'Create account'}
+          </button>
 
-          <div className="text-center">
-            <a href="/login" className="text-blue-600 hover:text-blue-500">
-              Already have an account? Sign in here
-            </a>
-          </div>
+          <p className={styles.p}>
+            Already have an account?
+            <Link className={styles.span} href="/login">
+              Sign in here
+            </Link>
+          </p>
         </form>
       </div>
     </div>
