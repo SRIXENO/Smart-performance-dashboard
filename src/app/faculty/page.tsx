@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { facultyAPI } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
+import ConfirmModal from '@/components/ConfirmModal';
 
 type FacultyMember = {
   _id: string;
@@ -51,6 +52,15 @@ export default function FacultyPage() {
     profilePhoto: '',
     expertiseText: '',
   });
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    confirmText: 'Confirm',
+    confirmStyle: 'danger' as 'danger' | 'primary' | 'warning',
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadFaculty = async () => {
     setLoading(true);
@@ -109,14 +119,29 @@ export default function FacultyPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this faculty member?')) return;
-    try {
-      await facultyAPI.delete(id);
-      await loadFaculty();
-      if (selected?._id === id) setSelected(null);
-    } catch (error: any) {
-      alert(error?.response?.data?.error || 'Failed to delete faculty');
-    }
+    const member = faculty.find((f) => f._id === id);
+    const label = member?.name || 'this faculty member';
+
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Faculty?',
+      message: `Delete ${label}? This will remove faculty access and linked references.`,
+      confirmText: 'Delete',
+      confirmStyle: 'danger',
+      onConfirm: async () => {
+        setIsDeleting(true);
+        try {
+          await facultyAPI.delete(id);
+          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+          await loadFaculty();
+          if (selected?._id === id) setSelected(null);
+        } catch (error: any) {
+          alert(error?.response?.data?.error || 'Failed to delete faculty');
+        } finally {
+          setIsDeleting(false);
+        }
+      },
+    });
   };
 
   const startEdit = (member: FacultyMember) => {
@@ -276,6 +301,17 @@ export default function FacultyPage() {
           </div>
         </section>
       )}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        description={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        confirmStyle={confirmModal.confirmStyle}
+        cancelText="Cancel"
+        loading={isDeleting}
+      />
     </div>
   );
 }

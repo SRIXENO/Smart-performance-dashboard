@@ -25,7 +25,10 @@ export default function Students() {
     isOpen: false,
     title: '',
     message: '',
-    onConfirm: () => {}
+    onConfirm: () => {},
+    confirmText: 'Confirm',
+    confirmStyle: 'danger' as 'danger' | 'primary' | 'warning',
+    action: 'general' as 'general' | 'delete' | 'block' | 'unblock',
   });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
@@ -71,11 +74,14 @@ export default function Students() {
       isOpen: true,
       title: 'Delete Student?',
       message: `Are you sure you want to delete ${name}? This will permanently remove all student data. This action cannot be undone.`,
+      confirmText: 'Delete',
+      confirmStyle: 'danger',
+      action: 'delete',
       onConfirm: async () => {
         setIsDeleting(true);
         try {
           await studentsAPI.delete(id);
-          setConfirmModal({ ...confirmModal, isOpen: false });
+          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
           fetchStudents(pagination.currentPage);
         } catch (error) {
           console.error('Failed to delete student:', error);
@@ -101,6 +107,9 @@ export default function Students() {
         nextStatus === 'active'
           ? `Unblock ${student.name}? They will be able to log in again.`
           : `Block ${student.name}? They will not be able to log in.`,
+      confirmText: actionLabel,
+      confirmStyle: nextStatus === 'active' ? 'primary' : 'warning',
+      action: nextStatus === 'active' ? 'unblock' : 'block',
       onConfirm: async () => {
         setIsUpdatingStatus(student._id);
         try {
@@ -330,14 +339,14 @@ export default function Students() {
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
         onConfirm={confirmModal.onConfirm}
         title={confirmModal.title}
         description={confirmModal.message}
-        confirmStyle="danger"
-        confirmText="Delete"
+        confirmStyle={confirmModal.confirmStyle}
+        confirmText={confirmModal.confirmText}
         cancelText="Cancel"
-        loading={isDeleting}
+        loading={confirmModal.action === 'delete' ? isDeleting : isUpdatingStatus !== null}
       />
     </div>
   );

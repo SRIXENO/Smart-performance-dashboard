@@ -18,7 +18,10 @@ export default function StudentDetail() {
     isOpen: false,
     title: '',
     message: '',
-    onConfirm: () => {}
+    onConfirm: () => {},
+    confirmText: 'Confirm',
+    confirmStyle: 'danger' as 'danger' | 'primary' | 'warning',
+    action: 'general' as 'general' | 'delete' | 'block' | 'unblock',
   });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -44,6 +47,9 @@ export default function StudentDetail() {
       isOpen: true,
       title: 'Delete Student?',
       message: `Are you sure you want to delete ${student.name}? This will permanently remove all student data including performance records. This action cannot be undone.`,
+      confirmText: 'Delete',
+      confirmStyle: 'danger',
+      action: 'delete',
       onConfirm: async () => {
         setIsDeleting(true);
         try {
@@ -86,6 +92,9 @@ export default function StudentDetail() {
         nextStatus === 'active'
           ? `Unblock ${student.name}? They will be able to log in again.`
           : `Block ${student.name}? They will not be able to log in.`,
+      confirmText: actionLabel,
+      confirmStyle: nextStatus === 'active' ? 'primary' : 'warning',
+      action: nextStatus === 'active' ? 'unblock' : 'block',
       onConfirm: async () => {
         setIsUpdatingStatus(true);
         try {
@@ -551,14 +560,14 @@ export default function StudentDetail() {
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
         onConfirm={confirmModal.onConfirm}
         title={confirmModal.title}
         description={confirmModal.message}
-        confirmStyle="danger"
-        confirmText="Delete"
+        confirmStyle={confirmModal.confirmStyle}
+        confirmText={confirmModal.confirmText}
         cancelText="Cancel"
-        loading={isDeleting}
+        loading={confirmModal.action === 'delete' ? isDeleting : isUpdatingStatus}
       />
     </div>
   );
