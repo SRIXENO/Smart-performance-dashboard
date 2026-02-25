@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { GOOGLE_AUTH_URL } from '@/lib/api';
 import styles from './LoginForm.module.css';
@@ -14,6 +14,17 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const authError = searchParams.get('error');
+
+  const googleErrorMessage =
+    authError === 'approval_pending'
+      ? 'Account approval is pending. Please wait for admin approval.'
+      : authError === 'approval_rejected'
+        ? 'Your account request was rejected. Contact admin.'
+        : authError === 'account_blocked'
+          ? 'Account is blocked. Contact admin.'
+          : '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +106,7 @@ export default function Login() {
             <span className={styles.span}>Forgot password?</span>
           </div>
 
-          {error && <div className={styles.errorBox}>{error}</div>}
+          {(error || googleErrorMessage) && <div className={styles.errorBox}>{error || googleErrorMessage}</div>}
 
           <button type="submit" className={styles.buttonSubmit} disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}

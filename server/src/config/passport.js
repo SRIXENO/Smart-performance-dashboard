@@ -13,10 +13,6 @@ passport.use(new GoogleStrategy({
     let user = await User.findOne({ googleId: profile.id });
     
     if (user) {
-      if (user.role !== 'student') {
-        user.role = 'student';
-        await user.save();
-      }
       return done(null, user);
     }
     
@@ -24,7 +20,6 @@ passport.use(new GoogleStrategy({
     
     if (user) {
       user.googleId = profile.id;
-      user.role = 'student';
       user.authProvider = 'google';
       user.avatar = profile.photos[0]?.value;
       await user.save();
@@ -38,7 +33,8 @@ passport.use(new GoogleStrategy({
       name: profile.displayName,
       email: googleEmail,
       avatar: profile.photos[0]?.value,
-      role: 'student',
+      role: 'viewer',
+      approvalStatus: 'pending',
       authProvider: 'google'
     });
     

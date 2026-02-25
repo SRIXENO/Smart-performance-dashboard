@@ -31,20 +31,23 @@ router.get('/google/callback',
         return res.redirect(`${frontendUrl}/login?error=account_blocked`);
       }
 
-      if (req.user.role !== 'student') {
-        req.user.role = 'student';
-        await req.user.save();
+      if (req.user.approvalStatus === 'pending') {
+        return res.redirect(`${frontendUrl}/login?error=approval_pending`);
+      }
+
+      if (req.user.approvalStatus === 'rejected') {
+        return res.redirect(`${frontendUrl}/login?error=approval_rejected`);
       }
       
       const token = jwt.sign(
-        { userId: req.user._id, role: 'student' },
+        { userId: req.user._id, role: req.user.role },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRE }
       );
 
       await ActivityLog.log({
         userId: req.user._id,
-        userRole: 'student',
+        userRole: req.user.role,
         userName: req.user.name,
         action: 'login',
         targetType: 'system',

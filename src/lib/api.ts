@@ -39,6 +39,12 @@ export const authAPI = {
   me: () => api.get('/auth/me'),
 };
 
+export const approvalsAPI = {
+  getPending: () => api.get('/auth/approvals/pending'),
+  updateDecision: (id: string, decision: 'approved' | 'rejected') =>
+    api.put(`/auth/approvals/${id}`, { decision }),
+};
+
 export const studentsAPI = {
   getAll: (params?: any) => api.get('/students', { params }),
   getById: (id: string) => api.get(`/students/${id}`),

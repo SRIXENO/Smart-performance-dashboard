@@ -2,7 +2,9 @@ export interface User {
   userId: string;
   name: string;
   email: string;
-  role: 'admin' | 'faculty' | 'student';
+  role: 'admin' | 'faculty' | 'student' | 'viewer';
+  status?: 'active' | 'blocked';
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
 }
 
 export interface Student {

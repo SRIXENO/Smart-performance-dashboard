@@ -10,6 +10,7 @@ export default function StudentDetail() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const canManageStudentAccess = user?.role === 'admin' || user?.role === 'faculty';
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('personal');
@@ -20,6 +21,7 @@ export default function StudentDetail() {
     onConfirm: () => {}
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState('');
 
   useEffect(() => {
@@ -68,6 +70,36 @@ export default function StudentDetail() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const isBlocked = ['inactive', 'suspended'].includes(String(student?.status || '').toLowerCase());
+
+  const handleToggleBlock = async () => {
+    if (!student) return;
+    const nextStatus = isBlocked ? 'active' : 'suspended';
+    const actionLabel = nextStatus === 'active' ? 'Unblock' : 'Block';
+
+    setConfirmModal({
+      isOpen: true,
+      title: `${actionLabel} Student?`,
+      message:
+        nextStatus === 'active'
+          ? `Unblock ${student.name}? They will be able to log in again.`
+          : `Block ${student.name}? They will not be able to log in.`,
+      onConfirm: async () => {
+        setIsUpdatingStatus(true);
+        try {
+          await studentsAPI.update(student._id, { status: nextStatus });
+          setStudent((prev: any) => ({ ...prev, status: nextStatus }));
+          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('Failed to update student status:', error);
+          alert('Failed to update student status');
+        } finally {
+          setIsUpdatingStatus(false);
+        }
+      }
+    });
   };
 
   const handleDocumentUpload = async (field: string, file: File | null) => {
@@ -150,11 +182,11 @@ export default function StudentDetail() {
               <p className="text-gray-500 mt-1">Student ID: {student.studentId}</p>
               <div className="flex items-center space-x-3 mt-2">
                 <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                  student.status === 'active' 
+                  !isBlocked
                     ? 'bg-green-100 text-green-800' 
                     : 'bg-red-100 text-red-800'
                 }`}>
-                  {student.status?.toUpperCase()}
+                  {isBlocked ? 'BLOCKED' : 'ACTIVE'}
                 </span>
                 <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                   Year {student.year}
@@ -198,6 +230,19 @@ export default function StudentDetail() {
             >
               <span>Export</span>
             </button>
+            {canManageStudentAccess && (
+              <button
+                onClick={handleToggleBlock}
+                disabled={isUpdatingStatus}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 flex items-center space-x-2 ${
+                  isBlocked
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    : 'bg-amber-600 hover:bg-amber-700 text-white'
+                }`}
+              >
+                <span>{isUpdatingStatus ? 'Saving...' : isBlocked ? 'Unblock' : 'Block'}</span>
+              </button>
+            )}
             {user?.role === 'admin' && (
               <button
                 onClick={handleDelete}

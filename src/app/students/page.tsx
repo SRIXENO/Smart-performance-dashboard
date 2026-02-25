@@ -9,6 +9,7 @@ import CustomDropdown from '@/components/ui/CustomDropdown';
 
 export default function Students() {
   const { user } = useAuth();
+  const canManageStudentAccess = user?.role === 'admin' || user?.role === 'faculty';
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -27,6 +28,7 @@ export default function Students() {
     onConfirm: () => {}
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
 
   const departments = [
     'Computer Science',
@@ -82,6 +84,36 @@ export default function Students() {
           setIsDeleting(false);
         }
       }
+    });
+  };
+
+  const isBlocked = (status?: string) =>
+    ['inactive', 'suspended'].includes(String(status || '').toLowerCase());
+
+  const handleToggleBlock = async (student: Student) => {
+    const nextStatus = isBlocked(student.status) ? 'active' : 'suspended';
+    const actionLabel = nextStatus === 'active' ? 'Unblock' : 'Block';
+
+    setConfirmModal({
+      isOpen: true,
+      title: `${actionLabel} Student?`,
+      message:
+        nextStatus === 'active'
+          ? `Unblock ${student.name}? They will be able to log in again.`
+          : `Block ${student.name}? They will not be able to log in.`,
+      onConfirm: async () => {
+        setIsUpdatingStatus(student._id);
+        try {
+          await studentsAPI.update(student._id, { status: nextStatus });
+          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+          fetchStudents(pagination.currentPage);
+        } catch (error) {
+          console.error('Failed to update student status:', error);
+          alert('Failed to update student status');
+        } finally {
+          setIsUpdatingStatus(null);
+        }
+      },
     });
   };
 
@@ -214,6 +246,20 @@ export default function Students() {
                               >
                                 Edit
                               </a>
+                              {canManageStudentAccess && (
+                                <button
+                                  onClick={() => handleToggleBlock(student)}
+                                  className={`block w-full text-left rounded px-2 py-1 hover:bg-slate-50 ${
+                                    isBlocked(student.status) ? 'text-emerald-700' : 'text-amber-700'
+                                  }`}
+                                >
+                                  {isUpdatingStatus === student._id
+                                    ? 'Saving...'
+                                    : isBlocked(student.status)
+                                      ? 'Unblock'
+                                      : 'Block'}
+                                </button>
+                              )}
                               {user?.role === 'admin' && (
                                 <button
                                   onClick={() => handleDelete(student._id, student.name)}
@@ -230,6 +276,23 @@ export default function Students() {
                           >
                             Edit
                           </a>
+                          {canManageStudentAccess && (
+                            <button
+                              onClick={() => handleToggleBlock(student)}
+                              disabled={isUpdatingStatus === student._id}
+                              className={`hidden sm:inline disabled:opacity-50 ${
+                                isBlocked(student.status)
+                                  ? 'text-emerald-600 hover:text-emerald-900'
+                                  : 'text-amber-600 hover:text-amber-900'
+                              }`}
+                            >
+                              {isUpdatingStatus === student._id
+                                ? 'Saving...'
+                                : isBlocked(student.status)
+                                  ? 'Unblock'
+                                  : 'Block'}
+                            </button>
+                          )}
                           {user?.role === 'admin' && (
                             <button
                               onClick={() => handleDelete(student._id, student.name)}

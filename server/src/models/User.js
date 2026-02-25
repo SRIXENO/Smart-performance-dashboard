@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
   registerNumber: { type: String, unique: true, sparse: true, trim: true },
   password: { type: String },
   role: { type: String, required: true, enum: ['admin', 'faculty', 'student', 'viewer'], default: 'student' },
+  approvalStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved' },
   status: { type: String, enum: ['active', 'blocked'], default: 'active' },
   department: { type: String, trim: true },
   designation: { type: String, trim: true, default: 'Faculty Member' },

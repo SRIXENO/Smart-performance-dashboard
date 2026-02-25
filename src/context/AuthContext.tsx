@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const register = async (name: string, email: string, password: string) => {
-    const response = await authAPI.register({ name, email, password, role: 'student' });
+    const response = await authAPI.register({ name, email, password });
     if (response.data.token && typeof window !== 'undefined') {
       localStorage.setItem('token', response.data.token);
     }

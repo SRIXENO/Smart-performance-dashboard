@@ -32,7 +32,8 @@ const register = async (req, res) => {
       name,
       email,
       password,
-      role: 'student',
+      role: 'viewer',
+      approvalStatus: 'pending',
       authProvider: 'local'
     });
 
@@ -47,9 +48,16 @@ const register = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'Registration received. Waiting for admin approval.',
       token,
-      user: { userId: newUser.userId, name: newUser.name, email: newUser.email, role: newUser.role }
+      user: {
+        userId: newUser.userId,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        status: newUser.status,
+        approvalStatus: newUser.approvalStatus,
+      }
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -102,6 +110,14 @@ const login = async (req, res) => {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
+    if (user.approvalStatus === 'pending') {
+      return res.status(403).json({ success: false, error: 'Account approval is pending. Please wait for admin approval.' });
+    }
+
+    if (user.approvalStatus === 'rejected') {
+      return res.status(403).json({ success: false, error: 'Your account request was rejected. Contact admin.' });
+    }
+
     if (user.status === 'blocked') {
       return res.status(403).json({ success: false, error: 'Account is blocked. Contact admin.' });
     }
@@ -136,7 +152,14 @@ const login = async (req, res) => {
       success: true,
       message: 'Login successful',
       token,
-      user: { userId: user.userId, name: user.name, email: user.email, role: user.role, status: user.status }
+      user: {
+        userId: user.userId,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        approvalStatus: user.approvalStatus,
+      }
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -164,7 +187,8 @@ const me = async (req, res) => {
         email: user.email,
         role: user.role,
         avatar: user.avatar,
-        status: user.status
+        status: user.status,
+        approvalStatus: user.approvalStatus,
       }
     });
   } catch (error) {
@@ -173,4 +197,52 @@ const me = async (req, res) => {
   }
 };
 
-module.exports = { register, login, logout, me };
+const getPendingApprovals = async (_req, res) => {
+  try {
+    const users = await User.find({
+      role: 'viewer',
+      approvalStatus: 'pending',
+    })
+      .select('userId name email authProvider createdAt status approvalStatus')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: users });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const updateApprovalStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { decision } = req.body;
+
+    if (!['approved', 'rejected'].includes(String(decision))) {
+      return res.status(400).json({ success: false, error: 'Invalid decision. Use approved or rejected.' });
+    }
+
+    const update = decision === 'approved'
+      ? { approvalStatus: 'approved', status: 'active' }
+      : { approvalStatus: 'rejected', status: 'blocked' };
+
+    const updated = await User.findOneAndUpdate(
+      { _id: id, role: 'viewer' },
+      update,
+      { new: true }
+    ).select('userId name email role status approvalStatus');
+
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Pending viewer account not found' });
+    }
+
+    res.json({
+      success: true,
+      message: `User ${decision} successfully`,
+      data: updated,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+module.exports = { register, login, logout, me, getPendingApprovals, updateApprovalStatus };
