@@ -8,8 +8,10 @@ import CustomDropdown from '@/components/ui/CustomDropdown';
 type FacultyMember = {
   _id: string;
   userId: string;
+  registerNumber?: string;
   name: string;
   email: string;
+  status?: 'active' | 'blocked';
   department?: string;
   designation?: string;
   bio?: string;
@@ -41,6 +43,8 @@ export default function FacultyPage() {
     name: '',
     email: '',
     password: '',
+    registerNumber: '',
+    status: 'active',
     department: '',
     designation: '',
     bio: '',
@@ -72,7 +76,7 @@ export default function FacultyPage() {
   }, [faculty]);
 
   const resetForm = () => {
-    setForm({ name: '', email: '', password: '', department: '', designation: '', bio: '', profilePhoto: '', expertiseText: '' });
+    setForm({ name: '', email: '', password: '', registerNumber: '', status: 'active', department: '', designation: '', bio: '', profilePhoto: '', expertiseText: '' });
     setEditing(null);
     setShowForm(false);
   };
@@ -84,6 +88,8 @@ export default function FacultyPage() {
         name: form.name,
         email: form.email,
         password: form.password,
+        registerNumber: form.registerNumber,
+        status: form.status,
         department: form.department,
         designation: form.designation,
         bio: form.bio,
@@ -119,6 +125,8 @@ export default function FacultyPage() {
       name: member.name || '',
       email: member.email || '',
       password: '',
+      registerNumber: member.registerNumber || '',
+      status: member.status || 'active',
       department: member.department || '',
       designation: member.designation || '',
       bio: member.bio || '',
@@ -150,6 +158,15 @@ export default function FacultyPage() {
             <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Name" className="px-3 py-2 border rounded-md" />
             <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email" className="px-3 py-2 border rounded-md" />
             <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={editing ? 'Leave blank to keep password' : 'Password'} className="px-3 py-2 border rounded-md" />
+            <input value={form.registerNumber} onChange={(e) => setForm({ ...form, registerNumber: e.target.value })} placeholder="Login ID / Register Number (optional)" className="px-3 py-2 border rounded-md" />
+            <CustomDropdown
+              value={form.status}
+              onChange={(value) => setForm({ ...form, status: value as 'active' | 'blocked' })}
+              options={[
+                { value: 'active', label: 'Active' },
+                { value: 'blocked', label: 'Blocked' },
+              ]}
+            />
             <CustomDropdown
               value={form.department}
               onChange={(value) => setForm({ ...form, department: value })}
@@ -210,6 +227,9 @@ export default function FacultyPage() {
                     <h3 className="font-bold text-slate-900 truncate">{member.name}</h3>
                     <p className="text-sm text-violet-700">{member.designation || 'Faculty Member'}</p>
                     <p className="text-xs text-slate-500 mt-1 truncate">{member.department || 'Department not set'}</p>
+                    <p className={`text-xs mt-1 font-semibold ${member.status === 'blocked' ? 'text-rose-600' : 'text-emerald-600'}`}>
+                      {member.status === 'blocked' ? 'Blocked' : 'Active'}
+                    </p>
                     <p className="text-xs text-slate-500 truncate">{member.email}</p>
                   </div>
                 </div>

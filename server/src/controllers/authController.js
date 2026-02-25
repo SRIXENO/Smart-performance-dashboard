@@ -73,6 +73,11 @@ const login = async (req, res) => {
       user = await User.findOne({ userId: identifier });
     }
 
+    // Allow login by explicit register number on user account
+    if (!user) {
+      user = await User.findOne({ registerNumber: identifier });
+    }
+
     // Allow student login by register number or studentId
     if (!user) {
       const student = await Student.findOne({
@@ -95,6 +100,10 @@ const login = async (req, res) => {
 
     if (!user || !isValidPassword) {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    if (user.status === 'blocked') {
+      return res.status(403).json({ success: false, error: 'Account is blocked. Contact admin.' });
     }
 
     const token = generateToken(user._id, user.role);
@@ -127,7 +136,7 @@ const login = async (req, res) => {
       success: true,
       message: 'Login successful',
       token,
-      user: { userId: user.userId, name: user.name, email: user.email, role: user.role }
+      user: { userId: user.userId, name: user.name, email: user.email, role: user.role, status: user.status }
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -154,7 +163,8 @@ const me = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        avatar: user.avatar
+        avatar: user.avatar,
+        status: user.status
       }
     });
   } catch (error) {

@@ -1,5 +1,6 @@
 const Student = require('../models/Student');
 const Performance = require('../models/Performance');
+const User = require('../models/User');
 const { generateId } = require('../utils/generateId');
 
 const DEPARTMENT_CODE_MAP = {
@@ -127,13 +128,45 @@ const getStudentById = async (req, res) => {
 
 const createStudent = async (req, res) => {
   try {
-    const detectedDepartment = detectDepartmentFromRegisterNumber(req.body.rollNumber);
+    const { password, ...studentPayload } = req.body;
+    if (!password || String(password).length < 8) {
+      return res.status(400).json({ success: false, error: 'Password (min 8 characters) is required for student login account' });
+    }
+
+    const detectedDepartment = detectDepartmentFromRegisterNumber(studentPayload.rollNumber);
 
     const studentId = await generateId('studentId');
+    const normalizedEmail = String(studentPayload.email || '').toLowerCase();
+    const registerNumber = String(studentPayload.rollNumber || studentId);
+
+    const existingUserByEmail = await User.findOne({ email: normalizedEmail });
+    if (existingUserByEmail) {
+      return res.status(400).json({ success: false, error: 'Email already exists in login accounts' });
+    }
+
+    const existingUserByRegNo = await User.findOne({ registerNumber });
+    if (existingUserByRegNo) {
+      return res.status(400).json({ success: false, error: 'Register number already exists in login accounts' });
+    }
+
     const newStudent = await Student.create({
       studentId,
-      ...req.body,
-      department: detectedDepartment || req.body.department,
+      ...studentPayload,
+      email: normalizedEmail,
+      department: detectedDepartment || studentPayload.department,
+    });
+
+    const userId = await generateId('userId');
+    await User.create({
+      userId,
+      name: newStudent.name,
+      email: normalizedEmail,
+      registerNumber,
+      password: String(password),
+      role: 'student',
+      status: ['inactive', 'suspended'].includes(String(newStudent.status || '').toLowerCase()) ? 'blocked' : 'active',
+      department: newStudent.department,
+      authProvider: 'local',
     });
 
     res.status(201).json({
@@ -148,9 +181,15 @@ const createStudent = async (req, res) => {
 
 const updateStudent = async (req, res) => {
   try {
-    const detectedDepartment = detectDepartmentFromRegisterNumber(req.body.rollNumber);
+    const existingStudent = await Student.findById(req.params.id);
+    if (!existingStudent) {
+      return res.status(404).json({ success: false, error: 'Student not found' });
+    }
+
+    const { password: _password, ...studentPayload } = req.body;
+    const detectedDepartment = detectDepartmentFromRegisterNumber(studentPayload.rollNumber);
     const updatePayload = {
-      ...req.body,
+      ...studentPayload,
       ...(detectedDepartment ? { department: detectedDepartment } : {}),
     };
 
@@ -161,8 +200,29 @@ const updateStudent = async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    if (!updatedStudent) {
-      return res.status(404).json({ success: false, error: 'Student not found' });
+    const oldEmail = String(existingStudent.email || '').toLowerCase();
+    const newEmail = String(updatedStudent.email || '').toLowerCase();
+    const oldRegisterNumber = String(existingStudent.rollNumber || existingStudent.studentId || '');
+    const newRegisterNumber = String(updatedStudent.rollNumber || updatedStudent.studentId || '');
+    const userStatus = ['inactive', 'suspended'].includes(String(updatedStudent.status || '').toLowerCase()) ? 'blocked' : 'active';
+
+    const linkedUser = await User.findOne({
+      role: 'student',
+      $or: [
+        { email: oldEmail },
+        { email: newEmail },
+        { registerNumber: oldRegisterNumber },
+        { registerNumber: newRegisterNumber },
+      ],
+    });
+
+    if (linkedUser) {
+      linkedUser.name = updatedStudent.name;
+      linkedUser.email = newEmail;
+      linkedUser.registerNumber = newRegisterNumber;
+      linkedUser.department = updatedStudent.department;
+      linkedUser.status = userStatus;
+      await linkedUser.save();
     }
 
     res.json({
@@ -178,10 +238,23 @@ const updateStudent = async (req, res) => {
 
 const deleteStudent = async (req, res) => {
   try {
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({ success: false, error: 'Student not found' });
+    }
+
+    const email = String(student.email || '').toLowerCase();
+    const registerNumber = String(student.rollNumber || student.studentId || '');
+
     const deleted = await Student.findByIdAndDelete(req.params.id);
     if (!deleted) {
       return res.status(404).json({ success: false, error: 'Student not found' });
     }
+
+    await User.deleteMany({
+      role: 'student',
+      $or: [{ email }, { registerNumber }],
+    });
 
     res.json({ success: true, message: 'Student deleted successfully' });
   } catch (error) {

@@ -27,6 +27,10 @@ router.get('/google/callback',
         return res.redirect(`${frontendUrl}/login?error=no_user`);
       }
 
+      if (req.user.status === 'blocked') {
+        return res.redirect(`${frontendUrl}/login?error=account_blocked`);
+      }
+
       if (req.user.role !== 'student') {
         req.user.role = 'student';
         await req.user.save();
