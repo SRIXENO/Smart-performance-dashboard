@@ -44,15 +44,22 @@ export default function Register() {
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
-            <input
-              type="text"
-              name="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
-              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="Full Name"
-            />
+            <div className="floating-input-container">
+              <input
+                id="register-name"
+                type="text"
+                name="name"
+                required
+                autoComplete="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="floating-input-field"
+                placeholder=" "
+              />
+              <label className="floating-input-label" htmlFor="register-name">
+                Name
+              </label>
+            </div>
             <input
               type="email"
               name="email"
