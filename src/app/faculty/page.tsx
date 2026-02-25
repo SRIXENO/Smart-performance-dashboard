@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { facultyAPI } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import CustomDropdown from '@/components/ui/CustomDropdown';
 
 type FacultyMember = {
   _id: string;
@@ -149,18 +150,15 @@ export default function FacultyPage() {
             <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Name" className="px-3 py-2 border rounded-md" />
             <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email" className="px-3 py-2 border rounded-md" />
             <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={editing ? 'Leave blank to keep password' : 'Password'} className="px-3 py-2 border rounded-md" />
-            <select
+            <CustomDropdown
               value={form.department}
-              onChange={(e) => setForm({ ...form, department: e.target.value })}
-              className="px-3 py-2 border rounded-md"
-            >
-              <option value="">Select Department</option>
-              {DEPARTMENTS.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setForm({ ...form, department: value })}
+              placeholder="Select Department"
+              options={[
+                { value: '', label: 'Select Department' },
+                ...DEPARTMENTS.map((dept) => ({ value: dept, label: dept })),
+              ]}
+            />
             <input value={form.designation} onChange={(e) => setForm({ ...form, designation: e.target.value })} placeholder="Designation" className="px-3 py-2 border rounded-md" />
             <input value={form.profilePhoto} onChange={(e) => setForm({ ...form, profilePhoto: e.target.value })} placeholder="Profile Photo URL or base64" className="px-3 py-2 border rounded-md" />
             <input value={form.expertiseText} onChange={(e) => setForm({ ...form, expertiseText: e.target.value })} placeholder="Expertise (comma separated)" className="md:col-span-2 px-3 py-2 border rounded-md" />
@@ -176,10 +174,15 @@ export default function FacultyPage() {
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name/email/ID" className="px-3 py-2 border rounded-md" />
-          <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} className="px-3 py-2 border rounded-md">
-            <option value="">All Departments</option>
-            {departments.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
+          <CustomDropdown
+            value={departmentFilter}
+            onChange={setDepartmentFilter}
+            placeholder="All Departments"
+            options={[
+              { value: '', label: 'All Departments' },
+              ...departments.map((d) => ({ value: d, label: d })),
+            ]}
+          />
           <div className="text-sm text-slate-500 flex items-center">{faculty.length} faculty records</div>
         </div>
       </section>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { studentsAPI, subjectsAPI } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import CustomDropdown from '@/components/ui/CustomDropdown';
 
 const DEPARTMENT_CODE_MAP: Record<string, string> = {
   CS: 'Computer Science',
@@ -388,17 +389,27 @@ export default function EditStudent() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
-                    <select required value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="">Select Gender</option>
-                      {genders.map(g => <option key={g} value={g}>{g}</option>)}
-                    </select>
+                    <CustomDropdown
+                      value={formData.gender}
+                      onChange={(value) => setFormData({ ...formData, gender: value })}
+                      placeholder="Select Gender"
+                      options={[
+                        { value: '', label: 'Select Gender' },
+                        ...genders.map((g) => ({ value: g, label: g })),
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Blood Group</label>
-                    <select value={formData.bloodGroup} onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="">Select Blood Group</option>
-                      {bloodGroups.map(bg => <option key={bg} value={bg}>{bg}</option>)}
-                    </select>
+                    <CustomDropdown
+                      value={formData.bloodGroup}
+                      onChange={(value) => setFormData({ ...formData, bloodGroup: value })}
+                      placeholder="Select Blood Group"
+                      options={[
+                        { value: '', label: 'Select Blood Group' },
+                        ...bloodGroups.map((bg) => ({ value: bg, label: bg })),
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
@@ -406,33 +417,51 @@ export default function EditStudent() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Religion</label>
-                    <select value={formData.religion} onChange={(e) => setFormData({ ...formData, religion: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="">Select Religion</option>
-                      {religions.map(r => <option key={r} value={r}>{r}</option>)}
-                    </select>
+                    <CustomDropdown
+                      value={formData.religion}
+                      onChange={(value) => setFormData({ ...formData, religion: value })}
+                      placeholder="Select Religion"
+                      options={[
+                        { value: '', label: 'Select Religion' },
+                        ...religions.map((r) => ({ value: r, label: r })),
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                    <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="">Select Category</option>
-                      {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    <CustomDropdown
+                      value={formData.category}
+                      onChange={(value) => setFormData({ ...formData, category: value })}
+                      placeholder="Select Category"
+                      options={[
+                        { value: '', label: 'Select Category' },
+                        ...categories.map((c) => ({ value: c, label: c })),
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Marital Status</label>
-                    <select value={formData.maritalStatus} onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="Single">Single</option>
-                      <option value="Married">Married</option>
-                    </select>
+                    <CustomDropdown
+                      value={formData.maritalStatus}
+                      onChange={(value) => setFormData({ ...formData, maritalStatus: value })}
+                      options={[
+                        { value: 'Single', label: 'Single' },
+                        { value: 'Married', label: 'Married' },
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Status *</label>
-                    <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                      <option value="suspended">Suspended</option>
-                      <option value="graduated">Graduated</option>
-                    </select>
+                    <CustomDropdown
+                      value={formData.status}
+                      onChange={(value) => setFormData({ ...formData, status: value })}
+                      options={[
+                        { value: 'active', label: 'Active' },
+                        { value: 'inactive', label: 'Inactive' },
+                        { value: 'suspended', label: 'Suspended' },
+                        { value: 'graduated', label: 'Graduated' },
+                      ]}
+                    />
                   </div>
                 </div>
                 <div>
@@ -478,40 +507,55 @@ export default function EditStudent() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Department *</label>
-                    <select required value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="">Select Department</option>
-                      {departments.map(dept => <option key={dept} value={dept}>{dept}</option>)}
-                    </select>
+                    <CustomDropdown
+                      value={formData.department}
+                      onChange={(value) => setFormData({ ...formData, department: value })}
+                      placeholder="Select Department"
+                      options={[
+                        { value: '', label: 'Select Department' },
+                        ...departments.map((dept) => ({ value: dept, label: dept })),
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Program</label>
-                    <select value={formData.program} onChange={(e) => setFormData({ ...formData, program: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="BE">BE</option>
-                      <option value="B.Tech">B.Tech</option>
-                      <option value="M.Tech">M.Tech</option>
-                      <option value="ME">ME</option>
-                      <option value="BCA">BCA</option>
-                      <option value="MCA">MCA</option>
-                      <option value="B.Sc">B.Sc</option>
-                      <option value="M.Sc">M.Sc</option>
-                      <option value="MBA">MBA</option>
-                      <option value="BBA">BBA</option>
-                    </select>
+                    <CustomDropdown
+                      value={formData.program}
+                      onChange={(value) => setFormData({ ...formData, program: value })}
+                      options={[
+                        { value: 'BE', label: 'BE' },
+                        { value: 'B.Tech', label: 'B.Tech' },
+                        { value: 'M.Tech', label: 'M.Tech' },
+                        { value: 'ME', label: 'ME' },
+                        { value: 'BCA', label: 'BCA' },
+                        { value: 'MCA', label: 'MCA' },
+                        { value: 'B.Sc', label: 'B.Sc' },
+                        { value: 'M.Sc', label: 'M.Sc' },
+                        { value: 'MBA', label: 'MBA' },
+                        { value: 'BBA', label: 'BBA' },
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Year *</label>
-                    <select value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value={1}>Year 1</option>
-                      <option value={2}>Year 2</option>
-                      <option value={3}>Year 3</option>
-                      <option value={4}>Year 4</option>
-                    </select>
+                    <CustomDropdown
+                      value={String(formData.year)}
+                      onChange={(value) => setFormData({ ...formData, year: parseInt(value) })}
+                      options={[
+                        { value: '1', label: 'Year 1' },
+                        { value: '2', label: 'Year 2' },
+                        { value: '3', label: 'Year 3' },
+                        { value: '4', label: 'Year 4' },
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Semester</label>
-                    <select value={formData.semester} onChange={(e) => setFormData({ ...formData, semester: parseInt(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      {[1,2,3,4,5,6,7,8].map(sem => <option key={sem} value={sem}>Semester {sem}</option>)}
-                    </select>
+                    <CustomDropdown
+                      value={String(formData.semester)}
+                      onChange={(value) => setFormData({ ...formData, semester: parseInt(value) })}
+                      options={[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => ({ value: String(sem), label: `Semester ${sem}` }))}
+                    />
                   </div>
 
                   <div>
@@ -524,12 +568,16 @@ export default function EditStudent() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Admission Type</label>
-                    <select value={formData.admissionType} onChange={(e) => setFormData({ ...formData, admissionType: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="Regular">Regular</option>
-                      <option value="Lateral Entry">Lateral Entry</option>
-                      <option value="Management Quota">Management Quota</option>
-                      <option value="NRI Quota">NRI Quota</option>
-                    </select>
+                    <CustomDropdown
+                      value={formData.admissionType}
+                      onChange={(value) => setFormData({ ...formData, admissionType: value })}
+                      options={[
+                        { value: 'Regular', label: 'Regular' },
+                        { value: 'Lateral Entry', label: 'Lateral Entry' },
+                        { value: 'Management Quota', label: 'Management Quota' },
+                        { value: 'NRI Quota', label: 'NRI Quota' },
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Previous Education</label>

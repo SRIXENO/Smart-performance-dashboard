@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bar, Line } from 'react-chartjs-2';
 import {
@@ -15,6 +15,7 @@ import {
   Legend,
 } from 'chart.js';
 import { studentsAPI } from '@/lib/api';
+import CustomDropdown from '@/components/ui/CustomDropdown';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -56,8 +57,6 @@ export default function StudentDashboard() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [showFilters, setShowFilters] = useState(true);
-  const [yearMenuOpen, setYearMenuOpen] = useState(false);
-  const yearSelectRef = useRef<HTMLDivElement | null>(null);
 
   const [deptMetric, setDeptMetric] = useState<DeptMetric>('count');
   const [deptChartType, setDeptChartType] = useState<DeptChartType>('bar');
@@ -70,18 +69,6 @@ export default function StudentDashboard() {
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      if (!yearSelectRef.current) return;
-      if (!yearSelectRef.current.contains(event.target as Node)) {
-        setYearMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
   const fetchStudents = async () => {
@@ -422,86 +409,49 @@ export default function StudentDashboard() {
             </FilterLabel>
 
             <FilterLabel title="Year">
-              <div ref={yearSelectRef} className="relative w-full select-none">
-                <button
-                  type="button"
-                  onClick={() => setYearMenuOpen((prev) => !prev)}
-                  className="w-full bg-[#2a2f3b] text-white px-3 py-2 rounded-xl flex items-center justify-between border border-[#2a2f3b] hover:bg-[#323741] transition"
-                >
-                  <span>{selectedYear === 'All' ? 'All Years' : `Year ${selectedYear}`}</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 512 512"
-                    className={`h-3 w-5 fill-white transition-transform ${yearMenuOpen ? 'rotate-0' : '-rotate-90'}`}
-                    aria-hidden="true"
-                  >
-                    <path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
-                  </svg>
-                </button>
-
-                <div
-                  className={`absolute left-0 right-0 z-20 mt-1 rounded-xl bg-[#2a2f3b] p-1 transition-all duration-300 ${
-                    yearMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'
-                  }`}
-                >
-                  {years
-                    .filter((year) => year !== selectedYear)
-                    .map((year) => (
-                      <button
-                        key={String(year)}
-                        type="button"
-                        onClick={() => {
-                          setSelectedYear(year);
-                          setYearMenuOpen(false);
-                        }}
-                        className="w-full text-left text-white px-3 py-2 rounded-lg text-sm hover:bg-[#323741] transition"
-                      >
-                        {year === 'All' ? 'All Years' : `Year ${year}`}
-                      </button>
-                    ))}
-                </div>
-              </div>
+              <CustomDropdown
+                value={String(selectedYear)}
+                onChange={(val) => setSelectedYear(val === 'All' ? 'All' : Number(val))}
+                options={years.map((y) => ({
+                  value: String(y),
+                  label: y === 'All' ? 'All Years' : `Year ${y}`,
+                }))}
+              />
             </FilterLabel>
 
             <FilterLabel title="Status">
-              <select
+              <CustomDropdown
                 value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-              >
-                {statuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status === 'All' ? 'All Statuses' : status}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedStatus(val)}
+                options={statuses.map((status) => ({
+                  value: status,
+                  label: status === 'All' ? 'All Statuses' : status,
+                }))}
+              />
             </FilterLabel>
 
             <FilterLabel title="Department">
-              <select
+              <CustomDropdown
                 value={selectedDepartment}
-                onChange={(e) => setSelectedDepartment(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-              >
-                {departments.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept === 'All' ? 'All Departments' : dept}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedDepartment(val)}
+                options={departments.map((dept) => ({
+                  value: dept,
+                  label: dept === 'All' ? 'All Departments' : dept,
+                }))}
+              />
             </FilterLabel>
 
             <FilterLabel title="Time Window">
-              <select
+              <CustomDropdown
                 value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-              >
-                <option value="all">All Time</option>
-                <option value="30d">Last 30 Days</option>
-                <option value="90d">Last 90 Days</option>
-                <option value="365d">Last 12 Months</option>
-              </select>
+                onChange={(val) => setTimeRange(val as TimeRange)}
+                options={[
+                  { value: 'all', label: 'All Time' },
+                  { value: '30d', label: 'Last 30 Days' },
+                  { value: '90d', label: 'Last 90 Days' },
+                  { value: '365d', label: 'Last 12 Months' },
+                ]}
+              />
             </FilterLabel>
 
             <div className="flex items-end">

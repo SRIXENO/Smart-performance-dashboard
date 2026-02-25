@@ -5,6 +5,7 @@ import { studentsAPI } from '@/lib/api';
 import { Student } from '@/types';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useAuth } from '@/context/AuthContext';
+import CustomDropdown from '@/components/ui/CustomDropdown';
 
 export default function Students() {
   const { user } = useAuth();
@@ -109,27 +110,27 @@ export default function Students() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          <select
+          <CustomDropdown
             value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">All Departments</option>
-            {departments.map((dept) => (
-              <option key={dept} value={dept}>{dept}</option>
-            ))}
-          </select>
-          <select
+            onChange={setDepartment}
+            placeholder="All Departments"
+            options={[
+              { value: '', label: 'All Departments' },
+              ...departments.map((dept) => ({ value: dept, label: dept })),
+            ]}
+          />
+          <CustomDropdown
             value={year}
-            onChange={(e) => setYear(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">All Years</option>
-            <option value="1">Year 1</option>
-            <option value="2">Year 2</option>
-            <option value="3">Year 3</option>
-            <option value="4">Year 4</option>
-          </select>
+            onChange={setYear}
+            placeholder="All Years"
+            options={[
+              { value: '', label: 'All Years' },
+              { value: '1', label: 'Year 1' },
+              { value: '2', label: 'Year 2' },
+              { value: '3', label: 'Year 3' },
+              { value: '4', label: 'Year 4' },
+            ]}
+          />
         </div>
       </div>
 

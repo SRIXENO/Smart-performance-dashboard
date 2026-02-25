@@ -5,6 +5,7 @@ import api, { studentsAPI, subjectsAPI } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import SuccessToast from '@/components/SuccessToast';
 import { useAuth } from '@/context/AuthContext';
+import CustomDropdown from '@/components/ui/CustomDropdown';
 
 export default function Performance() {
   const { user } = useAuth();
@@ -192,20 +193,19 @@ export default function Performance() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Student</label>
-                <select
-                  required
+                <CustomDropdown
                   value={formData.studentId}
-                  onChange={(e) => handleStudentChange(e.target.value)}
+                  onChange={handleStudentChange}
                   disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  <option value="" className="text-gray-500">Select Student</option>
-                  {students.map((student) => (
-                    <option key={student._id} value={student._id}>
-                      {student.name} ({student.studentId}) - Year {student.year}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Select Student"
+                  options={[
+                    { value: '', label: 'Select Student' },
+                    ...students.map((student) => ({
+                      value: student._id,
+                      label: `${student.name} (${student.studentId}) - Year ${student.year}`,
+                    })),
+                  ]}
+                />
               </div>
               
               {selectedStudent && (
@@ -221,19 +221,18 @@ export default function Performance() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Subject Name</label>
                 {assignedSubjects.length > 0 ? (
-                  <select
-                    required
+                  <CustomDropdown
                     value={formData.subjectName}
-                    onChange={(e) => setFormData({ ...formData, subjectName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select Subject</option>
-                    {assignedSubjects.map((subject) => (
-                      <option key={subject.code} value={subject.name}>
-                        {subject.code} - {subject.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(value) => setFormData({ ...formData, subjectName: value })}
+                    placeholder="Select Subject"
+                    options={[
+                      { value: '', label: 'Select Subject' },
+                      ...assignedSubjects.map((subject) => ({
+                        value: subject.name,
+                        label: `${subject.code} - ${subject.name}`,
+                      })),
+                    ]}
+                  />
                 ) : (
                   <input
                     type="text"

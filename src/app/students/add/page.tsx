@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { studentsAPI } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import CustomDropdown from '@/components/ui/CustomDropdown';
 
 const DEPARTMENT_CODE_MAP: Record<string, string> = {
   CS: 'Computer Science',
@@ -184,19 +185,15 @@ export default function AddStudent() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Department *
               </label>
-              <select
-                name="department"
+              <CustomDropdown
                 value={formData.department}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.department ? 'border-red-500' : 'border-gray-300'
-                }`}
-              >
-                <option value="">Select Department</option>
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
+                onChange={(value) => handleChange({ target: { name: 'department', value } } as React.ChangeEvent<HTMLSelectElement>)}
+                placeholder="Select Department"
+                options={[
+                  { value: '', label: 'Select Department' },
+                  ...departments.map((dept) => ({ value: dept, label: dept })),
+                ]}
+              />
               {errors.department && <p className="text-red-600 text-sm mt-1">{errors.department}</p>}
             </div>
 
@@ -204,36 +201,33 @@ export default function AddStudent() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Year *
               </label>
-              <select
-                name="year"
-                value={formData.year}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value={1}>Year 1</option>
-                <option value={2}>Year 2</option>
-                <option value={3}>Year 3</option>
-                <option value={4}>Year 4</option>
-              </select>
+              <CustomDropdown
+                value={String(formData.year)}
+                onChange={(value) => handleChange({ target: { name: 'year', value } } as React.ChangeEvent<HTMLSelectElement>)}
+                options={[
+                  { value: '1', label: 'Year 1' },
+                  { value: '2', label: 'Year 2' },
+                  { value: '3', label: 'Year 3' },
+                  { value: '4', label: 'Year 4' },
+                ]}
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Gender *
               </label>
-              <select
-                name="gender"
+              <CustomDropdown
                 value={formData.gender}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.gender ? 'border-red-500' : 'border-gray-300'
-                }`}
-              >
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
+                onChange={(value) => handleChange({ target: { name: 'gender', value } } as React.ChangeEvent<HTMLSelectElement>)}
+                placeholder="Select Gender"
+                options={[
+                  { value: '', label: 'Select Gender' },
+                  { value: 'Male', label: 'Male' },
+                  { value: 'Female', label: 'Female' },
+                  { value: 'Other', label: 'Other' },
+                ]}
+              />
               {errors.gender && <p className="text-red-600 text-sm mt-1">{errors.gender}</p>}
             </div>
 
@@ -307,15 +301,14 @@ export default function AddStudent() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Status *
               </label>
-              <select
-                name="status"
+              <CustomDropdown
                 value={formData.status}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+                onChange={(value) => handleChange({ target: { name: 'status', value } } as React.ChangeEvent<HTMLSelectElement>)}
+                options={[
+                  { value: 'active', label: 'Active' },
+                  { value: 'inactive', label: 'Inactive' },
+                ]}
+              />
             </div>
           </div>
 

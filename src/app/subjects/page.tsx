@@ -5,6 +5,7 @@ import { subjectsAPI } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import SuccessToast from '@/components/SuccessToast';
 import { useAuth } from '@/context/AuthContext';
+import CustomDropdown from '@/components/ui/CustomDropdown';
 
 interface Subject {
   code: string;
@@ -198,34 +199,31 @@ export default function SubjectManagement() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Department *</label>
-                <select
-                  required
-                  disabled={!!editingId}
+                <CustomDropdown
                   value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                >
-                  <option value="">Select Department</option>
-                  {departments.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
+                  onChange={(value) => setFormData({ ...formData, department: value })}
+                  placeholder="Select Department"
+                  disabled={!!editingId}
+                  options={[
+                    { value: '', label: 'Select Department' },
+                    ...departments.map((dept) => ({ value: dept, label: dept })),
+                  ]}
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Academic Year *</label>
-                <select
-                  required
+                <CustomDropdown
+                  value={String(formData.year)}
+                  onChange={(value) => setFormData({ ...formData, year: parseInt(value) })}
                   disabled={!!editingId}
-                  value={formData.year}
-                  onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                >
-                  <option value={1}>1st Year</option>
-                  <option value={2}>2nd Year</option>
-                  <option value={3}>3rd Year</option>
-                  <option value={4}>4th Year</option>
-                </select>
+                  options={[
+                    { value: '1', label: '1st Year' },
+                    { value: '2', label: '2nd Year' },
+                    { value: '3', label: '3rd Year' },
+                    { value: '4', label: '4th Year' },
+                  ]}
+                />
               </div>
             </div>
 
