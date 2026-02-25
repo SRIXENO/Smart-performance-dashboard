@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 type DropdownOption = {
   value: string;
@@ -27,7 +27,9 @@ export default function CustomDropdown({
   menuClassName = '',
 }: CustomDropdownProps) {
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const listId = useId();
 
   const selectedLabel = useMemo(() => {
     const selected = options.find((opt) => opt.value === value);
@@ -35,6 +37,10 @@ export default function CustomDropdown({
   }, [options, placeholder, value]);
 
   const visibleOptions = useMemo(() => options.filter((opt) => opt.value !== value), [options, value]);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [value, open]);
 
   useEffect(() => {
     const handleOutside = (event: MouseEvent) => {
@@ -48,12 +54,65 @@ export default function CustomDropdown({
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
 
+  const chooseOption = (optionValue: string) => {
+    onChange(optionValue);
+    setOpen(false);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (disabled) return;
+
+    if (!open && ['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) {
+      event.preventDefault();
+      setOpen(true);
+      setActiveIndex(0);
+      return;
+    }
+
+    if (!open) return;
+
+    if (!visibleOptions.length) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+      }
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveIndex((prev) => (prev + 1) % visibleOptions.length);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveIndex((prev) => (prev - 1 + visibleOptions.length) % visibleOptions.length);
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      chooseOption(visibleOptions[activeIndex]?.value);
+      return;
+    }
+
+    if (event.key === 'Escape' || event.key === 'Tab') {
+      setOpen(false);
+    }
+  };
+
   return (
     <div ref={rootRef} className={`relative w-full select-none ${className}`}>
       <button
         type="button"
         disabled={disabled}
         onClick={() => setOpen((prev) => !prev)}
+        onKeyDown={handleKeyDown}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-label={selectedLabel}
         className="w-full bg-white text-slate-800 px-3 py-2 rounded-xl flex items-center justify-between border border-slate-300 hover:bg-slate-50 transition disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <span className="truncate text-left">{selectedLabel}</span>
@@ -68,19 +127,23 @@ export default function CustomDropdown({
       </button>
 
       <div
+        id={listId}
+        role="listbox"
         className={`absolute left-0 right-0 z-30 mt-1 rounded-xl bg-white border border-slate-200 shadow-sm p-1 transition-all duration-300 ${menuClassName} ${
           open ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'
         }`}
       >
-        {visibleOptions.map((option) => (
+        {visibleOptions.map((option, index) => (
           <button
             key={option.value}
             type="button"
-            onClick={() => {
-              onChange(option.value);
-              setOpen(false);
-            }}
-            className="w-full text-left text-slate-700 px-3 py-2 rounded-lg text-sm hover:bg-slate-100 transition"
+            role="option"
+            aria-selected={index === activeIndex}
+            onMouseEnter={() => setActiveIndex(index)}
+            onClick={() => chooseOption(option.value)}
+            className={`w-full text-left text-slate-700 px-3 py-2 rounded-lg text-sm transition ${
+              index === activeIndex ? 'bg-slate-100' : 'hover:bg-slate-100'
+            }`}
           >
             {option.label}
           </button>

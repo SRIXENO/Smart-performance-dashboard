@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { approvalsAPI } from '@/lib/api';
+import ConfirmModal from '@/components/ConfirmModal';
 
 type PendingUser = {
   _id: string;
@@ -22,6 +23,14 @@ export default function AdminApprovalsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    confirmText: 'Confirm',
+    confirmStyle: 'primary' as 'danger' | 'primary' | 'warning',
+  });
 
   const fetchPending = async () => {
     try {
@@ -47,16 +56,32 @@ export default function AdminApprovalsPage() {
   }, [user]);
 
   const handleDecision = async (id: string, decision: 'approved' | 'rejected') => {
-    setUpdatingId(id);
-    setError('');
-    try {
-      await approvalsAPI.updateDecision(id, decision);
-      setPendingUsers((prev) => prev.filter((u) => u._id !== id));
-    } catch (err: any) {
-      setError(err.response?.data?.error || `Failed to ${decision} user`);
-    } finally {
-      setUpdatingId(null);
-    }
+    const target = pendingUsers.find((u) => u._id === id);
+    const title = decision === 'approved' ? 'Approve Account?' : 'Reject Account?';
+    const message = decision === 'approved'
+      ? `Approve ${target?.name || 'this user'} and allow login access?`
+      : `Reject ${target?.name || 'this user'} and block login access?`;
+
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      confirmText: decision === 'approved' ? 'Approve' : 'Reject',
+      confirmStyle: decision === 'approved' ? 'primary' : 'danger',
+      onConfirm: async () => {
+        setUpdatingId(id);
+        setError('');
+        try {
+          await approvalsAPI.updateDecision(id, decision);
+          setPendingUsers((prev) => prev.filter((u) => u._id !== id));
+          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        } catch (err: any) {
+          setError(err.response?.data?.error || `Failed to ${decision} user`);
+        } finally {
+          setUpdatingId(null);
+        }
+      }
+    });
   };
 
   if (loading || isLoading) {
@@ -131,6 +156,18 @@ export default function AdminApprovalsPage() {
           <div className="text-center py-12 text-gray-500">No pending approvals.</div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        description={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        confirmStyle={confirmModal.confirmStyle}
+        cancelText="Cancel"
+        loading={updatingId !== null}
+      />
     </div>
   );
 }

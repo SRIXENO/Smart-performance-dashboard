@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { studentsAPI } from '@/lib/api';
 import { Student } from '@/types';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -131,12 +132,12 @@ export default function Students() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-900">Students</h1>
         {user?.role === 'admin' && (
-          <a
+          <Link
             href="/students/add"
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
           >
             Add Student
-          </a>
+          </Link>
         )}
       </div>
 
@@ -236,12 +237,12 @@ export default function Students() {
                     </td>
                     <td className="sticky right-0 z-10 bg-white shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.35)] px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="inline-flex items-center gap-2 sm:gap-3">
-                      <a
+                      <Link
                         href={`/students/${student._id}`}
                         className="text-blue-600 hover:text-blue-900"
                       >
                         View
-                      </a>
+                      </Link>
                       {(user?.role === 'admin' || user?.role === 'faculty') && (
                         <>
                           <details className="relative sm:hidden">
@@ -249,12 +250,12 @@ export default function Students() {
                               More
                             </summary>
                             <div className="absolute right-0 mt-1 w-28 rounded-md border border-gray-200 bg-white shadow-lg p-1 z-20">
-                              <a
+                              <Link
                                 href={`/students/${student._id}/edit`}
                                 className="block rounded px-2 py-1 text-indigo-600 hover:bg-indigo-50"
                               >
                                 Edit
-                              </a>
+                              </Link>
                               {canManageStudentAccess && (
                                 <button
                                   onClick={() => handleToggleBlock(student)}
@@ -279,12 +280,12 @@ export default function Students() {
                               )}
                             </div>
                           </details>
-                          <a
+                          <Link
                             href={`/students/${student._id}/edit`}
                             className="hidden sm:inline text-indigo-600 hover:text-indigo-900"
                           >
                             Edit
-                          </a>
+                          </Link>
                           {canManageStudentAccess && (
                             <button
                               onClick={() => handleToggleBlock(student)}
@@ -324,12 +325,12 @@ export default function Students() {
               <div className="text-center py-12">
                 <div className="text-gray-500 mb-4">No students found</div>
                 {user?.role === 'admin' && (
-                  <a
+                  <Link
                     href="/students/add"
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                   >
                     Add Student
-                  </a>
+                  </Link>
                 )}
               </div>
             )}
