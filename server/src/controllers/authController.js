@@ -119,7 +119,7 @@ const login = async (req, res) => {
     }
 
     if (user.status === 'blocked') {
-      return res.status(403).json({ success: false, error: 'Account is blocked. Contact admin.' });
+      return res.status(403).json({ success: false, error: 'Account is blocked. Contact admin or faculty.' });
     }
 
     const token = generateToken(user._id, user.role);

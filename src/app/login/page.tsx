@@ -24,7 +24,7 @@ function LoginContent() {
       : authError === 'approval_rejected'
         ? 'Your account request was rejected. Contact admin.'
         : authError === 'account_blocked'
-          ? 'Account is blocked. Contact admin.'
+          ? 'Account is blocked. Contact admin or faculty.'
           : '';
 
   const handleSubmit = async (e: React.FormEvent) => {
