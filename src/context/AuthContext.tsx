@@ -43,13 +43,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (email: string, password: string) => {
-    const response = await authAPI.login({ email, password });
-    console.log('Login response:', response.data);
-    if (response.data.token && typeof window !== 'undefined') {
-      localStorage.setItem('token', response.data.token);
-      console.log('Token stored:', response.data.token.substring(0, 20) + '...');
+    try {
+      const response = await authAPI.login({ email, password });
+      console.log('Login response:', response.data);
+      if (response.data.token && typeof window !== 'undefined') {
+        localStorage.setItem('token', response.data.token);
+        console.log('Token stored:', response.data.token.substring(0, 20) + '...');
+      }
+      setUser(response.data.user);
+    } catch (error: any) {
+      const isTimeout =
+        error?.code === 'ECONNABORTED' || String(error?.message || '').toLowerCase().includes('timeout');
+
+      if (!isTimeout) {
+        throw error;
+      }
+
+      // Retry once for backend cold starts.
+      const retryResponse = await authAPI.login({ email, password });
+      if (retryResponse.data.token && typeof window !== 'undefined') {
+        localStorage.setItem('token', retryResponse.data.token);
+      }
+      setUser(retryResponse.data.user);
     }
-    setUser(response.data.user);
   };
 
   const register = async (name: string, email: string, password: string) => {

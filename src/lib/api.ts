@@ -8,13 +8,14 @@ const normalizedApiBase = API_BASE_URL.replace(/\/+$/, '');
 const apiOrigin = normalizedApiBase.endsWith('/api')
   ? normalizedApiBase.slice(0, -4)
   : normalizedApiBase;
+const API_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || 30000);
 
 export const GOOGLE_AUTH_URL =
   normalizedApiBase === '/api' ? '/api/auth/google' : `${apiOrigin}/api/auth/google`;
 
 const api = axios.create({
   baseURL: normalizedApiBase,
-  timeout: 12000,
+  timeout: Number.isFinite(API_TIMEOUT_MS) ? API_TIMEOUT_MS : 30000,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
