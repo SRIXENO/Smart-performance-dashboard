@@ -33,6 +33,10 @@ export default function EditStudent() {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
   const [uploadingDoc, setUploadingDoc] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -269,11 +273,26 @@ export default function EditStudent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (newPassword && newPassword.length < 8) {
+      alert('New password must be at least 8 characters');
+      return;
+    }
+
+    if (newPassword && newPassword !== confirmPassword) {
+      alert('New password and confirm password do not match');
+      return;
+    }
+
     setSaving(true);
 
     try {
-      console.log('Submitting form data:', formData);
-      await studentsAPI.update(params.id as string, formData);
+      const payload = {
+        ...formData,
+        ...(newPassword ? { password: newPassword } : {}),
+      };
+      console.log('Submitting form data:', payload);
+      await studentsAPI.update(params.id as string, payload);
       router.push('/students');
     } catch (error: any) {
       console.error('Failed to update student:', error);
@@ -472,6 +491,52 @@ export default function EditStudent() {
                         {lang}
                       </button>
                     ))}
+                  </div>
+                </div>
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4">Login Access</h3>
+                  <p className="text-sm text-gray-600 mb-4">Admin and faculty can reset student login password.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                      <div className="relative">
+                        <input
+                          type={showNewPassword ? 'text' : 'password'}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Leave blank to keep current password"
+                          className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword((prev) => !prev)}
+                          className="absolute inset-y-0 right-3 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                          aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showNewPassword ? 'Hide' : 'Show'}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Confirm new password"
+                          className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((prev) => !prev)}
+                          className="absolute inset-y-0 right-3 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                          aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showConfirmPassword ? 'Hide' : 'Show'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

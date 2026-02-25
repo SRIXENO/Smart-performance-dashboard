@@ -11,6 +11,7 @@ export default function StudentDetail() {
   const router = useRouter();
   const { user } = useAuth();
   const canManageStudentAccess = user?.role === 'admin' || user?.role === 'faculty';
+  const canManageStudentFiles = user?.role === 'admin' || user?.role === 'faculty';
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('personal');
@@ -201,7 +202,7 @@ export default function StudentDetail() {
                   Year {student.year}
                 </span>
               </div>
-              {user?.role === 'admin' && (
+              {canManageStudentFiles && (
                 <>
                   <label className="mt-2 inline-flex items-center text-xs text-blue-600 hover:text-blue-800 cursor-pointer">
                     Change Photo
@@ -445,7 +446,7 @@ export default function StudentDetail() {
                         {doc.status}
                       </span>
                     </div>
-                    {user?.role === 'admin' && (
+                    {canManageStudentFiles && (
                       <div className="flex items-center gap-3">
                         <input
                           type="file"

@@ -190,7 +190,12 @@ const updateStudent = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Student not found' });
     }
 
-    const { password: _password, ...studentPayload } = req.body;
+    const { password: newPasswordRaw, ...studentPayload } = req.body;
+    const newPassword = String(newPasswordRaw || '').trim();
+    if (newPasswordRaw !== undefined && newPassword.length < 8) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+    }
+
     const detectedDepartment = detectDepartmentFromRegisterNumber(studentPayload.rollNumber);
     const updatePayload = {
       ...studentPayload,
@@ -226,6 +231,9 @@ const updateStudent = async (req, res) => {
       linkedUser.registerNumber = newRegisterNumber;
       linkedUser.department = updatedStudent.department;
       linkedUser.status = userStatus;
+      if (newPassword) {
+        linkedUser.password = newPassword;
+      }
       await linkedUser.save();
     }
 
