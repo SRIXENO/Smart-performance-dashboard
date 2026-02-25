@@ -1,4 +1,7 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
+const ActivityLog = require('../models/ActivityLog');
+const Subject = require('../models/Subject');
 const bcrypt = require('bcryptjs');
 const { generateId } = require('../utils/generateId');
 
@@ -135,15 +138,47 @@ const updateFaculty = async (req, res) => {
 };
 
 const deleteFaculty = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
     const { id } = req.params;
-    const deleted = await User.findOneAndDelete({ _id: id, role: 'faculty' });
-    if (!deleted) {
-      return res.status(404).json({ success: false, error: 'Faculty member not found' });
-    }
-    res.json({ success: true, message: 'Faculty deleted successfully' });
+    let deletedSummary = null;
+
+    await session.withTransaction(async () => {
+      const faculty = await User.findOne({ _id: id, role: 'faculty' }).session(session);
+      if (!faculty) {
+        const err = new Error('Faculty member not found');
+        err.statusCode = 404;
+        throw err;
+      }
+
+      const [activityDelete, subjectUnassign, facultyDelete] = await Promise.all([
+        ActivityLog.deleteMany({ userId: faculty._id }).session(session),
+        Subject.updateMany(
+          { facultyId: faculty._id },
+          { $unset: { facultyId: 1 } }
+        ).session(session),
+        User.deleteOne({ _id: faculty._id, role: 'faculty' }).session(session),
+      ]);
+
+      deletedSummary = {
+        faculty: facultyDelete.deletedCount || 0,
+        activityLogs: activityDelete.deletedCount || 0,
+        subjectsUnassigned: subjectUnassign.modifiedCount || 0,
+      };
+    });
+
+    res.json({
+      success: true,
+      message: 'Faculty deleted successfully (cascade)',
+      data: { deleted: deletedSummary },
+    });
   } catch (error) {
+    if (error.statusCode === 404) {
+      return res.status(404).json({ success: false, error: error.message });
+    }
     res.status(500).json({ success: false, error: error.message });
+  } finally {
+    session.endSession();
   }
 };
 

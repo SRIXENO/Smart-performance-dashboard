@@ -1,5 +1,9 @@
+const mongoose = require('mongoose');
 const Student = require('../models/Student');
 const Performance = require('../models/Performance');
+const AcademicRecord = require('../models/AcademicRecord');
+const AIAnalytics = require('../models/AIAnalytics');
+const ActivityLog = require('../models/ActivityLog');
 const User = require('../models/User');
 const { generateId } = require('../utils/generateId');
 
@@ -237,28 +241,60 @@ const updateStudent = async (req, res) => {
 };
 
 const deleteStudent = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
-    const student = await Student.findById(req.params.id);
-    if (!student) {
-      return res.status(404).json({ success: false, error: 'Student not found' });
-    }
+    let deletedSummary = null;
+    await session.withTransaction(async () => {
+      const student = await Student.findById(req.params.id).session(session);
+      if (!student) {
+        const err = new Error('Student not found');
+        err.statusCode = 404;
+        throw err;
+      }
 
-    const email = String(student.email || '').toLowerCase();
-    const registerNumber = String(student.rollNumber || student.studentId || '');
+      const email = String(student.email || '').toLowerCase();
+      const registerNumber = String(student.rollNumber || student.studentId || '');
 
-    const deleted = await Student.findByIdAndDelete(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ success: false, error: 'Student not found' });
-    }
+      const linkedUser = await User.findOne({
+        role: 'student',
+        $or: [{ email }, { registerNumber }],
+      }).session(session);
 
-    await User.deleteMany({
-      role: 'student',
-      $or: [{ email }, { registerNumber }],
+      const userId = linkedUser?._id || null;
+
+      const [performanceDelete, academicDelete, aiDelete, activityDelete, userDelete, studentDelete] = await Promise.all([
+        Performance.deleteMany({ studentId: student._id }).session(session),
+        AcademicRecord.deleteMany({ studentId: student._id }).session(session),
+        AIAnalytics.deleteMany({ studentId: student._id }).session(session),
+        ActivityLog.deleteMany({
+          $or: [{ targetId: student._id }, ...(userId ? [{ userId }] : [])],
+        }).session(session),
+        userId ? User.deleteOne({ _id: userId }).session(session) : Promise.resolve({ deletedCount: 0 }),
+        Student.deleteOne({ _id: student._id }).session(session),
+      ]);
+
+      deletedSummary = {
+        student: studentDelete.deletedCount || 0,
+        user: userDelete.deletedCount || 0,
+        performance: performanceDelete.deletedCount || 0,
+        academicRecord: academicDelete.deletedCount || 0,
+        aiAnalytics: aiDelete.deletedCount || 0,
+        activityLogs: activityDelete.deletedCount || 0,
+      };
     });
 
-    res.json({ success: true, message: 'Student deleted successfully' });
+    res.json({
+      success: true,
+      message: 'Student deleted successfully (cascade)',
+      data: { deleted: deletedSummary },
+    });
   } catch (error) {
+    if (error.statusCode === 404) {
+      return res.status(404).json({ success: false, error: error.message });
+    }
     res.status(500).json({ success: false, error: error.message });
+  } finally {
+    session.endSession();
   }
 };
 
