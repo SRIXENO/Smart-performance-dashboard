@@ -45,15 +45,8 @@ PROJECT 1/
       routes/                API routes
   README.md
   FEATURES.md
-  ARCHITECTURE.md
   SETUP.md
-  QUICK_START.md
   DEPLOYMENT.md
-  DEPLOYMENT_CHECKLIST.md
-  DEPLOYMENT_QUICK_REFERENCE.md
-  DOCUMENTATION_INDEX.md
-  ENTERPRISE_TRANSFORMATION.md
-  TRANSFORMATION_SUMMARY.md
 ```
 
 ## Role and Access Model
@@ -147,12 +140,13 @@ npm run dev
 - `/api/activities`
 
 ## Deployment
-- Full deployment: [DEPLOYMENT.md](DEPLOYMENT.md)
-- Go-live checklist: [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)
-- Fast reference: [DEPLOYMENT_QUICK_REFERENCE.md](DEPLOYMENT_QUICK_REFERENCE.md)
+- Full deployment + checklist + quick troubleshooting: [DEPLOYMENT.md](DEPLOYMENT.md)
 
-## Documentation
-Use [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) for the full map.
+## Documentation Files (Reduced)
+- [README.md](README.md)
+- [FEATURES.md](FEATURES.md)
+- [SETUP.md](SETUP.md)
+- [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ## License
 Academic and portfolio usage.

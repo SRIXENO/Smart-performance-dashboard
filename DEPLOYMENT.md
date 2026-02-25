@@ -68,6 +68,25 @@
 - Verify callback URL matches deployed backend auth callback
 - Verify client ID/secret on Render
 
+## 8. Go-Live Checklist
+- [ ] Frontend build succeeds on Vercel
+- [ ] Backend `/api/health` responds successfully
+- [ ] `FRONTEND_URL` matches deployed Vercel domain exactly
+- [ ] Login works for admin account
+- [ ] Students and Faculty pages load without CORS errors
+- [ ] Approvals page works for admin
+- [ ] Student block/unblock and update flows work
+
+## 9. Quick Reference
+Backend (Render):
+- Root: `PROJECT 1/server`
+- Build: `npm install`
+- Start: `npm start`
+
+Frontend (Vercel):
+- Root: `PROJECT 1`
+- `NEXT_PUBLIC_API_URL=https://<render-service>.onrender.com/api`
+
 ## Document Metadata
 - Last Updated: February 25, 2026
 - Status: Active
