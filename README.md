@@ -148,6 +148,19 @@ npm run dev
 - [SETUP.md](SETUP.md)
 - [DEPLOYMENT.md](DEPLOYMENT.md)
 
+## Merged Documentation Note
+The previous markdown files were intentionally merged to reduce documentation noise.  
+Their content now lives in the core 4 files above.
+
+Merged mapping:
+- `ARCHITECTURE.md` -> merged into `README.md` + `FEATURES.md`
+- `QUICK_START.md` -> merged into `README.md` + `SETUP.md`
+- `DEPLOYMENT_CHECKLIST.md` -> merged into `DEPLOYMENT.md`
+- `DEPLOYMENT_QUICK_REFERENCE.md` -> merged into `DEPLOYMENT.md`
+- `DOCUMENTATION_INDEX.md` -> replaced by the reduced docs list in this README
+- `ENTERPRISE_TRANSFORMATION.md` -> important outcomes merged into `README.md` + `FEATURES.md`
+- `TRANSFORMATION_SUMMARY.md` -> summary points merged into `README.md`
+
 ## License
 Academic and portfolio usage.
 
