@@ -54,13 +54,13 @@ export default function CustomDropdown({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full bg-[#2a2f3b] text-white px-3 py-2 rounded-xl flex items-center justify-between border border-[#2a2f3b] hover:bg-[#323741] transition disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full bg-white text-slate-800 px-3 py-2 rounded-xl flex items-center justify-between border border-slate-300 hover:bg-slate-50 transition disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <span className="truncate text-left">{selectedLabel}</span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 512 512"
-          className={`h-3 w-5 fill-white transition-transform ${open ? 'rotate-0' : '-rotate-90'}`}
+          className={`h-3 w-5 fill-slate-700 transition-transform ${open ? 'rotate-0' : '-rotate-90'}`}
           aria-hidden="true"
         >
           <path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
@@ -68,7 +68,7 @@ export default function CustomDropdown({
       </button>
 
       <div
-        className={`absolute left-0 right-0 z-30 mt-1 rounded-xl bg-[#2a2f3b] p-1 transition-all duration-300 ${menuClassName} ${
+        className={`absolute left-0 right-0 z-30 mt-1 rounded-xl bg-white border border-slate-200 shadow-sm p-1 transition-all duration-300 ${menuClassName} ${
           open ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'
         }`}
       >
@@ -80,7 +80,7 @@ export default function CustomDropdown({
               onChange(option.value);
               setOpen(false);
             }}
-            className="w-full text-left text-white px-3 py-2 rounded-lg text-sm hover:bg-[#323741] transition"
+            className="w-full text-left text-slate-700 px-3 py-2 rounded-lg text-sm hover:bg-slate-100 transition"
           >
             {option.label}
           </button>
