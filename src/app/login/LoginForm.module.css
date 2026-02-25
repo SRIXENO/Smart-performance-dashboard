@@ -52,7 +52,7 @@
   margin-left: 10px;
   border-radius: 10px;
   border: none !important;
-  width: 85%;
+  width: 100%;
   height: 100%;
   background: transparent !important;
   box-shadow: none !important;
@@ -181,6 +181,16 @@
 
 .icon {
   flex-shrink: 0;
+}
+
+.passwordToggle {
+  margin-right: 10px;
+  border: none;
+  background: transparent;
+  color: #2d79f3;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 @media (max-width: 640px) {

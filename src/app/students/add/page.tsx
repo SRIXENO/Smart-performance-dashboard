@@ -27,6 +27,7 @@ const detectDepartmentFromRegisterNumber = (value: string) => {
 
 export default function AddStudent() {
   const { user, loading: authLoading } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -187,16 +188,26 @@ export default function AddStudent() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Login Password *
               </label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.password ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Min 8 characters"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 pr-16 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.password ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Min 8 characters"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-3 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
               {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
             </div>
 
