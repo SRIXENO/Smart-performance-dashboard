@@ -1,115 +1,71 @@
-# Architecture Guide
+# Architecture
 
-## Documentation Hub
-- Main Overview: [`README.md`](README.md)
-- Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md)
-- Setup: [`SETUP.md`](SETUP.md)
-- Quick Start: [`QUICK_START.md`](QUICK_START.md)
-- Deployment Guide: [`DEPLOYMENT.md`](DEPLOYMENT.md)
-- Deployment Checklist: [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md)
-- Deployment Quick Reference: [`DEPLOYMENT_QUICK_REFERENCE.md`](DEPLOYMENT_QUICK_REFERENCE.md)
-- Documentation Index: [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md)
-- Enterprise Report: [`ENTERPRISE_TRANSFORMATION.md`](ENTERPRISE_TRANSFORMATION.md)
-- Executive Summary: [`TRANSFORMATION_SUMMARY.md`](TRANSFORMATION_SUMMARY.md)
+## 1. System Overview
+SPID is a split frontend/backend platform:
+- Frontend: Next.js app (UI, routing, role-aware interactions)
+- Backend: Express API (auth, domain logic, RBAC enforcement)
+- Database: MongoDB Atlas (persistent records)
 
-## Contents
-- [System Context](#system-context)
-- [Runtime Topology](#runtime-topology)
-- [Layer Responsibilities](#layer-responsibilities)
-- [Request Lifecycle](#request-lifecycle)
-- [Security Model](#security-model)
-- [Domain APIs](#domain-apis)
-- [Deployment View](#deployment-view)
-- [Scalability Notes](#scalability-notes)
-
-## System Context
-SPID is a full-stack college performance platform designed for three roles:
-- Admin
-- Faculty
-- Student
-
-It combines operational workflows (records, subjects, performance) with analytics and audit visibility.
-
-## Runtime Topology
 ```mermaid
 flowchart LR
-  U[User Browser] --> FE[Next.js Frontend]
-  FE --> API[Express API]
-  API --> DB[(MongoDB Atlas)]
+  U[Browser] --> FE[Next.js Frontend]
+  FE -->|/api| BE[Express API]
+  BE --> DB[(MongoDB Atlas)]
 ```
 
-## Layer Responsibilities
-### Frontend (Next.js)
-- Role-aware navigation and page rendering
-- Auth session handling via context
-- Dashboard visualization and responsive UI
-- API communication via centralized Axios client
+## 2. Runtime Components
+### Frontend
+- `src/app`: route pages
+- `src/components`: UI primitives and dashboard layout
+- `src/context/AuthContext.tsx`: auth session and user state
+- `src/lib/api.ts`: centralized axios API client
 
-Key files:
-- `src/context/AuthContext.tsx`
-- `src/lib/api.ts`
-- `src/components/dashboard/*`
-- `src/app/*`
+### Backend
+- `server/src/routes`: endpoint definitions
+- `server/src/controllers`: request handling/business logic
+- `server/src/middleware`: `authMiddleware`, `roleMiddleware`
+- `server/src/models`: mongoose schemas
 
-### Backend (Express)
-- Authentication and authorization
-- Domain-specific REST endpoints
-- Data validation and business logic
-- Activity and login history tracking
+## 3. Core Design Decisions
+- RBAC is enforced in backend routes, not only in UI
+- Viewer onboarding is approval-gated (`pending` -> admin decision)
+- Sensitive operations (delete/block/approve/reject) use explicit confirmations in UI
+- Cascade deletions are transaction-based for consistency
 
-Key files:
-- `server/src/server.js`
-- `server/src/routes/*`
-- `server/src/controllers/*`
-- `server/src/middleware/authMiddleware.js`
+## 4. Role Matrix
+| Role | Core Permissions |
+|---|---|
+| Admin | Full CRUD, approvals, login history, faculty password management |
+| Faculty | Student edit workflows, student documents, student block/unblock |
+| Student | Student-scoped read access |
+| Viewer | No access until approved |
 
-### Data Layer (MongoDB)
-Primary models:
-- `User`, `Student`, `Faculty`, `Subject`, `Performance`
-- `AcademicRecord`, `ActivityLog`
+## 5. Request Lifecycle
+1. User triggers UI action.
+2. Frontend calls API via `src/lib/api.ts`.
+3. Backend route applies auth + role middleware.
+4. Controller executes validation and DB updates.
+5. JSON response updates client state/UI.
 
-## Request Lifecycle
-1. User action triggers frontend event.
-2. Frontend sends request through `src/lib/api.ts`.
-3. Backend route resolves middleware and controller.
-4. Controller runs business logic + DB operations.
-5. API returns JSON response.
-6. Frontend updates state and UI.
+## 6. Security Model
+- JWT auth with cookie support
+- Password hashing via `bcryptjs`
+- Google OAuth support through passport
+- CORS allowlist from environment + hosted domains
+- Route-level role authorization for protected endpoints
 
-## Security Model
-- JWT-based authentication
-- Cookie and bearer-token support
-- Role-based API authorization
-- CORS origin validation
-- Password hashing with bcrypt
+## 7. Data and Integrity
+- Key models: `User`, `Student`, `Subject`, `Performance`, `AcademicRecord`, `ActivityLog`
+- Linked user/student/faculty synchronization on updates
+- Cascade cleanup for student/faculty delete flows
 
-## Domain APIs
-- `/api/auth`
-- `/api/students`
-- `/api/faculty`
-- `/api/subjects`
-- `/api/performance`
-- `/api/dashboard`
-- `/api/academic`
-- `/api/ai-analytics`
-- `/api/activities`
-
-## Deployment View
+## 8. Operational Topology
 - Frontend: Vercel
 - Backend: Render
-- Database: MongoDB Atlas
+- Database: Atlas
 
-Production URL:
-- `https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app`
-
-## Scalability Notes
-- Keep controllers domain-focused.
-- Add caching for heavy analytics endpoints.
-- Add integration and E2E tests for release confidence.
-- Add centralized logging/metrics for production observability.
+See deployment details in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Document Metadata
-- Version: `2.0`
-- Last Updated: `February 24, 2026`
-
-
+- Last Updated: February 25, 2026
+- Status: Active

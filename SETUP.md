@@ -1,80 +1,87 @@
 # Setup Guide
 
-## Documentation Hub
-- Main Overview: [`README.md`](README.md)
-- Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md)
-- Setup: [`SETUP.md`](SETUP.md)
-- Quick Start: [`QUICK_START.md`](QUICK_START.md)
-- Deployment Guide: [`DEPLOYMENT.md`](DEPLOYMENT.md)
-- Deployment Checklist: [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md)
-- Deployment Quick Reference: [`DEPLOYMENT_QUICK_REFERENCE.md`](DEPLOYMENT_QUICK_REFERENCE.md)
-- Documentation Index: [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md)
-- Enterprise Report: [`ENTERPRISE_TRANSFORMATION.md`](ENTERPRISE_TRANSFORMATION.md)
-- Executive Summary: [`TRANSFORMATION_SUMMARY.md`](TRANSFORMATION_SUMMARY.md)
-
-## Environment Requirements
+## 1. Prerequisites
 - Node.js 18+
 - npm 9+
-- MongoDB Atlas
+- MongoDB Atlas cluster and connection string
 
-## Initial Setup
+## 2. Environment Files
+From project root:
+
 ```powershell
 Copy-Item .env.example .env
 Copy-Item server/.env.example server/.env
 ```
 
-Configure frontend env (`.env.local`):
+### Frontend variables (`.env.local`)
 - `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_APP_NAME`
 
-Configure backend env (`server/.env`):
-- `NODE_ENV`, `PORT`, `MONGODB_URI`
-- `JWT_SECRET`, `JWT_EXPIRE`, `COOKIE_EXPIRE`
+### Backend variables (`server/.env`)
+- `PORT`
+- `NODE_ENV`
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `JWT_EXPIRE`
+- `COOKIE_EXPIRE`
 - `FRONTEND_URL`
-- OAuth values if Google login is enabled
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_CALLBACK_URL`
 
-## Install Dependencies
-Automated:
+## 3. Install Dependencies
+### Option A: Helper script
 ```powershell
 .\install_all.bat
 ```
 
-Manual:
+### Option B: Manual
 ```bash
 npm install
 cd server
 npm install
+```
+
+## 4. Seed Data (optional but recommended)
+```bash
+cd server
 npm run seed
 ```
 
-## Run Development Servers
-Automated:
+## 5. Run Development
+### Option A: Helper script
 ```powershell
 .\start_project.bat
 ```
 
-Manual:
+### Option B: Manual
 ```bash
-cd server && npm run dev
-# new terminal
+# terminal 1
+cd server
+npm run dev
+
+# terminal 2
 npm run dev
 ```
 
-## Validation Checklist
-- [ ] `http://localhost:5000/api/health` works
-- [ ] Login/logout works
-- [ ] Dashboard data loads
-- [ ] Role-based actions behave correctly
-- [ ] Mobile/split-screen views are usable
+## 6. Verify Local Runtime
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:5000/api`
+- Health: `http://localhost:5000/api/health`
 
-## Common Mistakes
+## 7. Validation Checklist
+- [ ] `npm run build` succeeds at root
+- [ ] Login works for known account
+- [ ] Students and Faculty pages load
+- [ ] Role restrictions behave as expected
+- [ ] Approvals page loads for admin
+
+## 8. Common Setup Errors
 - Missing `/api` in `NEXT_PUBLIC_API_URL`
-- Wrong Render `FRONTEND_URL`
-- OAuth callback URL mismatch
-- Expired or invalid MongoDB credentials
+- Wrong `FRONTEND_URL` format in backend env
+- Missing OAuth env values when Google auth is enabled
+- Using stale Atlas credentials/allowlist
 
 ## Document Metadata
-- Version: `2.0`
-- Last Updated: `February 24, 2026`
-
-
+- Last Updated: February 25, 2026
+- Status: Active

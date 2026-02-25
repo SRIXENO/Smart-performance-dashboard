@@ -1,51 +1,46 @@
 # Documentation Index
 
-## Documentation Hub
-- Main Overview: [`README.md`](README.md)
-- Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md)
-- Setup: [`SETUP.md`](SETUP.md)
-- Quick Start: [`QUICK_START.md`](QUICK_START.md)
-- Deployment Guide: [`DEPLOYMENT.md`](DEPLOYMENT.md)
-- Deployment Checklist: [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md)
-- Deployment Quick Reference: [`DEPLOYMENT_QUICK_REFERENCE.md`](DEPLOYMENT_QUICK_REFERENCE.md)
-- Documentation Index: [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md)
-- Enterprise Report: [`ENTERPRISE_TRANSFORMATION.md`](ENTERPRISE_TRANSFORMATION.md)
-- Executive Summary: [`TRANSFORMATION_SUMMARY.md`](TRANSFORMATION_SUMMARY.md)
+## Core Product Docs
+- [README.md](README.md): Professional project overview and onboarding entry point
+- [FEATURES.md](FEATURES.md): Full functional feature catalog
+- [ARCHITECTURE.md](ARCHITECTURE.md): Technical architecture and RBAC model
 
-## Core Documents
-- `README.md` - complete project overview
-- `QUICK_START.md` - fastest local run path
-- `SETUP.md` - detailed setup and validation
-- `ARCHITECTURE.md` - technical architecture and request flow
-- `DEPLOYMENT.md` - full deployment process
-- `DEPLOYMENT_QUICK_REFERENCE.md` - short deploy card
-- `DEPLOYMENT_CHECKLIST.md` - go-live checklist
-- `ENTERPRISE_TRANSFORMATION.md` - detailed transformation report
-- `TRANSFORMATION_SUMMARY.md` - executive summary
+## Local Development
+- [QUICK_START.md](QUICK_START.md): Fast run path
+- [SETUP.md](SETUP.md): Detailed setup and validation
+
+## Deployment
+- [DEPLOYMENT.md](DEPLOYMENT.md): End-to-end deployment instructions
+- [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md): Go-live checklist
+- [DEPLOYMENT_QUICK_REFERENCE.md](DEPLOYMENT_QUICK_REFERENCE.md): One-page deploy card
+
+## Transformation and Business Context
+- [ENTERPRISE_TRANSFORMATION.md](ENTERPRISE_TRANSFORMATION.md): Detailed transformation narrative
+- [TRANSFORMATION_SUMMARY.md](TRANSFORMATION_SUMMARY.md): Executive summary
 
 ## Suggested Reading Paths
 ### New Developer
-1. `README.md`
-2. `QUICK_START.md`
-3. `ARCHITECTURE.md`
-4. `SETUP.md`
+1. README
+2. QUICK_START
+3. SETUP
+4. ARCHITECTURE
+5. FEATURES
 
-### Reviewer / Faculty Lead
-1. `TRANSFORMATION_SUMMARY.md`
-2. `ENTERPRISE_TRANSFORMATION.md`
-3. `README.md`
+### Reviewer / Project Lead
+1. README
+2. TRANSFORMATION_SUMMARY
+3. ENTERPRISE_TRANSFORMATION
 
-### Deployment Owner
-1. `DEPLOYMENT_QUICK_REFERENCE.md`
-2. `DEPLOYMENT.md`
-3. `DEPLOYMENT_CHECKLIST.md`
+### DevOps / Deployment Owner
+1. DEPLOYMENT_QUICK_REFERENCE
+2. DEPLOYMENT
+3. DEPLOYMENT_CHECKLIST
 
-## Public URLs
-- Live app: `https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app`
-- Summary document: `https://github.com/SRIXENO/Smart-performance-dashboard/blob/main/PROJECT%201/TRANSFORMATION_SUMMARY.md`
+## Document Governance
+- Canonical entry point: `README.md`
+- Keep environment variable definitions in `README.md` + `SETUP.md`
+- Keep deployment source-of-truth in `DEPLOYMENT.md`
 
 ## Document Metadata
-- Version: `2.0`
-- Last Updated: `February 24, 2026`
-
-
+- Last Updated: February 25, 2026
+- Status: Active

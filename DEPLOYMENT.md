@@ -1,110 +1,73 @@
-# Complete Deployment Guide
+# Deployment Guide (Vercel + Render + Atlas)
 
-## Documentation Hub
-- Main Overview: [`README.md`](README.md)
-- Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md)
-- Setup: [`SETUP.md`](SETUP.md)
-- Quick Start: [`QUICK_START.md`](QUICK_START.md)
-- Deployment Guide: [`DEPLOYMENT.md`](DEPLOYMENT.md)
-- Deployment Checklist: [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md)
-- Deployment Quick Reference: [`DEPLOYMENT_QUICK_REFERENCE.md`](DEPLOYMENT_QUICK_REFERENCE.md)
-- Documentation Index: [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md)
-- Enterprise Report: [`ENTERPRISE_TRANSFORMATION.md`](ENTERPRISE_TRANSFORMATION.md)
-- Executive Summary: [`TRANSFORMATION_SUMMARY.md`](TRANSFORMATION_SUMMARY.md)
+## 1. Target Topology
+- Frontend: Vercel (`PROJECT 1`)
+- Backend: Render Web Service (`PROJECT 1/server`)
+- Database: MongoDB Atlas
 
-## Contents
-- [Architecture](#architecture)
-- [Prerequisites](#prerequisites)
-- [MongoDB Atlas Setup](#mongodb-atlas-setup)
-- [Render Backend Deployment](#render-backend-deployment)
-- [Vercel Frontend Deployment](#vercel-frontend-deployment)
-- [Final Integration](#final-integration)
-- [Verification](#verification)
-- [Common Issues](#common-issues)
+## 2. Deploy Database (Atlas)
+1. Create cluster (M0 or higher).
+2. Create DB user.
+3. Add network access (start with `0.0.0.0/0`, then restrict later).
+4. Copy connection string for `MONGODB_URI`.
 
-## Architecture
-```mermaid
-flowchart LR
-  FE[Vercel - Next.js] --> BE[Render - Express API]
-  BE --> DB[(MongoDB Atlas)]
-```
-
-## Prerequisites
-- GitHub repository with latest code
-- MongoDB Atlas account
-- Render account
-- Vercel account
-
-## MongoDB Atlas Setup
-1. Create M0 free cluster.
-2. Create DB user (strong password).
-3. Allow network access (`0.0.0.0/0` for setup simplicity).
-4. Copy connection string.
-
-Example:
-```text
-mongodb+srv://<user>:<password>@<cluster>/<db_name>?retryWrites=true&w=majority
-```
-
-## Render Backend Deployment
-Service configuration:
+## 3. Deploy Backend (Render)
+### Service settings
 - Root directory: `PROJECT 1/server`
 - Build command: `npm install`
 - Start command: `npm start`
 
-Environment variables:
+### Required env vars
 - `NODE_ENV=production`
 - `PORT=10000`
 - `MONGODB_URI=<atlas-uri>`
 - `JWT_SECRET=<strong-secret>`
 - `JWT_EXPIRE=3h`
 - `COOKIE_EXPIRE=0.125`
-- `FRONTEND_URL=<set after Vercel deploy>`
-- Google OAuth values if enabled
+- `FRONTEND_URL=<vercel-url>`
+- `GOOGLE_CLIENT_ID=<optional>`
+- `GOOGLE_CLIENT_SECRET=<optional>`
+- `GOOGLE_CALLBACK_URL=<optional>`
 
-Health check:
-- `https://<render-service>.onrender.com/api/health`
+### Verify backend
+- Open `https://<render-service>.onrender.com/api/health`
+- Expect `{"success":true,...}`
 
-## Vercel Frontend Deployment
-Project configuration:
+## 4. Deploy Frontend (Vercel)
+### Project settings
 - Root directory: `PROJECT 1`
 
-Environment variables:
+### Required env vars
 - `NEXT_PUBLIC_API_URL=https://<render-service>.onrender.com/api`
-- `NEXT_PUBLIC_APP_NAME=Smart Performance Dashboard`
+- `NEXT_PUBLIC_APP_NAME=Smart Performance Intelligence Dashboard`
 
-## Final Integration
+## 5. Final Integration
 1. Copy Vercel production URL.
-2. Set Render `FRONTEND_URL` to that exact domain.
+2. Set backend `FRONTEND_URL` to exact Vercel URL.
 3. Redeploy backend.
+4. Test login and protected pages.
 
-## Verification
-- Open app URL and login.
-- Confirm dashboard loads.
-- Confirm student/faculty pages load.
-- Confirm no CORS/auth errors.
+## 6. Production Validation
+- [ ] Login works (local auth)
+- [ ] Google login works (if enabled)
+- [ ] Approvals page accessible for admin
+- [ ] Student/faculty CRUD flows working
+- [ ] No CORS errors in browser console
 
-Production URL:
-- `https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app`
-
-Transformation summary URL:
-- `https://github.com/SRIXENO/Smart-performance-dashboard/blob/main/PROJECT%201/TRANSFORMATION_SUMMARY.md`
-
-## Common Issues
-### First load slow
-Render free-tier cold start is expected.
-
-### Stuck on loading
-- Check backend `/api/health`
-- Verify `NEXT_PUBLIC_API_URL`
-- Check network tab for `/auth/me`
+## 7. Troubleshooting
+### Frontend stuck on loading
+- Check backend health endpoint
+- Confirm `NEXT_PUBLIC_API_URL` includes `/api`
+- Confirm `/auth/me` returns valid response
 
 ### CORS blocked
-- Verify exact `FRONTEND_URL` on Render
-- Redeploy backend after env updates
+- Ensure backend `FRONTEND_URL` is exact (protocol + domain)
+- Redeploy backend after env changes
+
+### Google auth failure
+- Verify callback URL matches deployed backend auth callback
+- Verify client ID/secret on Render
 
 ## Document Metadata
-- Version: `2.0`
-- Last Updated: `February 24, 2026`
-
-
+- Last Updated: February 25, 2026
+- Status: Active
