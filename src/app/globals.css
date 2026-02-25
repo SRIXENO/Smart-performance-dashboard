@@ -45,6 +45,11 @@ body {
   font-family: var(--font-geist-sans), sans-serif;
 }
 
+.dashboard-font,
+.dashboard-font * {
+  font-family: "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
 /* Floating label input */
 .floating-input-container {
   --floating-outline: rgb(55, 45, 190);
