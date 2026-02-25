@@ -11,6 +11,14 @@
   color: #111827;
 }
 
+.subtitle {
+  margin: -0.25rem 0 0.75rem;
+  text-align: center;
+  color: #667085;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
 .form {
   display: flex;
   flex-direction: column;

@@ -38,7 +38,10 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className={styles.formShell}>
-        <h2 className={styles.title}>Sign in to SPID Dashboard</h2>
+        <h2 className={styles.title}>Login to your Account</h2>
+        <p className={styles.subtitle}>
+          Get started with our app, just create an account and enjoy the experience.
+        </p>
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.flexColumn}>
             <label htmlFor="login-email">Email</label>
