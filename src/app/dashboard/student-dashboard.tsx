@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bar, Line } from 'react-chartjs-2';
 import {
@@ -56,6 +56,8 @@ export default function StudentDashboard() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [showFilters, setShowFilters] = useState(true);
+  const [yearMenuOpen, setYearMenuOpen] = useState(false);
+  const yearSelectRef = useRef<HTMLDivElement | null>(null);
 
   const [deptMetric, setDeptMetric] = useState<DeptMetric>('count');
   const [deptChartType, setDeptChartType] = useState<DeptChartType>('bar');
@@ -68,6 +70,18 @@ export default function StudentDashboard() {
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!yearSelectRef.current) return;
+      if (!yearSelectRef.current.contains(event.target as Node)) {
+        setYearMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
   const fetchStudents = async () => {
@@ -408,17 +422,45 @@ export default function StudentDashboard() {
             </FilterLabel>
 
             <FilterLabel title="Year">
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value === 'All' ? 'All' : Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-              >
-                {years.map((year) => (
-                  <option key={String(year)} value={String(year)}>
-                    {year === 'All' ? 'All Years' : `Year ${year}`}
-                  </option>
-                ))}
-              </select>
+              <div ref={yearSelectRef} className="relative w-full select-none">
+                <button
+                  type="button"
+                  onClick={() => setYearMenuOpen((prev) => !prev)}
+                  className="w-full bg-[#2a2f3b] text-white px-3 py-2 rounded-xl flex items-center justify-between border border-[#2a2f3b] hover:bg-[#323741] transition"
+                >
+                  <span>{selectedYear === 'All' ? 'All Years' : `Year ${selectedYear}`}</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 512 512"
+                    className={`h-3 w-5 fill-white transition-transform ${yearMenuOpen ? 'rotate-0' : '-rotate-90'}`}
+                    aria-hidden="true"
+                  >
+                    <path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
+                  </svg>
+                </button>
+
+                <div
+                  className={`absolute left-0 right-0 z-20 mt-1 rounded-xl bg-[#2a2f3b] p-1 transition-all duration-300 ${
+                    yearMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'
+                  }`}
+                >
+                  {years
+                    .filter((year) => year !== selectedYear)
+                    .map((year) => (
+                      <button
+                        key={String(year)}
+                        type="button"
+                        onClick={() => {
+                          setSelectedYear(year);
+                          setYearMenuOpen(false);
+                        }}
+                        className="w-full text-left text-white px-3 py-2 rounded-lg text-sm hover:bg-[#323741] transition"
+                      >
+                        {year === 'All' ? 'All Years' : `Year ${year}`}
+                      </button>
+                    ))}
+                </div>
+              </div>
             </FilterLabel>
 
             <FilterLabel title="Status">
