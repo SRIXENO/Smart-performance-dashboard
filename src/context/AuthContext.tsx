@@ -14,6 +14,8 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const USER_CACHE_KEY = 'auth_user';
+const TOKEN_CACHE_KEY = 'token';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -27,18 +29,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const checkAuth = async () => {
+  const checkAuth = async ({ background = false }: { background?: boolean } = {}) => {
+    if (typeof window === 'undefined') {
+      if (!background) setLoading(false);
+      return;
+    }
+
+    const token = localStorage.getItem(TOKEN_CACHE_KEY);
+    if (!token) {
+      localStorage.removeItem(USER_CACHE_KEY);
+      setUser(null);
+      if (!background) setLoading(false);
+      return;
+    }
+
     try {
       const response = await authAPI.me();
       setUser(response.data.user);
+      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(response.data.user));
     } catch (error) {
       console.log('Auth check failed:', error);
       setUser(null);
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-      }
+      localStorage.removeItem(TOKEN_CACHE_KEY);
+      localStorage.removeItem(USER_CACHE_KEY);
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   };
 
@@ -47,10 +62,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await authAPI.login({ email, password });
       console.log('Login response:', response.data);
       if (response.data.token && typeof window !== 'undefined') {
-        localStorage.setItem('token', response.data.token);
+        localStorage.setItem(TOKEN_CACHE_KEY, response.data.token);
         console.log('Token stored:', response.data.token.substring(0, 20) + '...');
       }
       setUser(response.data.user);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(USER_CACHE_KEY, JSON.stringify(response.data.user));
+      }
     } catch (error: any) {
       const isTimeout =
         error?.code === 'ECONNABORTED' || String(error?.message || '').toLowerCase().includes('timeout');
@@ -62,16 +80,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Retry once for backend cold starts.
       const retryResponse = await authAPI.login({ email, password });
       if (retryResponse.data.token && typeof window !== 'undefined') {
-        localStorage.setItem('token', retryResponse.data.token);
+        localStorage.setItem(TOKEN_CACHE_KEY, retryResponse.data.token);
       }
       setUser(retryResponse.data.user);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(USER_CACHE_KEY, JSON.stringify(retryResponse.data.user));
+      }
     }
   };
 
   const register = async (name: string, email: string, password: string) => {
     const response = await authAPI.register({ name, email, password });
     if (response.data.token && typeof window !== 'undefined') {
-      localStorage.setItem('token', response.data.token);
+      localStorage.setItem(TOKEN_CACHE_KEY, response.data.token);
+      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(response.data.user));
     }
     setUser(response.data.user);
   };
@@ -79,22 +101,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     await authAPI.logout();
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
+      localStorage.removeItem(TOKEN_CACHE_KEY);
+      localStorage.removeItem(USER_CACHE_KEY);
     }
     setUser(null);
   };
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  useEffect(() => {
-    // Prevent infinite loading if upstream API hangs or cold-start is too slow.
-    const failSafe = setTimeout(() => {
+    if (typeof window === 'undefined') {
       setLoading(false);
-    }, 15000);
+      return;
+    }
 
-    return () => clearTimeout(failSafe);
+    const token = localStorage.getItem(TOKEN_CACHE_KEY);
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    const cachedUser = localStorage.getItem(USER_CACHE_KEY);
+    if (cachedUser) {
+      try {
+        setUser(JSON.parse(cachedUser));
+        setLoading(false);
+        checkAuth({ background: true });
+        return;
+      } catch {
+        localStorage.removeItem(USER_CACHE_KEY);
+      }
+    }
+
+    checkAuth();
   }, []);
 
   return (

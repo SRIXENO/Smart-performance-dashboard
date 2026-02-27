@@ -8,7 +8,7 @@ const normalizedApiBase = API_BASE_URL.replace(/\/+$/, '');
 const apiOrigin = normalizedApiBase.endsWith('/api')
   ? normalizedApiBase.slice(0, -4)
   : normalizedApiBase;
-const API_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || 30000);
+const API_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || 10000);
 
 export const GOOGLE_AUTH_URL =
   normalizedApiBase === '/api' ? '/api/auth/google' : `${apiOrigin}/api/auth/google`;
@@ -36,7 +36,7 @@ export const authAPI = {
   register: (data: any) => api.post('/auth/register', data),
   login: (data: any) => api.post('/auth/login', data),
   logout: () => api.post('/auth/logout'),
-  me: () => api.get('/auth/me'),
+  me: () => api.get('/auth/me', { timeout: Number(process.env.NEXT_PUBLIC_AUTH_TIMEOUT_MS || 8000) }),
 };
 
 export const approvalsAPI = {
