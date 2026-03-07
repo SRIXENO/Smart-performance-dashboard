@@ -101,6 +101,7 @@ export const activityAPI = {
   getRecentActivities: (params?: any) => api.get('/activities/recent', { params }),
   getByAction: (action: string, params?: any) => api.get(`/activities/by-action/${action}`, { params }),
   getLoginHistory: (params?: any) => api.get('/activities/login-history', { params }),
+  clearLoginHistory: (from: string, to: string) => api.delete('/activities/login-history', { params: { from, to } }),
 };
 
 export const subjectsAPI = {
