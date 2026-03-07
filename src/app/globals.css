@@ -10,16 +10,6 @@
   --label-text: #374151;
 }
 
-:root.light {
-  --background: #ffffff;
-  --foreground: #171717;
-  --input-bg: #ffffff;
-  --input-text: #111827;
-  --input-border: #d1d5db;
-  --input-placeholder: #9ca3af;
-  --label-text: #374151;
-}
-
 :root.dark {
   --background: #0b1220;
   --foreground: #e2e8f0;

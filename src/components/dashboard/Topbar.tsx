@@ -15,31 +15,26 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     return () => clearInterval(timer);
   }, []);
 
-  const applyTheme = (mode: 'light' | 'dark') => {
-    const root = document.documentElement;
-    const body = document.body;
-
-    root.classList.remove('light', 'dark');
-    body.classList.remove('light', 'dark');
-
-    root.classList.add(mode);
-    body.classList.add(mode);
-    root.style.colorScheme = mode;
-  };
-
   useEffect(() => {
     const saved = (localStorage.getItem('theme') as 'light' | 'dark' | null) || null;
     const initial = saved || 'light';
     setTheme(initial);
-    localStorage.setItem('theme', initial);
-    applyTheme(initial);
+    if (initial === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, []);
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
     localStorage.setItem('theme', next);
-    applyTheme(next);
+    if (next === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
 
   const handleLogout = async () => {
