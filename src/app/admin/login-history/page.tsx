@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { activityAPI } from '@/lib/api';
+import ConfirmModal from '@/components/ConfirmModal';
 
 type LoginHistoryItem = {
   id: string;
@@ -24,6 +25,14 @@ export default function AdminLoginHistoryPage() {
   const [toDateTime, setToDateTime] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    confirmText: 'Confirm',
+    confirmStyle: 'danger' as 'danger' | 'primary' | 'warning',
+  });
 
   const fetchHistory = async () => {
     if (user?.role !== 'admin') return;
@@ -48,6 +57,21 @@ export default function AdminLoginHistoryPage() {
     fetchHistory();
   }, [user]);
 
+  const executeClearByRange = async () => {
+    setIsClearing(true);
+    try {
+      const response = await activityAPI.clearLoginHistory(fromDateTime, toDateTime);
+      const deletedCount = response.data?.data?.deletedCount ?? 0;
+      setMessage(`Cleared ${deletedCount} login records.`);
+      setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      await fetchHistory();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to clear login history');
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
   const handleClearByRange = async () => {
     setError('');
     setMessage('');
@@ -62,20 +86,14 @@ export default function AdminLoginHistoryPage() {
       return;
     }
 
-    const confirm = window.confirm('Clear login history for this date-time range?');
-    if (!confirm) return;
-
-    setIsClearing(true);
-    try {
-      const response = await activityAPI.clearLoginHistory(fromDateTime, toDateTime);
-      const deletedCount = response.data?.data?.deletedCount ?? 0;
-      setMessage(`Cleared ${deletedCount} login records.`);
-      await fetchHistory();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to clear login history');
-    } finally {
-      setIsClearing(false);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Clear Login History?',
+      message: `Clear login history from ${new Date(fromDateTime).toLocaleString()} to ${new Date(toDateTime).toLocaleString()}?`,
+      confirmText: 'Clear',
+      confirmStyle: 'danger',
+      onConfirm: executeClearByRange,
+    });
   };
 
   if (loading || isLoading) {
@@ -167,6 +185,18 @@ export default function AdminLoginHistoryPage() {
           <div className="text-center py-12 text-gray-500">No login history found.</div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        description={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        confirmStyle={confirmModal.confirmStyle}
+        cancelText="Cancel"
+        loading={isClearing}
+      />
     </div>
   );
 }
