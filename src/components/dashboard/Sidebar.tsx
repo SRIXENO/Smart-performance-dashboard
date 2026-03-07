@@ -98,17 +98,17 @@ export default function Sidebar({ isOpen = false, onClose }: { isOpen?: boolean;
     <>
       {isOpen && <button className="fixed inset-0 z-40 bg-slate-900/40 md:hidden" onClick={onClose} aria-label="Close menu overlay" />}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[86vw] p-4 bg-slate-100 border-r border-slate-200 overflow-y-auto transform transition-transform duration-200 md:static md:z-0 md:w-64 md:max-w-none md:translate-x-0 md:min-h-screen ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[86vw] p-4 bg-slate-100 border-r border-slate-200 overflow-y-auto transform transition-transform duration-200 md:static md:z-0 md:w-64 md:max-w-none md:translate-x-0 md:min-h-screen dark:bg-gradient-to-b dark:from-slate-950 dark:to-slate-900 dark:border-slate-800 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
       <MotionReveal>
       <div className="mb-6">
         <div className="flex items-center gap-2">
-          <img src="/spid-logo.svg" alt="SPID logo" className="h-7 w-7 rounded-full border border-slate-300" />
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">SPID Dashboard</h1>
+          <img src="/spid-logo.svg" alt="SPID logo" className="h-7 w-7 rounded-full border border-slate-300 dark:border-slate-700" />
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight dark:text-slate-100">SPID Dashboard</h1>
         </div>
-        <p className="text-slate-500 text-sm mt-1">Performance Intelligence</p>
+        <p className="text-slate-500 text-sm mt-1 dark:text-slate-400">Performance Intelligence</p>
       </div>
       </MotionReveal>
 
@@ -122,8 +122,8 @@ export default function Sidebar({ isOpen = false, onClose }: { isOpen?: boolean;
               onClick={onClose}
               className={`interactive-btn flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 isActive
-                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-cyan-500/15 dark:text-cyan-200 dark:border-cyan-400/30'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent dark:text-slate-300 dark:hover:bg-slate-800/80 dark:hover:text-white'
               }`}
             >
               <span>{item.icon}</span>
@@ -135,10 +135,10 @@ export default function Sidebar({ isOpen = false, onClose }: { isOpen?: boolean;
       </nav>
 
       <MotionReveal delayMs={260}>
-      <div className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-3">
-        <div className="text-xs text-slate-500">Signed in as</div>
-        <div className="text-sm font-semibold mt-1 text-slate-900 truncate">{user?.name || 'User'}</div>
-        <div className="text-xs uppercase tracking-wide mt-1 text-slate-500">{user?.role || 'guest'}</div>
+      <div className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/70">
+        <div className="text-xs text-slate-500 dark:text-slate-400">Signed in as</div>
+        <div className="text-sm font-semibold mt-1 text-slate-900 truncate dark:text-slate-100">{user?.name || 'User'}</div>
+        <div className="text-xs uppercase tracking-wide mt-1 text-slate-500 dark:text-slate-400">{user?.role || 'guest'}</div>
       </div>
       </MotionReveal>
       </aside>
