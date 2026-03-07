@@ -1,4 +1,6 @@
 const express = require('express');
+const authMiddleware = require('../middleware/authMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware');
 const { 
   getSummary, 
   getAttendanceTrend, 
@@ -17,19 +19,18 @@ const {
 
 const router = express.Router();
 
-// Remove auth middleware temporarily to test
-router.get('/summary', getSummary);
-router.get('/attendance-trend', getAttendanceTrend);
-router.get('/grade-distribution', getGradeDistribution);
-router.get('/subject-performance', getSubjectPerformance);
-router.get('/at-risk-students', getAtRiskStudents);
-router.get('/department-comparison', getDepartmentComparison);
-router.get('/semester-distribution', getSemesterDistribution);
-router.get('/attendance-heatmap', getAttendanceHeatmap);
-router.get('/cgpa-distribution', getCGPADistribution);
-router.get('/performance-growth', getPerformanceGrowth);
-router.get('/difficult-subjects', getDifficultSubjects);
-router.get('/attendance-performance-correlation', getAttendancePerformanceCorrelation);
-router.get('/recent-students', getRecentStudents);
+router.get('/summary', authMiddleware, roleMiddleware(['admin', 'faculty']), getSummary);
+router.get('/attendance-trend', authMiddleware, roleMiddleware(['admin', 'faculty']), getAttendanceTrend);
+router.get('/grade-distribution', authMiddleware, roleMiddleware(['admin', 'faculty']), getGradeDistribution);
+router.get('/subject-performance', authMiddleware, roleMiddleware(['admin', 'faculty']), getSubjectPerformance);
+router.get('/at-risk-students', authMiddleware, roleMiddleware(['admin', 'faculty']), getAtRiskStudents);
+router.get('/department-comparison', authMiddleware, roleMiddleware(['admin', 'faculty']), getDepartmentComparison);
+router.get('/semester-distribution', authMiddleware, roleMiddleware(['admin', 'faculty']), getSemesterDistribution);
+router.get('/attendance-heatmap', authMiddleware, roleMiddleware(['admin', 'faculty']), getAttendanceHeatmap);
+router.get('/cgpa-distribution', authMiddleware, roleMiddleware(['admin', 'faculty']), getCGPADistribution);
+router.get('/performance-growth', authMiddleware, roleMiddleware(['admin', 'faculty']), getPerformanceGrowth);
+router.get('/difficult-subjects', authMiddleware, roleMiddleware(['admin', 'faculty']), getDifficultSubjects);
+router.get('/attendance-performance-correlation', authMiddleware, roleMiddleware(['admin', 'faculty']), getAttendancePerformanceCorrelation);
+router.get('/recent-students', authMiddleware, roleMiddleware(['admin', 'faculty']), getRecentStudents);
 
 module.exports = router;

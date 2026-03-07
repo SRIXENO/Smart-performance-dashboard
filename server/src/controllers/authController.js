@@ -253,4 +253,78 @@ const updateApprovalStatus = async (req, res) => {
   }
 };
 
-module.exports = { register, login, logout, me, getPendingApprovals, updateApprovalStatus };
+const getViewers = async (_req, res) => {
+  try {
+    const viewers = await User.find({ role: 'viewer' })
+      .select('userId name email authProvider createdAt status approvalStatus')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: viewers });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const updateViewerStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['active', 'blocked'].includes(String(status))) {
+      return res.status(400).json({ success: false, error: 'Invalid status. Use active or blocked.' });
+    }
+
+    const update = status === 'blocked'
+      ? { status: 'blocked' }
+      : { status: 'active', approvalStatus: 'approved' };
+
+    const updated = await User.findOneAndUpdate(
+      { _id: id, role: 'viewer' },
+      update,
+      { new: true }
+    ).select('userId name email role status approvalStatus');
+
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Viewer account not found' });
+    }
+
+    res.json({
+      success: true,
+      message: `Viewer ${status === 'blocked' ? 'blocked' : 'unblocked'} successfully`,
+      data: updated,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const deleteViewer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await User.findOneAndDelete({ _id: id, role: 'viewer' }).select('userId name email role');
+
+    if (!deleted) {
+      return res.status(404).json({ success: false, error: 'Viewer account not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Viewer account deleted successfully',
+      data: deleted,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  logout,
+  me,
+  getPendingApprovals,
+  updateApprovalStatus,
+  getViewers,
+  updateViewerStatus,
+  deleteViewer,
+};
