@@ -103,7 +103,7 @@ export default function ChartCard({
 
   if (loading) {
     return (
-      <div className="interactive-card bg-white rounded-xl shadow-lg p-6 dark:bg-slate-900 dark:border dark:border-slate-800">
+      <div className="interactive-card bg-white rounded-xl shadow-lg p-6">
         <div className="shimmer-block h-6 rounded w-1/3 mb-2"></div>
         {subtitle && <div className="shimmer-block h-4 rounded w-1/2 mb-4"></div>}
         <div className="shimmer-block rounded-lg" style={{ height: `${height}px` }}></div>
@@ -113,10 +113,10 @@ export default function ChartCard({
 
   return (
     <MotionReveal>
-    <TiltSurface className="interactive-card bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 dark:bg-slate-900 dark:border dark:border-slate-800">
+    <TiltSurface className="interactive-card bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{title}</h3>
-        {subtitle && <p className="text-sm text-gray-500 mt-1 dark:text-slate-400">{subtitle}</p>}
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
       </div>
       <div style={{ height: `${height}px` }}>
         {renderChart()}
