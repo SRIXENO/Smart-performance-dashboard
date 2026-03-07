@@ -15,26 +15,29 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     return () => clearInterval(timer);
   }, []);
 
+  const applyTheme = (mode: 'light' | 'dark') => {
+    const root = document.documentElement;
+    const body = document.body;
+    root.classList.remove('light', 'dark');
+    body.classList.remove('light', 'dark');
+    root.classList.add(mode);
+    body.classList.add(mode);
+    root.style.colorScheme = mode;
+  };
+
   useEffect(() => {
     const saved = (localStorage.getItem('theme') as 'light' | 'dark' | null) || null;
     const initial = saved || 'light';
     setTheme(initial);
-    if (initial === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    localStorage.setItem('theme', initial);
+    applyTheme(initial);
   }, []);
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
     localStorage.setItem('theme', next);
-    if (next === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    applyTheme(next);
   };
 
   const handleLogout = async () => {
@@ -69,7 +72,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
             className="interactive-btn inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
             aria-label="Toggle dark mode"
           >
-            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            {theme === 'dark' ? 'Light' : 'Dark'}
           </button>
 
           <div className="hidden sm:flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/80">

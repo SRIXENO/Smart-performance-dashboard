@@ -56,7 +56,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="dashboard-font relative flex min-h-screen bg-slate-50 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="dashboard-font relative flex min-h-screen bg-slate-100 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <ParallaxBackdrop />
       <Sidebar isOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
       <div className="relative flex-1 flex flex-col min-w-0">

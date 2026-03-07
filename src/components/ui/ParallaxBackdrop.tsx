@@ -13,7 +13,7 @@ export default function ParallaxBackdrop() {
   }, []);
 
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+    <div className="pointer-events-none absolute inset-0 overflow-hidden hidden dark:block" aria-hidden="true">
       <div
         className="absolute -top-20 -left-20 h-72 w-72 rounded-full bg-cyan-300/20 blur-3xl"
         style={{ transform: `translate3d(0, ${offset * -1}px, 0)` }}
@@ -29,4 +29,3 @@ export default function ParallaxBackdrop() {
     </div>
   );
 }
-

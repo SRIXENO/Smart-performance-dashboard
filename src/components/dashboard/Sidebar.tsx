@@ -98,7 +98,7 @@ export default function Sidebar({ isOpen = false, onClose }: { isOpen?: boolean;
     <>
       {isOpen && <button className="fixed inset-0 z-40 bg-slate-900/40 md:hidden" onClick={onClose} aria-label="Close menu overlay" />}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[86vw] p-4 bg-gradient-to-b from-white to-slate-50 border-r border-slate-200 overflow-y-auto transform transition-transform duration-200 md:static md:z-0 md:w-64 md:max-w-none md:translate-x-0 md:min-h-screen dark:from-slate-950 dark:to-slate-900 dark:border-slate-800 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[86vw] p-4 bg-slate-100 border-r border-slate-200 overflow-y-auto transform transition-transform duration-200 md:static md:z-0 md:w-64 md:max-w-none md:translate-x-0 md:min-h-screen dark:bg-gradient-to-b dark:from-slate-950 dark:to-slate-900 dark:border-slate-800 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
