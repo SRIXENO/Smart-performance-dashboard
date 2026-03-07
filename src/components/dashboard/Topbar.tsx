@@ -26,8 +26,8 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   };
 
   useEffect(() => {
-    const saved = (localStorage.getItem('theme') as 'light' | 'dark' | null) || null;
-    const initial = saved || 'light';
+    // Keep dashboard default in true light mode on load.
+    const initial: 'light' | 'dark' = 'light';
     setTheme(initial);
     localStorage.setItem('theme', initial);
     applyTheme(initial);
@@ -72,7 +72,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
             className="interactive-btn inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
             aria-label="Toggle dark mode"
           >
-            {theme === 'dark' ? 'Light' : 'Dark'}
+            {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
           </button>
 
           <div className="hidden sm:flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/80">
