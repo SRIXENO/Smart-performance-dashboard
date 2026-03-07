@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -17,6 +17,14 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const authError = searchParams.get('error');
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.classList.remove('dark');
+    document.body.classList.remove('dark');
+    document.documentElement.classList.add('light');
+    document.body.classList.add('light');
+  }, []);
 
   const googleErrorMessage =
     authError === 'approval_pending'
@@ -48,7 +56,7 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className={styles.formShell}>
         <h2 className={styles.title}>Login to your Account</h2>
         <p className={styles.subtitle}>
@@ -155,7 +163,7 @@ export default function Login() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className={styles.formShell}>
             <h2 className={styles.title}>Login to your Account</h2>
             <p className={styles.subtitle}>Loading sign-in page...</p>

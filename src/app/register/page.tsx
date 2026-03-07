@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +16,14 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { register } = useAuth();
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.classList.remove('dark');
+    document.body.classList.remove('dark');
+    document.documentElement.classList.add('light');
+    document.body.classList.add('light');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +45,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className={styles.formShell}>
         <h2 className={styles.title}>Create your account</h2>
         <form className={styles.form} onSubmit={handleSubmit}>
