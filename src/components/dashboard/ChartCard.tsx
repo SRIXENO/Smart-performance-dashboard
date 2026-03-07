@@ -15,6 +15,8 @@ import {
   Filler
 } from 'chart.js';
 import { Line, Bar, Doughnut, Radar, Pie } from 'react-chartjs-2';
+import TiltSurface from '@/components/ui/TiltSurface';
+import MotionReveal from '@/components/ui/MotionReveal';
 
 ChartJS.register(
   CategoryScale,
@@ -101,24 +103,26 @@ export default function ChartCard({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="h-6 bg-gray-200 rounded w-1/3 mb-2 animate-pulse"></div>
-        {subtitle && <div className="h-4 bg-gray-200 rounded w-1/2 mb-4 animate-pulse"></div>}
-        <div className="bg-gray-100 rounded-lg animate-pulse" style={{ height: `${height}px` }}></div>
+      <div className="interactive-card bg-white rounded-xl shadow-lg p-6 dark:bg-slate-900 dark:border dark:border-slate-800">
+        <div className="shimmer-block h-6 rounded w-1/3 mb-2"></div>
+        {subtitle && <div className="shimmer-block h-4 rounded w-1/2 mb-4"></div>}
+        <div className="shimmer-block rounded-lg" style={{ height: `${height}px` }}></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+    <MotionReveal>
+    <TiltSurface className="interactive-card bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 dark:bg-slate-900 dark:border dark:border-slate-800">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-        {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{title}</h3>
+        {subtitle && <p className="text-sm text-gray-500 mt-1 dark:text-slate-400">{subtitle}</p>}
       </div>
       <div style={{ height: `${height}px` }}>
         {renderChart()}
       </div>
-    </div>
+    </TiltSurface>
+    </MotionReveal>
   );
 }
 
