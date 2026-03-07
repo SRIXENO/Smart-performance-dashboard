@@ -35,13 +35,13 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
+    <header className="sticky top-0 z-40 border-b border-slate-200/90 bg-white/90 backdrop-blur-sm">
       <div className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
         <div className="min-w-0 flex items-start gap-2">
           <button
             type="button"
             onClick={onMenuToggle}
-            className="md:hidden inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white p-2 text-slate-700 hover:bg-slate-50"
+            className="interactive-btn md:hidden inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white p-2 text-slate-700 hover:bg-slate-50"
             aria-label="Open menu"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,7 +58,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
           <button
             type="button"
             onClick={toggleTheme}
-            className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="interactive-btn inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             aria-label="Toggle dark mode"
           >
             {theme === 'dark' ? 'Light' : 'Dark'}
@@ -74,7 +74,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
 
           <button
             onClick={handleLogout}
-            className="bg-slate-900 hover:bg-slate-800 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+            className="interactive-btn bg-slate-900 hover:bg-slate-800 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
           >
             Logout
           </button>

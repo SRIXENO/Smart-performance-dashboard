@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import ParallaxBackdrop from '@/components/ui/ParallaxBackdrop';
 
 export default function DashboardLayout({
   children,
@@ -55,9 +56,10 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="dashboard-font flex min-h-screen bg-slate-50">
+    <div className="dashboard-font relative flex min-h-screen bg-slate-50">
+      <ParallaxBackdrop />
       <Sidebar isOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="relative flex-1 flex flex-col min-w-0">
         <Topbar onMenuToggle={() => setMobileSidebarOpen((prev) => !prev)} />
         <main className="flex-1 overflow-x-auto overflow-y-auto p-3 sm:p-4 lg:p-6">
           {children}

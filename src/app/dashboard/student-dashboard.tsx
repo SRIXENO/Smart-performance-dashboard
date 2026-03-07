@@ -16,6 +16,8 @@ import {
 } from 'chart.js';
 import { studentsAPI } from '@/lib/api';
 import CustomDropdown from '@/components/ui/CustomDropdown';
+import MotionReveal from '@/components/ui/MotionReveal';
+import TiltSurface from '@/components/ui/TiltSurface';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -355,14 +357,18 @@ export default function StudentDashboard() {
   if (loading) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
-        <div className="w-16 h-16 rounded-full border-4 border-cyan-200 border-t-cyan-500 animate-spin" />
+        <div className="relative">
+          <div className="w-20 h-20 rounded-full border-4 border-cyan-100 border-t-cyan-500 animate-spin" />
+          <div className="absolute inset-3 rounded-full border-2 border-violet-100 border-b-violet-400 animate-spin [animation-direction:reverse]" />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm">
+      <MotionReveal>
+      <section className="interactive-card rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <p className="text-blue-600 text-xs uppercase tracking-[0.2em] mb-2">Analytics Studio</p>
@@ -375,29 +381,31 @@ export default function StudentDashboard() {
             <span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs text-slate-600">{now.toLocaleString()}</span>
             <button
               onClick={() => setShowFilters((prev) => !prev)}
-              className="rounded-lg bg-white hover:bg-slate-50 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition"
+              className="interactive-btn rounded-lg bg-white hover:bg-slate-50 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition"
             >
               {showFilters ? 'Hide Filters' : 'Show Filters'}
             </button>
             <button
               onClick={() => setViewMode((prev) => (prev === 'table' ? 'cards' : 'table'))}
-              className="rounded-lg bg-white hover:bg-slate-50 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition"
+              className="interactive-btn rounded-lg bg-white hover:bg-slate-50 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition"
             >
               {viewMode === 'table' ? 'Card View' : 'Table View'}
             </button>
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="rounded-lg bg-slate-900 text-white hover:bg-slate-800 px-4 py-2 text-sm font-semibold transition disabled:opacity-70"
+              className="interactive-btn rounded-lg bg-slate-900 text-white hover:bg-slate-800 px-4 py-2 text-sm font-semibold transition disabled:opacity-70"
             >
               {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </button>
           </div>
         </div>
       </section>
+      </MotionReveal>
 
       {showFilters && (
-        <section className="rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-sm p-4 shadow-sm">
+        <MotionReveal delayMs={60}>
+        <section className="interactive-card rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-sm p-4 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
             <FilterLabel title="Search">
               <input
@@ -463,15 +471,17 @@ export default function StudentDashboard() {
                   setSelectedDepartment('All');
                   setTimeRange('all');
                 }}
-                className="w-full rounded-xl border border-slate-300 bg-slate-100 hover:bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition"
+                className="interactive-btn w-full rounded-xl border border-slate-300 bg-slate-100 hover:bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition"
               >
                 Reset
               </button>
             </div>
           </div>
         </section>
+        </MotionReveal>
       )}
 
+      <MotionReveal delayMs={100}>
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4">
         <Kpi title="Total Students" value={String(stats.total)} baseValue={baseStats.total} tone="cyan" />
         <Kpi title="Active" value={String(stats.active)} baseValue={baseStats.active} tone="emerald" />
@@ -480,8 +490,10 @@ export default function StudentDashboard() {
         <Kpi title="Avg Attendance" value={stats.avgAttendance} baseValue={baseStats.avgAttendance} tone="rose" />
         <Kpi title="At Risk" value={String(stats.atRisk)} baseValue={baseStats.atRisk} tone="slate" />
       </section>
+      </MotionReveal>
 
-      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <MotionReveal delayMs={140}>
+      <section className="interactive-card rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-900">Student Directory</h3>
           <div className="text-xs text-slate-500">Sorted by {sortKey} ({sortOrder})</div>
@@ -512,7 +524,7 @@ export default function StudentDashboard() {
                   </tr>
                 )}
                 {filteredStudents.map((student, idx) => (
-                  <tr key={student._id} className={`transition-colors hover:bg-cyan-50/40 ${idx % 2 ? 'bg-slate-50/50' : 'bg-white'}`}>
+                  <tr key={student._id} className={`transition-all duration-200 hover:bg-cyan-50/40 hover:translate-x-[2px] ${idx % 2 ? 'bg-slate-50/50' : 'bg-white'}`}>
                     <td className="px-5 py-4 text-sm text-slate-700">{student.studentId || 'N/A'}</td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-900">{student.name}</td>
                     <td className="px-5 py-4 text-sm text-slate-600">{student.gender || 'N/A'}</td>
@@ -526,7 +538,7 @@ export default function StudentDashboard() {
                     <td className="px-5 py-4 text-sm">
                       <button
                         onClick={() => router.push(`/dashboard/student/${student._id}`)}
-                        className="rounded-lg bg-slate-900 text-white px-3 py-1.5 hover:bg-black transition"
+                        className="interactive-btn rounded-lg bg-slate-900 text-white px-3 py-1.5 hover:bg-black transition"
                       >
                         View
                       </button>
@@ -539,7 +551,7 @@ export default function StudentDashboard() {
         ) : (
           <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredStudents.map((student) => (
-              <article key={student._id} className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 hover:shadow-md transition">
+              <article key={student._id} className="interactive-card rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 hover:shadow-md transition">
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className="font-bold text-slate-900">{student.name}</h4>
@@ -555,7 +567,7 @@ export default function StudentDashboard() {
                 </div>
                 <button
                   onClick={() => router.push(`/dashboard/student/${student._id}`)}
-                  className="mt-4 w-full rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-semibold px-3 py-2 transition"
+                  className="interactive-btn mt-4 w-full rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-semibold px-3 py-2 transition"
                 >
                   Open Profile
                 </button>
@@ -567,9 +579,11 @@ export default function StudentDashboard() {
           </div>
         )}
       </section>
+      </MotionReveal>
 
+      <MotionReveal delayMs={180}>
       <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-cyan-50/30 to-sky-50/40 p-5 shadow-sm">
+        <TiltSurface className="interactive-card rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-cyan-50/30 to-sky-50/40 p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
               <h3 className="text-lg font-bold text-slate-900">Department Analytics</h3>
@@ -580,7 +594,7 @@ export default function StudentDashboard() {
                 <button
                   key={metric}
                   onClick={() => setDeptMetric(metric)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                  className={`interactive-btn px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     deptMetric === metric
                       ? 'bg-slate-900 text-white border-slate-900'
                       : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'
@@ -594,7 +608,7 @@ export default function StudentDashboard() {
                   <button
                     key={type}
                     onClick={() => setDeptChartType(type)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                    className={`interactive-btn px-3 py-1 rounded-full text-xs font-semibold transition ${
                       deptChartType === type ? 'bg-cyan-500 text-slate-950' : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
@@ -612,7 +626,7 @@ export default function StudentDashboard() {
             {selectedDepartment !== 'All' && (
               <button
                 onClick={() => setSelectedDepartment('All')}
-                className="rounded-full border border-slate-300 bg-white px-3 py-1 font-semibold text-slate-600 hover:text-slate-900"
+                className="interactive-btn rounded-full border border-slate-300 bg-white px-3 py-1 font-semibold text-slate-600 hover:text-slate-900"
               >
                 Clear focus
               </button>
@@ -634,7 +648,7 @@ export default function StudentDashboard() {
                 <button
                   key={item.label}
                   onClick={() => setSelectedDepartment(item.label)}
-                  className="rounded-xl border border-slate-200 bg-white/90 p-3 text-left hover:shadow-sm transition"
+                  className="interactive-btn rounded-xl border border-slate-200 bg-white/90 p-3 text-left hover:shadow-sm transition"
                 >
                   <p className="text-xs text-slate-500">#{index + 1}</p>
                   <p className="font-semibold text-sm text-slate-900 truncate">{item.label}</p>
@@ -646,9 +660,9 @@ export default function StudentDashboard() {
               );
             })}
           </div>
-        </div>
+        </TiltSurface>
 
-        <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-violet-50/20 to-fuchsia-50/30 p-5 shadow-sm">
+        <TiltSurface className="interactive-card rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-violet-50/20 to-fuchsia-50/30 p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
               <h3 className="text-lg font-bold text-slate-900">Cohort & Trend Analytics</h3>
@@ -664,7 +678,7 @@ export default function StudentDashboard() {
                 <button
                   key={mode.id}
                   onClick={() => setGenderMode(mode.id)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                  className={`interactive-btn px-3 py-1 rounded-full text-xs font-semibold transition ${
                     genderMode === mode.id ? 'bg-violet-500 text-white' : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
@@ -710,8 +724,9 @@ export default function StudentDashboard() {
               </p>
             </div>
           </div>
-        </div>
+        </TiltSurface>
       </section>
+      </MotionReveal>
     </div>
   );
 }
@@ -776,11 +791,11 @@ function Kpi({
   const delta = getDelta(value, String(baseValue));
 
   return (
-    <div className={`rounded-xl border p-4 shadow-sm transition-colors hover:bg-slate-50 ${tones[tone]}`}>
+    <TiltSurface className={`interactive-card rounded-xl border p-4 shadow-sm transition-colors hover:bg-slate-50 ${tones[tone]}`}>
       <p className="text-xs uppercase tracking-[0.12em] opacity-80">{title}</p>
       <p className="mt-2 text-3xl font-bold">{value}</p>
       <p className="mt-2 text-xs font-semibold opacity-75">{delta}</p>
-    </div>
+    </TiltSurface>
   );
 }
 

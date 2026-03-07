@@ -45,6 +45,50 @@ body {
   font-family: var(--font-geist-sans), sans-serif;
 }
 
+.interactive-card {
+  transition: transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease;
+  will-change: transform;
+}
+
+.interactive-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+}
+
+.interactive-btn {
+  transition: transform 160ms ease, box-shadow 200ms ease, background-color 200ms ease, color 200ms ease;
+}
+
+.interactive-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(2, 132, 199, 0.16);
+}
+
+.interactive-btn:active {
+  transform: translateY(0);
+}
+
+.shimmer-block {
+  position: relative;
+  overflow: hidden;
+  background: #e2e8f0;
+}
+
+.shimmer-block::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+  animation: shimmer 1.6s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .dashboard-font,
 .dashboard-font * {
   font-family: "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
@@ -400,5 +444,17 @@ select:focus option:checked {
   to {
     transform: translateX(0);
     opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interactive-card,
+  .interactive-btn,
+  .animate-fadeIn,
+  .animate-scaleIn,
+  .animate-slideIn {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }
