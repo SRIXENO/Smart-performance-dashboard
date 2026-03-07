@@ -50,15 +50,6 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
-          <button
-            type="button"
-            className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
-            aria-label="Current theme light"
-            disabled
-          >
-            Light Mode
-          </button>
-
           <div className="hidden sm:flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <div className="text-sm">
