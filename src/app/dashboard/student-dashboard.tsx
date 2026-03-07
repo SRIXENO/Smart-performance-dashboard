@@ -405,7 +405,7 @@ export default function StudentDashboard() {
 
       {showFilters && (
         <MotionReveal delayMs={60}>
-        <section className="interactive-card rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:bg-slate-900/85 dark:border-slate-800">
+        <section className="interactive-card rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
             <FilterLabel title="Search">
               <input
@@ -551,7 +551,7 @@ export default function StudentDashboard() {
         ) : (
           <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredStudents.map((student) => (
-              <article key={student._id} className="interactive-card rounded-xl border border-slate-200 bg-white p-4 hover:shadow-md transition dark:bg-slate-900 dark:border-slate-800">
+              <article key={student._id} className="interactive-card rounded-xl border border-slate-200 bg-white p-4 hover:shadow-md transition">
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className="font-bold text-slate-900">{student.name}</h4>
@@ -583,7 +583,7 @@ export default function StudentDashboard() {
 
       <MotionReveal delayMs={180}>
       <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <TiltSurface className="interactive-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:bg-gradient-to-br dark:from-slate-900 dark:via-cyan-900/10 dark:to-sky-900/10 dark:border-slate-800">
+        <TiltSurface className="interactive-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
               <h3 className="text-lg font-bold text-slate-900">Department Analytics</h3>
@@ -662,7 +662,7 @@ export default function StudentDashboard() {
           </div>
         </TiltSurface>
 
-        <TiltSurface className="interactive-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:bg-gradient-to-br dark:from-slate-900 dark:via-violet-900/10 dark:to-fuchsia-900/10 dark:border-slate-800">
+        <TiltSurface className="interactive-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
               <h3 className="text-lg font-bold text-slate-900">Cohort & Trend Analytics</h3>
