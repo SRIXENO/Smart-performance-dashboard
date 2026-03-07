@@ -223,20 +223,20 @@ export default function StudentDetail() {
             {(user?.role === 'admin' || user?.role === 'faculty') && (
               <button
                 onClick={() => router.push(`/students/${student._id}/edit`)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
+                className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
               >
                 <span>Edit</span>
               </button>
             )}
             <button
               onClick={handlePrint}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
+              className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
             >
               <span>Print</span>
             </button>
             <button
               onClick={handleExport}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
+              className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
             >
               <span>Export</span>
             </button>
@@ -246,8 +246,8 @@ export default function StudentDetail() {
                 disabled={isUpdatingStatus}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 flex items-center space-x-2 ${
                   isBlocked
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                    : 'bg-amber-600 hover:bg-amber-700 text-white'
+                    ? 'bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-700'
+                    : 'bg-white border border-amber-300 hover:bg-amber-50 text-amber-700'
                 }`}
               >
                 <span>{isUpdatingStatus ? 'Saving...' : isBlocked ? 'Unblock' : 'Block'}</span>
@@ -256,7 +256,7 @@ export default function StudentDetail() {
             {user?.role === 'admin' && (
               <button
                 onClick={handleDelete}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
+                className="bg-white border border-rose-300 hover:bg-rose-50 text-rose-700 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
               >
                 <span>Delete</span>
               </button>
