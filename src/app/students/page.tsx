@@ -7,6 +7,7 @@ import { Student } from '@/types';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
+import { logger } from '@/lib/logger';
 
 export default function Students() {
   const { user } = useAuth();
@@ -57,7 +58,7 @@ export default function Students() {
       setStudents(response.data.data.students);
       setPagination(response.data.data.pagination);
     } catch (error) {
-      console.error('Failed to fetch students:', error);
+      logger.error('Failed to fetch students:', error);
     } finally {
       setLoading(false);
     }
@@ -86,7 +87,7 @@ export default function Students() {
           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
           fetchStudents(pagination.currentPage);
         } catch (error) {
-          console.error('Failed to delete student:', error);
+          logger.error('Failed to delete student:', error);
           alert('Failed to delete student');
         } finally {
           setIsDeleting(false);
@@ -119,7 +120,7 @@ export default function Students() {
           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
           fetchStudents(pagination.currentPage);
         } catch (error) {
-          console.error('Failed to update student status:', error);
+          logger.error('Failed to update student status:', error);
           alert('Failed to update student status');
         } finally {
           setIsUpdatingStatus(null);

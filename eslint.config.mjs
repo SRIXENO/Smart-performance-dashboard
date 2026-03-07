@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Ignore duplicate/legacy project copy and backend workspace for frontend lint.
+    "Smart-performance-dashboard/**",
+    "server/**",
   ]),
 ]);
 

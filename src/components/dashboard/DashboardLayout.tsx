@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
@@ -14,7 +14,6 @@ export default function DashboardLayout({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -22,10 +21,6 @@ export default function DashboardLayout({
       router.replace('/login');
     }
   }, [loading, user, router]);
-
-  useEffect(() => {
-    setMobileSidebarOpen(false);
-  }, [pathname]);
 
   if (loading) {
     return (

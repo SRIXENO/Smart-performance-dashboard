@@ -18,20 +18,14 @@ export default function MotionReveal({
   once = true,
 }: MotionRevealProps) {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setReduceMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }, []);
+  const prefersReducedMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const [isVisible, setIsVisible] = useState(prefersReducedMotion);
+  const [reduceMotion] = useState(prefersReducedMotion);
 
   useEffect(() => {
     const node = ref.current;
-    if (!node || reduceMotion) {
-      setIsVisible(true);
-      return;
-    }
+    if (!node || reduceMotion) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -65,4 +59,3 @@ export default function MotionReveal({
     </div>
   );
 }
-

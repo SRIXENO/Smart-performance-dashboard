@@ -39,10 +39,6 @@ export default function CustomDropdown({
   const visibleOptions = useMemo(() => options.filter((opt) => opt.value !== value), [options, value]);
 
   useEffect(() => {
-    setActiveIndex(0);
-  }, [value, open]);
-
-  useEffect(() => {
     const handleOutside = (event: MouseEvent) => {
       if (!rootRef.current) return;
       if (!rootRef.current.contains(event.target as Node)) {
@@ -107,7 +103,13 @@ export default function CustomDropdown({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() =>
+          setOpen((prev) => {
+            const next = !prev;
+            if (next) setActiveIndex(0);
+            return next;
+          })
+        }
         onKeyDown={handleKeyDown}
         aria-haspopup="listbox"
         aria-expanded={open}

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User } from '@/types';
 import { authAPI } from '@/lib/api';
+import { logger } from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -48,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(response.data.user);
       localStorage.setItem(USER_CACHE_KEY, JSON.stringify(response.data.user));
     } catch (error) {
-      console.log('Auth check failed:', error);
+      logger.warn('Auth check failed:', error);
       setUser(null);
       localStorage.removeItem(TOKEN_CACHE_KEY);
       localStorage.removeItem(USER_CACHE_KEY);
@@ -60,10 +61,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     try {
       const response = await authAPI.login({ email, password });
-      console.log('Login response:', response.data);
       if (response.data.token && typeof window !== 'undefined') {
         localStorage.setItem(TOKEN_CACHE_KEY, response.data.token);
-        console.log('Token stored:', response.data.token.substring(0, 20) + '...');
       }
       setUser(response.data.user);
       if (typeof window !== 'undefined') {

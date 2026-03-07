@@ -28,12 +28,10 @@ export default function KPICard({
   miniChart
 }: KPICardProps) {
   const [displayValue, setDisplayValue] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
 
   // Animated counter effect
   useEffect(() => {
     if (typeof value === 'number' && !loading) {
-      setIsAnimating(true);
       const duration = 1000;
       const steps = 60;
       const increment = value / steps;
@@ -44,7 +42,6 @@ export default function KPICard({
         if (current >= value) {
           setDisplayValue(value);
           clearInterval(timer);
-          setIsAnimating(false);
         } else {
           setDisplayValue(Math.floor(current));
         }
@@ -53,6 +50,8 @@ export default function KPICard({
       return () => clearInterval(timer);
     }
   }, [value, loading]);
+
+  const isAnimating = typeof value === 'number' && !loading && displayValue !== value;
 
   const colorClasses = {
     blue: 'from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700',

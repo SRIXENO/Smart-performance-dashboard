@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { studentsAPI } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useAuth } from '@/context/AuthContext';
+import { logger } from '@/lib/logger';
 
 export default function StudentDetail() {
   const params = useParams();
@@ -34,7 +35,7 @@ export default function StudentDetail() {
         const response = await studentsAPI.getById(params.id as string);
         setStudent(response.data.data.student);
       } catch (error) {
-        console.error('Failed to fetch student:', error);
+        logger.error('Failed to fetch student:', error);
       } finally {
         setLoading(false);
       }
@@ -57,7 +58,7 @@ export default function StudentDetail() {
           await studentsAPI.delete(params.id as string);
           router.push('/students');
         } catch (error) {
-          console.error('Failed to delete student:', error);
+          logger.error('Failed to delete student:', error);
           alert('Failed to delete student');
           setIsDeleting(false);
         }
@@ -103,7 +104,7 @@ export default function StudentDetail() {
           setStudent((prev: any) => ({ ...prev, status: nextStatus }));
           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
         } catch (error) {
-          console.error('Failed to update student status:', error);
+          logger.error('Failed to update student status:', error);
           alert('Failed to update student status');
         } finally {
           setIsUpdatingStatus(false);
@@ -133,7 +134,7 @@ export default function StudentDetail() {
             [`${field}UploadedAt`]: new Date().toISOString(),
           }));
         } catch (error) {
-          console.error('Failed to save uploaded document:', error);
+          logger.error('Failed to save uploaded document:', error);
           alert('Failed to upload document');
         } finally {
           setUploadingDoc('');
@@ -141,7 +142,7 @@ export default function StudentDetail() {
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      console.error('Document upload error:', error);
+      logger.error('Document upload error:', error);
       setUploadingDoc('');
     }
   };
