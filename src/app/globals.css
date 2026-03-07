@@ -27,18 +27,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --input-bg: #ffffff;
-    --input-text: #111827;
-    --input-border: #cbd5e1;
-    --input-placeholder: #94a3b8;
-    --label-text: #475569;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
@@ -138,8 +126,7 @@ body {
 }
 
 /* Dark mode adaptation for existing utility classes */
-.dark body,
-body.dark {
+.dark body {
   background: #0b1220;
   color: #e2e8f0;
 }
