@@ -35,13 +35,13 @@ const getStudents = async (req, res) => {
 
     const query = {};
 
+    const isViewer = req.user?.role === 'viewer';
+
     if (search) {
       const regex = new RegExp(search, 'i');
-      query.$or = [
-        { name: regex },
-        { email: regex },
-        { studentId: regex }
-      ];
+      query.$or = isViewer
+        ? [{ name: regex }, { department: regex }]
+        : [{ name: regex }, { email: regex }, { studentId: regex }];
     }
 
     if (department) {
@@ -59,10 +59,16 @@ const getStudents = async (req, res) => {
     const totalStudents = await Student.countDocuments(query);
     const totalPages = Math.ceil(totalStudents / limitNum);
 
-    const students = await Student.find(query)
+    const studentsQuery = Student.find(query)
       .sort({ createdAt: -1 })
       .skip((pageNum - 1) * limitNum)
       .limit(limitNum);
+
+    if (isViewer) {
+      studentsQuery.select('_id name department year');
+    }
+
+    const students = await studentsQuery;
 
     res.json({
       success: true,

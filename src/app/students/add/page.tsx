@@ -121,14 +121,19 @@ export default function AddStudent() {
       await studentsAPI.create(formData);
       router.push('/students');
     } catch (error: any) {
-      if (error.response?.data?.error) {
-        if (error.response.data.error.includes('email')) {
-          setErrors({ email: 'This email is already registered' });
-        } else {
-          setErrors({ general: error.response.data.error });
-        }
+      const backendError = error?.response?.data?.error;
+      const message = String(backendError || error?.message || '').toLowerCase();
+
+      if (message.includes('timeout') || error?.code === 'ECONNABORTED') {
+        setErrors({ general: 'Request timed out. Please retry in 10-20 seconds (server may be waking up).' });
+      } else if (message.includes('email already')) {
+        setErrors({ email: 'This email is already registered' });
+      } else if (message.includes('register number already')) {
+        setErrors({ rollNumber: 'This register number is already registered' });
+      } else if (backendError) {
+        setErrors({ general: backendError });
       } else {
-        setErrors({ general: 'Failed to create student' });
+        setErrors({ general: 'Failed to create student. Please try again.' });
       }
     } finally {
       setLoading(false);

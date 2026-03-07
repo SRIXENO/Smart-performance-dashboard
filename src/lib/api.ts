@@ -10,6 +10,7 @@ const apiOrigin = normalizedApiBase.endsWith('/api')
   : normalizedApiBase;
 const API_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || 10000);
 const LOGIN_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_LOGIN_TIMEOUT_MS || 45000);
+const STUDENT_CREATE_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_STUDENT_CREATE_TIMEOUT_MS || 45000);
 
 export const GOOGLE_AUTH_URL =
   normalizedApiBase === '/api' ? '/api/auth/google' : `${apiOrigin}/api/auth/google`;
@@ -56,7 +57,10 @@ export const viewersAPI = {
 export const studentsAPI = {
   getAll: (params?: any) => api.get('/students', { params }),
   getById: (id: string) => api.get(`/students/${id}`),
-  create: (data: any) => api.post('/students', data),
+  create: (data: any) =>
+    api.post('/students', data, {
+      timeout: Number.isFinite(STUDENT_CREATE_TIMEOUT_MS) ? STUDENT_CREATE_TIMEOUT_MS : 45000,
+    }),
   update: (id: string, data: any) => api.put(`/students/${id}`, data),
   delete: (id: string) => api.delete(`/students/${id}`),
 };

@@ -10,6 +10,7 @@ import CustomDropdown from '@/components/ui/CustomDropdown';
 
 export default function Students() {
   const { user } = useAuth();
+  const isViewer = user?.role === 'viewer';
   const canManageStudentAccess = user?.role === 'admin' || user?.role === 'faculty';
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +147,7 @@ export default function Students() {
           <div className="md:col-span-2">
             <input
               type="text"
-              placeholder="Search by name, email, or student ID..."
+              placeholder={isViewer ? 'Search by name or department...' : 'Search by name, email, or student ID...'}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -182,17 +183,11 @@ export default function Students() {
         ) : (
           <>
             <div className="overflow-x-auto">
-            <table className="min-w-[920px] w-full divide-y divide-gray-200">
+            <table className={`${isViewer ? 'min-w-[620px]' : 'min-w-[920px]'} w-full divide-y divide-gray-200`}>
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Student ID
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Name
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
                   </th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Department
@@ -200,25 +195,23 @@ export default function Students() {
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Year
                   </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="sticky right-0 z-10 bg-gray-50 shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.35)] px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  {!isViewer && (
+                    <>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="sticky right-0 z-10 bg-gray-50 shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.35)] px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {students.map((student) => (
                   <tr key={student._id} className="hover:bg-gray-50">
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {student.studentId}
-                    </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {student.name}
-                    </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.email}
                     </td>
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {student.department}
@@ -226,41 +219,76 @@ export default function Students() {
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       Year {student.year}
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        student.status === 'active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {student.status}
-                      </span>
-                    </td>
-                    <td className="sticky right-0 z-10 bg-white shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.35)] px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="inline-flex items-center gap-2 sm:gap-3">
-                      <Link
-                        href={`/students/${student._id}`}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        View
-                      </Link>
-                      {(user?.role === 'admin' || user?.role === 'faculty') && (
-                        <>
-                          <details className="relative sm:hidden">
-                            <summary className="list-none cursor-pointer rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 hover:bg-gray-50">
-                              More
-                            </summary>
-                            <div className="absolute right-0 mt-1 w-28 rounded-md border border-gray-200 bg-white shadow-lg p-1 z-20">
+                    {!isViewer && (
+                      <>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            student.status === 'active' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {student.status}
+                          </span>
+                        </td>
+                        <td className="sticky right-0 z-10 bg-white shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.35)] px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="inline-flex items-center gap-2 sm:gap-3">
+                          <Link
+                            href={`/students/${student._id}`}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            View
+                          </Link>
+                          {(user?.role === 'admin' || user?.role === 'faculty') && (
+                            <>
+                              <details className="relative sm:hidden">
+                                <summary className="list-none cursor-pointer rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 hover:bg-gray-50">
+                                  More
+                                </summary>
+                                <div className="absolute right-0 mt-1 w-28 rounded-md border border-gray-200 bg-white shadow-lg p-1 z-20">
+                                  <Link
+                                    href={`/students/${student._id}/edit`}
+                                    className="block rounded px-2 py-1 text-indigo-600 hover:bg-indigo-50"
+                                  >
+                                    Edit
+                                  </Link>
+                                  {canManageStudentAccess && (
+                                    <button
+                                      onClick={() => handleToggleBlock(student)}
+                                      className={`block w-full text-left rounded px-2 py-1 hover:bg-slate-50 ${
+                                        isBlocked(student.status) ? 'text-emerald-700' : 'text-amber-700'
+                                      }`}
+                                    >
+                                      {isUpdatingStatus === student._id
+                                        ? 'Saving...'
+                                        : isBlocked(student.status)
+                                          ? 'Unblock'
+                                          : 'Block'}
+                                    </button>
+                                  )}
+                                  {user?.role === 'admin' && (
+                                    <button
+                                      onClick={() => handleDelete(student._id, student.name)}
+                                      className="block w-full text-left rounded px-2 py-1 text-red-600 hover:bg-red-50"
+                                    >
+                                      Delete
+                                    </button>
+                                  )}
+                                </div>
+                              </details>
                               <Link
                                 href={`/students/${student._id}/edit`}
-                                className="block rounded px-2 py-1 text-indigo-600 hover:bg-indigo-50"
+                                className="hidden sm:inline text-indigo-600 hover:text-indigo-900"
                               >
                                 Edit
                               </Link>
                               {canManageStudentAccess && (
                                 <button
                                   onClick={() => handleToggleBlock(student)}
-                                  className={`block w-full text-left rounded px-2 py-1 hover:bg-slate-50 ${
-                                    isBlocked(student.status) ? 'text-emerald-700' : 'text-amber-700'
+                                  disabled={isUpdatingStatus === student._id}
+                                  className={`hidden sm:inline disabled:opacity-50 ${
+                                    isBlocked(student.status)
+                                      ? 'text-emerald-600 hover:text-emerald-900'
+                                      : 'text-amber-600 hover:text-amber-900'
                                   }`}
                                 >
                                   {isUpdatingStatus === student._id
@@ -273,48 +301,17 @@ export default function Students() {
                               {user?.role === 'admin' && (
                                 <button
                                   onClick={() => handleDelete(student._id, student.name)}
-                                  className="block w-full text-left rounded px-2 py-1 text-red-600 hover:bg-red-50"
+                                  className="hidden sm:inline text-red-600 hover:text-red-900"
                                 >
                                   Delete
                                 </button>
                               )}
-                            </div>
-                          </details>
-                          <Link
-                            href={`/students/${student._id}/edit`}
-                            className="hidden sm:inline text-indigo-600 hover:text-indigo-900"
-                          >
-                            Edit
-                          </Link>
-                          {canManageStudentAccess && (
-                            <button
-                              onClick={() => handleToggleBlock(student)}
-                              disabled={isUpdatingStatus === student._id}
-                              className={`hidden sm:inline disabled:opacity-50 ${
-                                isBlocked(student.status)
-                                  ? 'text-emerald-600 hover:text-emerald-900'
-                                  : 'text-amber-600 hover:text-amber-900'
-                              }`}
-                            >
-                              {isUpdatingStatus === student._id
-                                ? 'Saving...'
-                                : isBlocked(student.status)
-                                  ? 'Unblock'
-                                  : 'Block'}
-                            </button>
+                            </>
                           )}
-                          {user?.role === 'admin' && (
-                            <button
-                              onClick={() => handleDelete(student._id, student.name)}
-                              className="hidden sm:inline text-red-600 hover:text-red-900"
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </>
-                      )}
-                      </div>
-                    </td>
+                          </div>
+                        </td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>

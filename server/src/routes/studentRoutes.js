@@ -5,7 +5,7 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 
 const router = express.Router();
 
-router.get('/', authMiddleware, roleMiddleware(['admin', 'faculty']), getStudents);
+router.get('/', authMiddleware, roleMiddleware(['admin', 'faculty', 'viewer']), getStudents);
 router.get('/:id', authMiddleware, roleMiddleware(['admin', 'faculty']), getStudentById);
 router.post('/', authMiddleware, roleMiddleware(['admin']), createStudent);
 router.put('/:id', authMiddleware, roleMiddleware(['admin', 'faculty']), updateStudent);
