@@ -89,10 +89,20 @@ const loginHistoryItem: NavItem = {
   )
 };
 
+const viewersItem: NavItem = {
+  name: 'Viewers',
+  href: '/admin/viewers',
+  icon: (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-5-3.87M7 20H2v-2a4 4 0 015-3.87m10-2.13a4 4 0 10-8 0 4 4 0 008 0zM7 10a3 3 0 100-6 3 3 0 000 6z" />
+    </svg>
+  )
+};
+
 export default function Sidebar({ isOpen = false, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const { user } = useAuth();
-  const items = user?.role === 'admin' ? [...navigation, adminItem, loginHistoryItem] : navigation;
+  const items = user?.role === 'admin' ? [...navigation, adminItem, viewersItem, loginHistoryItem] : navigation;
 
   return (
     <>

@@ -46,6 +46,13 @@ export const approvalsAPI = {
     api.put(`/auth/approvals/${id}`, { decision }),
 };
 
+export const viewersAPI = {
+  getAll: () => api.get('/auth/viewers'),
+  updateStatus: (id: string, status: 'active' | 'blocked') =>
+    api.patch(`/auth/viewers/${id}/status`, { status }),
+  delete: (id: string) => api.delete(`/auth/viewers/${id}`),
+};
+
 export const studentsAPI = {
   getAll: (params?: any) => api.get('/students', { params }),
   getById: (id: string) => api.get(`/students/${id}`),
