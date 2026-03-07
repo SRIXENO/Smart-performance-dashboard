@@ -8,9 +8,10 @@ const normalizedApiBase = API_BASE_URL.replace(/\/+$/, '');
 const apiOrigin = normalizedApiBase.endsWith('/api')
   ? normalizedApiBase.slice(0, -4)
   : normalizedApiBase;
-const API_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || 10000);
+const API_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || 20000);
 const LOGIN_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_LOGIN_TIMEOUT_MS || 45000);
 const STUDENT_CREATE_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_STUDENT_CREATE_TIMEOUT_MS || 45000);
+const AUTH_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_AUTH_TIMEOUT_MS || 20000);
 
 export const GOOGLE_AUTH_URL =
   normalizedApiBase === '/api' ? '/api/auth/google' : `${apiOrigin}/api/auth/google`;
@@ -34,11 +35,34 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+const isTimeoutError = (error: any) => {
+  const message = String(error?.message || '').toLowerCase();
+  return error?.code === 'ECONNABORTED' || message.includes('timeout');
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const withTimeoutRetry = async <T>(fn: () => Promise<T>, retries = 1): Promise<T> => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries > 0 && isTimeoutError(error)) {
+      await sleep(600);
+      return withTimeoutRetry(fn, retries - 1);
+    }
+    throw error;
+  }
+};
+
 export const authAPI = {
   register: (data: any) => api.post('/auth/register', data),
   login: (data: any) => api.post('/auth/login', data, { timeout: Number.isFinite(LOGIN_TIMEOUT_MS) ? LOGIN_TIMEOUT_MS : 45000 }),
   logout: () => api.post('/auth/logout'),
-  me: () => api.get('/auth/me', { timeout: Number(process.env.NEXT_PUBLIC_AUTH_TIMEOUT_MS || 8000) }),
+  me: () =>
+    withTimeoutRetry(
+      () => api.get('/auth/me', { timeout: Number.isFinite(AUTH_TIMEOUT_MS) ? AUTH_TIMEOUT_MS : 20000 }),
+      1
+    ),
 };
 
 export const approvalsAPI = {
@@ -55,7 +79,7 @@ export const viewersAPI = {
 };
 
 export const studentsAPI = {
-  getAll: (params?: any) => api.get('/students', { params }),
+  getAll: (params?: any) => withTimeoutRetry(() => api.get('/students', { params }), 1),
   getById: (id: string) => api.get(`/students/${id}`),
   create: (data: any) =>
     api.post('/students', data, {
