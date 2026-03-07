@@ -11,6 +11,7 @@ type LoginHistoryItem = {
   email: string;
   date: string;
   loginMethod: string;
+  role: string;
 };
 
 export default function AdminLoginHistoryPage() {
@@ -66,11 +67,12 @@ export default function AdminLoginHistoryPage() {
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
-        <table className="min-w-[760px] w-full divide-y divide-gray-200">
+        <table className="min-w-[920px] w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
             </tr>
@@ -80,6 +82,7 @@ export default function AdminLoginHistoryPage() {
               <tr key={item.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.userName}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.email}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 capitalize">{item.role}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 capitalize">{item.loginMethod}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                   {new Date(item.date).toLocaleString()}

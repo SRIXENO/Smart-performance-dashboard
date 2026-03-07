@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const activityLogSchema = new mongoose.Schema({
   // Who performed the action
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  userRole: { type: String, enum: ['admin', 'faculty', 'student', 'system'] },
+  userRole: { type: String, enum: ['admin', 'faculty', 'student', 'viewer', 'system'] },
   userName: { type: String },
   
   // What action was performed

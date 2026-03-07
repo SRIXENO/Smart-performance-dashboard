@@ -64,7 +64,9 @@ router.get('/login-history', authMiddleware, roleMiddleware(['admin']), async (r
       userName: log.userName || 'Unknown',
       email: log.metadata?.email || 'N/A',
       date: log.timestamp || log.createdAt,
-      loginMethod: log.metadata?.loginMethod || 'local'
+      loginMethod: log.metadata?.loginMethod || 'local',
+      role: log.userRole || 'unknown',
+      userId: log.userId ? String(log.userId) : null,
     }));
 
     res.json({ success: true, data: history });
