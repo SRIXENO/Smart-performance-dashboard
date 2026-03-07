@@ -66,6 +66,9 @@ const getStudents = async (req, res) => {
 
     if (isViewer) {
       studentsQuery.select('_id name department year');
+    } else {
+      // Keep list responses lean; avoid sending heavy profile/document fields.
+      studentsQuery.select('_id studentId name email gender year department cgpa attendance status enrollmentDate');
     }
 
     const students = await studentsQuery;
