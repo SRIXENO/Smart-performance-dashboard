@@ -39,7 +39,7 @@ function LoginContent() {
       const isTimeout =
         error?.code === 'ECONNABORTED' || String(error?.message || '').toLowerCase().includes('timeout');
       const errorMessage = isTimeout
-        ? 'Login request timed out. Please try again in a few seconds.'
+        ? 'Login is taking longer than expected (server wake-up). Please wait and try again in 20-30 seconds.'
         : error.response?.data?.error || error.message || 'Login failed';
       setError(errorMessage);
     } finally {

@@ -20,9 +20,6 @@ const facultyRoutes = require('./routes/facultyRoutes');
 
 const app = express();
 
-// Connect to database (non-blocking)
-connectDB();
-
 const normalizeOrigin = (value) => (value || '').trim().replace(/\/+$/, '');
 const configuredOrigins = [
   process.env.FRONTEND_URL,
@@ -87,7 +84,14 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Allowed origins: ${configuredOrigins.join(', ') || 'vercel.app, localhost'}`);
-});
+const startServer = async () => {
+  const dbConnected = await connectDB();
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Allowed origins: ${configuredOrigins.join(', ') || 'vercel.app, localhost'}`);
+    console.log(`Database status on startup: ${dbConnected ? 'connected' : 'not connected'}`);
+  });
+};
+
+startServer();

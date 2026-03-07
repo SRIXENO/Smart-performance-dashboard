@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Student = require('../models/Student');
 const ActivityLog = require('../models/ActivityLog');
@@ -67,6 +68,13 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        error: 'Authentication service is starting. Please try again in 10-20 seconds.'
+      });
+    }
+
     const { email, password } = req.body;
     const identifier = (email || '').trim();
 
