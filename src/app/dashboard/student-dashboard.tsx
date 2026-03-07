@@ -18,6 +18,7 @@ import { studentsAPI } from '@/lib/api';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import MotionReveal from '@/components/ui/MotionReveal';
 import TiltSurface from '@/components/ui/TiltSurface';
+import { logger } from '@/lib/logger';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -41,6 +42,8 @@ type DeptMetric = 'count' | 'cgpa' | 'attendance';
 type DeptChartType = 'bar' | 'line';
 type GenderMode = 'grouped' | 'stacked' | 'male' | 'female';
 type TimeRange = 'all' | '30d' | '90d' | '365d';
+const INITIAL_STUDENT_LIMIT = 250;
+const FULL_STUDENT_LIMIT = 2000;
 
 export default function StudentDashboard() {
   const router = useRouter();
@@ -65,7 +68,17 @@ export default function StudentDashboard() {
   const [genderMode, setGenderMode] = useState<GenderMode>('grouped');
 
   useEffect(() => {
-    fetchStudents();
+    let mounted = true;
+    const loadDashboard = async () => {
+      await fetchStudents({ full: false, silent: false });
+      if (mounted) {
+        fetchStudents({ full: true, silent: true });
+      }
+    };
+    loadDashboard();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -73,23 +86,23 @@ export default function StudentDashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  const fetchStudents = async () => {
-    setLoading(true);
+  const fetchStudents = async ({ full, silent }: { full: boolean; silent: boolean }) => {
+    if (!silent) setLoading(true);
     try {
-      const response = await studentsAPI.getAll({ limit: 2000 });
+      const response = await studentsAPI.getAll({ limit: full ? FULL_STUDENT_LIMIT : INITIAL_STUDENT_LIMIT });
       const studentData = response.data?.data?.students || [];
       setStudents(studentData);
       setLastRefreshed(new Date());
     } catch (error) {
-      console.error('Failed to fetch students:', error);
+      logger.error('Failed to fetch students:', error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await fetchStudents();
+    await fetchStudents({ full: true, silent: false });
     setIsRefreshing(false);
   };
 

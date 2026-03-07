@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
+const mongoose = require('mongoose');
 const passport = require('./config/passport');
 const connectDB = require('./config/database');
 
@@ -70,6 +71,16 @@ app.use('/api/faculty', facultyRoutes);
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Server is running' });
+});
+
+app.get('/api/healthz', (_req, res) => {
+  res.json({
+    success: true,
+    service: 'spid-api',
+    timestamp: new Date().toISOString(),
+    uptimeSeconds: Math.floor(process.uptime()),
+    dbConnected: mongoose.connection.readyState === 1,
+  });
 });
 
 // 404 handler
