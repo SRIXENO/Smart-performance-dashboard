@@ -520,7 +520,7 @@ export default function Performance() {
                 if (showForm) resetForm();
                 setShowForm(!showForm);
               }}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              className="app-primary-btn"
             >
               {showForm ? 'Cancel' : 'Add Performance Record'}
             </button>
@@ -769,7 +769,7 @@ export default function Performance() {
                 </button>
               )}
               {user?.role === 'admin' && (
-                <button onClick={() => setShowForm(true)} className="bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+                <button onClick={() => setShowForm(true)} className="app-primary-btn">
                   Create first record
                 </button>
               )}

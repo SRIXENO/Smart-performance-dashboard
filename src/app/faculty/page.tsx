@@ -170,7 +170,7 @@ export default function FacultyPage() {
             <p className="text-slate-500 text-sm mt-1">Admin can add/edit/delete. Faculty and students are view-only.</p>
           </div>
           {isAdmin && (
-            <button onClick={() => setShowForm((v) => !v)} className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-semibold">
+            <button onClick={() => setShowForm((v) => !v)} className="app-primary-btn">
               {showForm ? 'Close Form' : 'Add Faculty'}
             </button>
           )}

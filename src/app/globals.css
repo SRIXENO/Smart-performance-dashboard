@@ -66,6 +66,31 @@ body {
   transform: translateY(0);
 }
 
+.app-primary-btn {
+  min-width: 132px;
+  height: 48px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  background: #0f1b3d;
+  color: #ffffff;
+  font-size: 1.75rem;
+  font-size: 1rem;
+  line-height: 1;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color 160ms ease, transform 160ms ease, box-shadow 200ms ease;
+}
+
+.app-primary-btn:hover {
+  background: #12265a;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(15, 27, 61, 0.2);
+}
+
 .shimmer-block {
   position: relative;
   overflow: hidden;

@@ -136,7 +136,7 @@ export default function Students() {
         {user?.role === 'admin' && (
           <Link
             href="/students/add"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            className="app-primary-btn"
           >
             Add Student
           </Link>
@@ -325,7 +325,7 @@ export default function Students() {
                 {user?.role === 'admin' && (
                   <Link
                     href="/students/add"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                    className="app-primary-btn"
                   >
                     Add Student
                   </Link>

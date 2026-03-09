@@ -184,7 +184,7 @@ export default function SubjectManagement() {
         {!showForm && user?.role === 'admin' && (
           <button
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium flex items-center space-x-2"
+            className="app-primary-btn"
           >
             <span>➕</span>
             <span>Assign Subjects</span>
@@ -429,3 +429,4 @@ export default function SubjectManagement() {
     </div>
   );
 }
+
