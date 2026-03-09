@@ -1,7 +1,5 @@
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const hpp = require('hpp');
-const mongoSanitize = require('express-mongo-sanitize');
 
 const createRateLimiter = (options = {}) => rateLimit({
   standardHeaders: true,
@@ -27,16 +25,58 @@ const loginLimiter = createRateLimiter({
   message: { success: false, error: 'Too many login attempts. Please wait 10 minutes.' },
 });
 
+const sanitizeObjectInPlace = (value, { replaceWith = '_' } = {}) => {
+  if (!value || typeof value !== 'object') return;
+
+  if (Array.isArray(value)) {
+    for (const item of value) sanitizeObjectInPlace(item, { replaceWith });
+    return;
+  }
+
+  for (const key of Object.keys(value)) {
+    const current = value[key];
+    const sanitizedKey = key.replace(/^\$|\./g, replaceWith);
+
+    if (sanitizedKey !== key) {
+      delete value[key];
+      if (!['__proto__', 'constructor', 'prototype'].includes(sanitizedKey)) {
+        value[sanitizedKey] = current;
+      }
+    }
+
+    sanitizeObjectInPlace(value[sanitizedKey] ?? current, { replaceWith });
+  }
+};
+
+const collapseDuplicateQueryValues = (value) => {
+  if (!value || typeof value !== 'object') return;
+
+  for (const key of Object.keys(value)) {
+    const current = value[key];
+    if (Array.isArray(current)) {
+      value[key] = current[current.length - 1];
+      continue;
+    }
+    if (current && typeof current === 'object') {
+      collapseDuplicateQueryValues(current);
+    }
+  }
+};
+
+const requestHardeningMiddleware = (req, _res, next) => {
+  sanitizeObjectInPlace(req.body);
+  sanitizeObjectInPlace(req.params);
+  sanitizeObjectInPlace(req.query);
+  collapseDuplicateQueryValues(req.query);
+  next();
+};
+
 const securityMiddleware = [
   helmet({
     contentSecurityPolicy: false,
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }),
-  mongoSanitize({
-    allowDots: false,
-    replaceWith: '_',
-  }),
-  hpp(),
+  requestHardeningMiddleware,
   apiLimiter,
 ];
 
