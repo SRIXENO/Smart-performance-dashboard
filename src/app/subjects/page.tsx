@@ -21,6 +21,7 @@ export default function SubjectManagement() {
   const [formData, setFormData] = useState({
     department: '',
     year: 1,
+    semester: 1,
     subjects: [] as Subject[]
   });
   const [subjectCode, setSubjectCode] = useState('');
@@ -49,6 +50,13 @@ export default function SubjectManagement() {
     'Civil',
     'Biotechnology'
   ];
+
+  const semesterOptionsByYear: Record<number, number[]> = {
+    1: [1, 2],
+    2: [3, 4],
+    3: [5, 6],
+    4: [7, 8]
+  };
 
   useEffect(() => {
     fetchSubjectGroups();
@@ -107,7 +115,7 @@ export default function SubjectManagement() {
       setShowSuccessToast(true);
       setShowForm(false);
       setEditingId(null);
-      setFormData({ department: '', year: 1, subjects: [] });
+      setFormData({ department: '', year: 1, semester: 1, subjects: [] });
       fetchSubjectGroups();
     } catch (error: any) {
       console.error('Submit error:', error);
@@ -120,16 +128,17 @@ export default function SubjectManagement() {
     setFormData({
       department: group.department,
       year: group.year,
+      semester: group.semester || ((group.year - 1) * 2 + 1),
       subjects: [...group.subjects]
     });
     setShowForm(true);
   };
 
-  const handleDelete = async (id: string, department: string, year: number) => {
+  const handleDelete = async (id: string, department: string, year: number, semester: number) => {
     setConfirmModal({
       isOpen: true,
       title: 'Delete Subject Group?',
-      message: `Are you sure you want to delete subjects for ${department} Year ${year}? All students in this group will lose their assigned subjects. This action cannot be undone.`,
+      message: `Are you sure you want to delete subjects for ${department} Year ${year} Semester ${semester}? All students in this group will lose their assigned subjects. This action cannot be undone.`,
       type: 'danger',
       onConfirm: async () => {
         setIsDeleting(true);
@@ -149,7 +158,7 @@ export default function SubjectManagement() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ department: '', year: 1, subjects: [] });
+    setFormData({ department: '', year: 1, semester: 1, subjects: [] });
     setSubjectCode('');
     setSubjectName('');
   };
@@ -179,7 +188,7 @@ export default function SubjectManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Subject Management</h1>
-          <p className="text-gray-600 mt-2">Assign subjects by department and year - automatically applies to all matching students</p>
+          <p className="text-gray-600 mt-2">Assign subjects by department, year, and semester - automatically applies to matching students</p>
         </div>
         {!showForm && user?.role === 'admin' && (
           <button
@@ -196,7 +205,7 @@ export default function SubjectManagement() {
         <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-semibold mb-4">{editingId ? 'Edit Subject Group' : 'Assign New Subject Group'}</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Department *</label>
                 <CustomDropdown
@@ -215,7 +224,11 @@ export default function SubjectManagement() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Academic Year *</label>
                 <CustomDropdown
                   value={String(formData.year)}
-                  onChange={(value) => setFormData({ ...formData, year: parseInt(value) })}
+                  onChange={(value) => {
+                    const year = parseInt(value);
+                    const defaultSemester = semesterOptionsByYear[year]?.[0] || 1;
+                    setFormData({ ...formData, year, semester: defaultSemester });
+                  }}
                   disabled={!!editingId}
                   options={[
                     { value: '1', label: '1st Year' },
@@ -223,6 +236,18 @@ export default function SubjectManagement() {
                     { value: '3', label: '3rd Year' },
                     { value: '4', label: '4th Year' },
                   ]}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Semester *</label>
+                <CustomDropdown
+                  value={String(formData.semester)}
+                  onChange={(value) => setFormData({ ...formData, semester: parseInt(value) })}
+                  disabled={!!editingId}
+                  options={(semesterOptionsByYear[formData.year] || []).map((semester) => ({
+                    value: String(semester),
+                    label: `Semester ${semester}`,
+                  }))}
                 />
               </div>
             </div>
@@ -331,6 +356,9 @@ export default function SubjectManagement() {
                       <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
                         Year {group.year}
                       </span>
+                      <span className="px-3 py-1 bg-violet-100 text-violet-800 rounded-full text-sm font-medium">
+                        Semester {group.semester}
+                      </span>
                       <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
                         {group.subjects.length} Subjects
                       </span>
@@ -378,7 +406,7 @@ export default function SubjectManagement() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(group._id, group.department, group.year)}
+                        onClick={() => handleDelete(group._id, group.department, group.year, group.semester)}
                         className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
                       >
                         Delete

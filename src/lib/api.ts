@@ -190,7 +190,8 @@ export const activityAPI = {
 export const subjectsAPI = {
   assign: (data: any) => api.post('/subjects/assign', data),
   getAll: () => api.get('/subjects'),
-  getByDeptYear: (department: string, year: number) => api.get(`/subjects/department/${department}/year/${year}`),
+  getByDeptYear: (department: string, year: number, semester?: number) =>
+    api.get(`/subjects/department/${department}/year/${year}`, { params: semester ? { semester } : undefined }),
   getStudentSubjects: (studentId: string) => api.get(`/subjects/student/${studentId}`),
   update: (id: string, data: any) => api.put(`/subjects/${id}`, data),
   delete: (id: string) => api.delete(`/subjects/${id}`),

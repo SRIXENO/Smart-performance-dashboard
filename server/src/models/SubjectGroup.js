@@ -26,6 +26,12 @@ const subjectGroupSchema = new mongoose.Schema({
     min: 1,
     max: 4
   },
+  semester: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 8
+  },
   subjects: [subjectSchema],
   createdBy: {
     type: String,
@@ -35,6 +41,6 @@ const subjectGroupSchema = new mongoose.Schema({
   timestamps: true
 });
 
-subjectGroupSchema.index({ department: 1, year: 1 }, { unique: true });
+subjectGroupSchema.index({ department: 1, year: 1, semester: 1 }, { unique: true });
 
 module.exports = mongoose.model('SubjectGroup', subjectGroupSchema);

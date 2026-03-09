@@ -162,15 +162,15 @@ export default function EditStudent() {
   }, [authLoading, params.id, router, user?.role]);
 
   useEffect(() => {
-    if (formData.department && formData.year) {
-      fetchSubjectsForDeptYear(formData.department, formData.year);
+    if (formData.department && formData.year && formData.semester) {
+      fetchSubjectsForDeptYear(formData.department, formData.year, formData.semester);
     }
-  }, [formData.department, formData.year]);
+  }, [formData.department, formData.year, formData.semester]);
 
-  const fetchSubjectsForDeptYear = async (department: string, year: number) => {
+  const fetchSubjectsForDeptYear = async (department: string, year: number, semester: number) => {
     setLoadingSubjects(true);
     try {
-      const response = await subjectsAPI.getByDeptYear(department, year);
+      const response = await subjectsAPI.getByDeptYear(department, year, semester);
       const subjects = response.data.data.subjectGroup?.subjects || [];
       setAvailableSubjects(subjects);
     } catch (error) {

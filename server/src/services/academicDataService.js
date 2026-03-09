@@ -60,7 +60,8 @@ const ensureSemester = async (year, semesterNumber) => {
 };
 
 const upsertSubjectsFromGroup = async ({ department, year, semesterNumber }) => {
-  const group = await SubjectGroup.findOne({ department, year: normalizeYear(year) }).lean();
+  const resolvedSemester = inferSemesterNumber(year, semesterNumber);
+  const group = await SubjectGroup.findOne({ department, year: normalizeYear(year), semester: resolvedSemester }).lean();
   if (!group || !Array.isArray(group.subjects) || !group.subjects.length) return [];
 
   const docs = [];
