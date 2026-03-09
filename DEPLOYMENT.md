@@ -60,6 +60,16 @@
 - Confirm `NEXT_PUBLIC_API_URL` includes `/api`
 - Confirm `/auth/me` returns valid response
 
+### Render cold start (slow first or second login)
+- Free Render instances sleep when idle; wake-up can take 10-30s.
+- This repo includes GitHub keep-alive workflow at `.github/workflows/keepalive-render.yml`.
+- Add repository secret:
+  - Name: `RENDER_HEALTHCHECK_URL`
+  - Value: `https://<render-service>.onrender.com/api/healthz`
+- Ensure GitHub Actions is enabled for the repo.
+- You can run the workflow manually from `Actions -> Keep Render Awake -> Run workflow`.
+- Scheduled ping runs every 10 minutes.
+
 ### CORS blocked
 - Ensure backend `FRONTEND_URL` is exact (protocol + domain)
 - Redeploy backend after env changes
