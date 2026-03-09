@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const mongoose = require('mongoose');
 const passport = require('./config/passport');
 const connectDB = require('./config/database');
+const { securityMiddleware } = require('./middleware/securityMiddleware');
 
 // Route imports
 const authRoutes = require('./routes/authRoutes');
@@ -20,6 +21,7 @@ const activityRoutes = require('./routes/activityRoutes');
 const facultyRoutes = require('./routes/facultyRoutes');
 
 const app = express();
+app.set('trust proxy', 1);
 
 const normalizeOrigin = (value) => (value || '').trim().replace(/\/+$/, '');
 const configuredOrigins = [
@@ -50,11 +52,12 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: process.env.REQUEST_BODY_LIMIT || '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: process.env.REQUEST_BODY_LIMIT || '1mb' }));
 app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(passport.initialize());
+app.use(securityMiddleware);
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -95,10 +98,27 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
+let serverInstance = null;
+
+const shutdown = async (signal) => {
+  try {
+    console.log(`[shutdown] Received ${signal}. Closing server...`);
+    if (serverInstance) {
+      await new Promise((resolve) => serverInstance.close(resolve));
+    }
+    await mongoose.connection.close(false);
+    console.log('[shutdown] Clean shutdown completed');
+    process.exit(0);
+  } catch (error) {
+    console.error('[shutdown] Failed:', error);
+    process.exit(1);
+  }
+};
+
 const startServer = async () => {
   const dbConnected = await connectDB();
 
-  app.listen(PORT, '0.0.0.0', () => {
+  serverInstance = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Allowed origins: ${configuredOrigins.join(', ') || 'vercel.app, localhost'}`);
     console.log(`Database status on startup: ${dbConnected ? 'connected' : 'not connected'}`);
@@ -106,3 +126,12 @@ const startServer = async () => {
 };
 
 startServer();
+
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason);
+});
+process.on('uncaughtException', (error) => {
+  console.error('[uncaughtException]', error);
+});

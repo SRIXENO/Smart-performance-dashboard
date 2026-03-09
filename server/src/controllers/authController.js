@@ -6,6 +6,8 @@ const ActivityLog = require('../models/ActivityLog');
 
 const SESSION_MAX_AGE_MS = 3 * 60 * 60 * 1000; // 3 hours
 
+const normalizeIdentifier = (value) => String(value || '').trim().slice(0, 254);
+
 const generateToken = (userId, role) => {
   return jwt.sign({ userId, role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE
@@ -77,9 +79,10 @@ const login = async (req, res) => {
     }
 
     const { email, password } = req.body;
-    const identifier = (email || '').trim();
+    const identifier = normalizeIdentifier(email);
+    const normalizedPassword = String(password || '').slice(0, 256);
 
-    if (!identifier || !password) {
+    if (!identifier || !normalizedPassword) {
       return res.status(400).json({ success: false, error: 'Email or register number and password are required' });
     }
 
@@ -109,7 +112,7 @@ const login = async (req, res) => {
     let isValidPassword = false;
     if (user) {
       try {
-        isValidPassword = await user.comparePassword(password);
+        isValidPassword = await user.comparePassword(normalizedPassword);
       } catch (_err) {
         isValidPassword = false;
       }

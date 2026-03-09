@@ -12,11 +12,12 @@ const {
 } = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
+const { authLimiter, loginLimiter } = require('../middleware/securityMiddleware');
 
 const router = express.Router();
 
-router.post('/register', register);
-router.post('/login', login);
+router.post('/register', authLimiter, register);
+router.post('/login', loginLimiter, login);
 router.post('/logout', logout);
 router.get('/me', authMiddleware, me);
 router.get('/approvals/pending', authMiddleware, roleMiddleware(['admin']), getPendingApprovals);
