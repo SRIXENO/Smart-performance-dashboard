@@ -204,4 +204,13 @@ export const facultyAPI = {
   delete: (id: string) => api.delete(`/faculty/${id}`),
 };
 
+export const performanceAPI = {
+  getAll: (params?: any) => api.get('/performance', { params }),
+  getMissingSummary: (params?: any) => api.get('/performance/missing-summary', { params }),
+  bootstrapMissing: (data: any) => api.post('/performance/bootstrap-missing', data),
+  create: (data: any) => api.post('/performance', data),
+  update: (id: string, data: any) => api.put(`/performance/${id}`, data),
+  delete: (id: string) => api.delete(`/performance/${id}`),
+};
+
 export default api;

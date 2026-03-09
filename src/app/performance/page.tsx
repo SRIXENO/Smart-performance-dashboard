@@ -14,7 +14,7 @@ import {
   Tooltip,
 } from 'chart.js';
 import { Bar, Line } from 'react-chartjs-2';
-import api, { studentsAPI } from '@/lib/api';
+import { performanceAPI, studentsAPI } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import SuccessToast from '@/components/SuccessToast';
 import { useAuth } from '@/context/AuthContext';
@@ -58,7 +58,15 @@ export default function Performance() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
   const [isGeneratingSamples, setIsGeneratingSamples] = useState(false);
+  const [isBootstrappingMissing, setIsBootstrappingMissing] = useState(false);
   const [missingSearch, setMissingSearch] = useState('');
+  const [missingMeta, setMissingMeta] = useState({
+    totalStudentsScanned: 0,
+    totalMissing: 0,
+    finalYearMissing: 0,
+    noEligibleSubjects: 0,
+  });
+  const [missingDetailsById, setMissingDetailsById] = useState<Record<string, { eligibleSubjectCount: number; reasons: string[] }>>({});
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     title: '',
@@ -91,6 +99,7 @@ export default function Performance() {
   useEffect(() => {
     fetchRecords();
     fetchStudents();
+    fetchMissingSummary();
   }, []);
 
   useEffect(() => {
@@ -102,6 +111,7 @@ export default function Performance() {
       if (document.hidden) return;
       fetchStudents();
       fetchRecords();
+      fetchMissingSummary();
     };
     const intervalId = window.setInterval(refresh, 30000);
     window.addEventListener('focus', refresh);
@@ -134,7 +144,7 @@ export default function Performance() {
 
   const fetchRecords = async () => {
     try {
-      const response = await api.get('/performance');
+      const response = await performanceAPI.getAll({ limit: 1000 });
       const populatedRecords = response.data.data.records.map((record: any) => ({
         ...record,
         studentName: record.studentId?.name || 'Unknown',
@@ -156,6 +166,30 @@ export default function Performance() {
       setStudents(response.data.data.students);
     } catch (error) {
       console.error('Failed to fetch students:', error);
+    }
+  };
+
+  const fetchMissingSummary = async () => {
+    try {
+      const response = await performanceAPI.getMissingSummary({ limit: 400 });
+      const data = response.data?.data;
+      if (!isMountedRef.current || !data) return;
+      setMissingMeta({
+        totalStudentsScanned: Number(data.summary?.totalStudentsScanned || 0),
+        totalMissing: Number(data.summary?.totalMissing || 0),
+        finalYearMissing: Number(data.summary?.finalYearMissing || 0),
+        noEligibleSubjects: Number(data.summary?.noEligibleSubjects || 0),
+      });
+      const detailMap: Record<string, { eligibleSubjectCount: number; reasons: string[] }> = {};
+      for (const row of data.students || []) {
+        detailMap[String(row._id)] = {
+          eligibleSubjectCount: Number(row.eligibleSubjectCount || 0),
+          reasons: Array.isArray(row.reasons) ? row.reasons : [],
+        };
+      }
+      setMissingDetailsById(detailMap);
+    } catch (error) {
+      console.error('Failed to fetch missing performance summary:', error);
     }
   };
 
@@ -441,7 +475,7 @@ export default function Performance() {
       };
       setRecords((prev) => prev.map((r) => (r._id === editingRecordId ? optimistic : r)));
       try {
-        const response = await api.put(`/performance/${editingRecordId}`, payload);
+        const response = await performanceAPI.update(editingRecordId, payload);
         const updated = response.data?.data ? {
           ...optimistic,
           ...response.data.data,
@@ -483,7 +517,7 @@ export default function Performance() {
     };
     setRecords((prev) => [optimistic, ...prev]);
     try {
-      const response = await api.post('/performance', payload);
+      const response = await performanceAPI.create(payload);
       const created = response.data?.data ? {
         ...optimistic,
         ...response.data.data,
@@ -517,7 +551,7 @@ export default function Performance() {
         setIsDeleting(true);
         setRecords((prev) => prev.filter((item) => item._id !== record._id));
         try {
-          await api.delete(`/performance/${record._id}`);
+          await performanceAPI.delete(record._id);
           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
           setSuccessMessage('Performance record deleted successfully!');
           setShowSuccessToast(true);
@@ -574,7 +608,7 @@ export default function Performance() {
       for (let i = 0; i < 2; i += 1) {
         const chosen = eligible[Math.floor(Math.random() * eligible.length)];
         try {
-          await api.post('/performance', {
+          await performanceAPI.create({
             studentId: student._id,
             subjectId: String(chosen._id),
             subjectName: String(chosen.subjectName || chosen.name || ''),
@@ -586,6 +620,7 @@ export default function Performance() {
       }
     }
     await fetchRecords();
+    await fetchMissingSummary();
     if (!isMountedRef.current) return;
     setIsGeneratingSamples(false);
     if (created > 0) {
@@ -594,6 +629,35 @@ export default function Performance() {
     } else {
       setErrorMessage('No sample records added (likely duplicates)');
       setShowErrorToast(true);
+    }
+  };
+
+  const handleBootstrapMissing = async () => {
+    const targetIds = filteredMissingStudents.slice(0, 30).map((student) => String(student._id));
+    if (!targetIds.length) {
+      setErrorMessage('No missing students found for current filter');
+      setShowErrorToast(true);
+      return;
+    }
+    setIsBootstrappingMissing(true);
+    try {
+      const response = await performanceAPI.bootstrapMissing({
+        studentIds: targetIds,
+        perStudentMaxSubjects: 1,
+        marks: 70,
+        attendancePercentage: 85,
+      });
+      const created = Number(response.data?.data?.recordsCreated || 0);
+      const candidates = Number(response.data?.data?.candidates || targetIds.length);
+      setSuccessMessage(`Baseline created for ${created} record(s) from ${candidates} missing student(s).`);
+      setShowSuccessToast(true);
+      await Promise.all([fetchRecords(), fetchStudents(), fetchMissingSummary()]);
+    } catch (error: any) {
+      setErrorMessage(error.response?.data?.error || 'Failed to auto-create missing baseline records');
+      setShowErrorToast(true);
+    } finally {
+      if (!isMountedRef.current) return;
+      setIsBootstrappingMissing(false);
     }
   };
 
@@ -833,9 +897,21 @@ export default function Performance() {
                 className="w-full lg:max-w-md px-3 py-2 border border-blue-200 rounded-md text-sm"
               />
               <div className="flex items-center gap-2 text-xs text-blue-800">
+                <span className="px-2 py-1 rounded-full bg-white border border-blue-200">Missing: {missingMeta.totalMissing}</span>
+                <span className="px-2 py-1 rounded-full bg-white border border-blue-200">Final Year: {missingMeta.finalYearMissing}</span>
+                <span className="px-2 py-1 rounded-full bg-white border border-blue-200">No Subjects: {missingMeta.noEligibleSubjects}</span>
                 {missingByDepartment.map(([dept, count]) => (
                   <span key={dept} className="px-2 py-1 rounded-full bg-white border border-blue-200">{dept}: {count}</span>
                 ))}
+                {user?.role === 'admin' && (
+                  <button
+                    onClick={handleBootstrapMissing}
+                    disabled={isBootstrappingMissing || filteredMissingStudents.length === 0}
+                    className="px-3 py-1.5 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {isBootstrappingMissing ? 'Creating...' : 'Auto Create Baseline'}
+                  </button>
+                )}
                 {filteredMissingStudents.length > 0 && (
                   <button
                     onClick={() => handleQuickAddForStudent(String(filteredMissingStudents[0]._id))}
@@ -853,7 +929,7 @@ export default function Performance() {
                   onClick={() => handleQuickAddForStudent(String(student._id))}
                   className="text-xs px-3 py-1.5 rounded-full border border-blue-200 bg-white text-blue-700 hover:bg-blue-50"
                 >
-                  {student.name} ({student.studentId || 'N/A'}) | {student.department} | Sem {student.semester || '-'}
+                  {student.name} ({student.studentId || 'N/A'}) | {student.department} | Sem {student.semester || '-'} | Eligible: {missingDetailsById[String(student._id)]?.eligibleSubjectCount ?? 0}
                 </button>
               ))}
               {filteredMissingStudents.length > 8 && (
