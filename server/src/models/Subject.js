@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const subjectSchema = new mongoose.Schema({
   subjectId: { type: String, unique: true, required: true },
   subjectName: { type: String, required: true, maxlength: 100 },
-  subjectCode: { type: String, required: true, unique: true, uppercase: true, maxlength: 20 },
+  subjectCode: { type: String, required: true, uppercase: true, maxlength: 20 },
   credits: { type: Number, required: true, min: 1, max: 6 },
   department: { 
     type: String, 
@@ -18,9 +18,13 @@ const subjectSchema = new mongoose.Schema({
       'Biotechnology'
     ] 
   },
-  facultyId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  facultyId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  year: { type: Number, min: 1, max: 4 },
+  semester: { type: Number, min: 1, max: 8 }
 }, {
   timestamps: true
 });
+
+subjectSchema.index({ subjectCode: 1, department: 1, year: 1, semester: 1 }, { unique: true });
 
 module.exports = mongoose.model('Subject', subjectSchema);

@@ -3,6 +3,9 @@ const mongoose = require('mongoose');
 const performanceSchema = new mongoose.Schema({
   studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
   subjectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject' },
+  departmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' },
+  semesterId: { type: mongoose.Schema.Types.ObjectId, ref: 'Semester' },
+  year: { type: Number, min: 1, max: 4 },
   subjectName: { type: String, required: true },
   attendancePercentage: { type: Number, required: true, min: 0, max: 100 },
   marks: { type: Number, required: true, min: 0, max: 100 },
@@ -12,6 +15,7 @@ const performanceSchema = new mongoose.Schema({
 });
 
 performanceSchema.index({ studentId: 1, subjectName: 1, semester: 1 }, { unique: true });
+performanceSchema.index({ studentId: 1, subjectId: 1, semesterId: 1 }, { unique: true, sparse: true });
 
 performanceSchema.pre('validate', function() {
   // Auto-calculate grade based on marks

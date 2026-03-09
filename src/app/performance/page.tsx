@@ -14,7 +14,7 @@ import {
   Tooltip,
 } from 'chart.js';
 import { Bar, Line } from 'react-chartjs-2';
-import api, { studentsAPI, subjectsAPI } from '@/lib/api';
+import api, { studentsAPI } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import SuccessToast from '@/components/SuccessToast';
 import { useAuth } from '@/context/AuthContext';
@@ -38,7 +38,7 @@ export default function Performance() {
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState({
     studentId: '',
-    subjectName: '',
+    subjectId: '',
     attendancePercentage: '',
     marks: '',
     semester: ''
@@ -63,6 +63,7 @@ export default function Performance() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     studentId: '',
+    subjectId: '',
     subjectName: '',
     attendancePercentage: '',
     marks: '',
@@ -82,6 +83,10 @@ export default function Performance() {
     fetchRecords();
     fetchStudents();
   }, []);
+
+  useEffect(() => {
+    if (showForm) fetchStudents();
+  }, [showForm]);
 
   const fetchRecords = async () => {
     try {
@@ -113,7 +118,7 @@ export default function Performance() {
     [students]
   );
 
-  const semesterOptions = useMemo(
+  const semesterFilterOptions = useMemo(
     () => ['all', ...Array.from(new Set(records.map((r) => r.semester).filter(Boolean))).sort()],
     [records]
   );
@@ -254,29 +259,37 @@ export default function Performance() {
     }).filter((x) => x.reasons.length).sort((a, b) => b.reasons.length - a.reasons.length || a.marks - b.marks).slice(0, 6);
   }, [records]);
 
-  const handleStudentChange = async (studentId: string) => {
-    setFormData({ ...formData, studentId });
+  const handleStudentChange = async (studentId: string, preferredSemester?: string, preferredSubjectId?: string) => {
+    if (!studentId) {
+      setSelectedStudent(null);
+      setAssignedSubjects([]);
+      setFormData((prev) => ({ ...prev, studentId: '', subjectId: '', subjectName: '', semester: '' }));
+      return;
+    }
+    setFormData((prev) => ({ ...prev, studentId, subjectId: '', subjectName: '' }));
     setLoading(true);
     
     try {
-      const student = students.find(s => s._id === studentId);
+      const [profileResponse, subjectResponse] = await Promise.all([
+        studentsAPI.getProfile(studentId),
+        studentsAPI.getSubjects(studentId),
+      ]);
+      const profile = profileResponse.data?.data;
+      const student = profile?.student || students.find((s) => s._id === studentId);
+      const subjects = subjectResponse.data?.data?.subjects || profile?.eligibleSubjects || [];
+
       if (student) {
         setSelectedStudent(student);
-        setFormData(prev => ({
+        setAssignedSubjects(subjects);
+        const inferredSem = student?.semester ? `Semester ${student.semester}` : '';
+        const preferredSem = String(preferredSemester || '').trim() || String(profile?.semester?.label || student.currentSemester || inferredSem).trim();
+        const selectedSubject = subjects.find((s: any) => String(s._id) === String(preferredSubjectId || ''));
+        setFormData((prev) => ({
           ...prev,
-          semester: student.semester ? `Semester ${student.semester}` : ''
+          semester: preferredSem || prev.semester,
+          subjectId: selectedSubject ? String(selectedSubject._id) : '',
+          subjectName: selectedSubject ? String(selectedSubject.subjectName || selectedSubject.name || '') : ''
         }));
-        
-        // Fetch assigned subjects
-        if (student.department && student.year) {
-          try {
-            const subjectsResponse = await subjectsAPI.getByDeptYear(student.department, student.year);
-            const subjects = subjectsResponse.data.data.subjectGroup?.subjects || [];
-            setAssignedSubjects(subjects);
-          } catch (error) {
-            setAssignedSubjects([]);
-          }
-        }
       }
     } catch (error) {
       console.error('Failed to fetch student details:', error);
@@ -286,9 +299,9 @@ export default function Performance() {
   };
 
   const validateForm = () => {
-    const next = { studentId: '', subjectName: '', attendancePercentage: '', marks: '', semester: '' };
+    const next = { studentId: '', subjectId: '', attendancePercentage: '', marks: '', semester: '' };
     if (!formData.studentId) next.studentId = 'Please select a student';
-    if (!formData.subjectName.trim()) next.subjectName = 'Subject is required';
+    if (!formData.subjectId.trim()) next.subjectId = 'Subject is required';
     if (!formData.semester.trim()) next.semester = 'Semester is required';
     const attendance = Number(formData.attendancePercentage);
     const marks = Number(formData.marks);
@@ -299,8 +312,8 @@ export default function Performance() {
   };
 
   const resetForm = () => {
-    setFormData({ studentId: '', subjectName: '', attendancePercentage: '', marks: '', semester: '' });
-    setFormErrors({ studentId: '', subjectName: '', attendancePercentage: '', marks: '', semester: '' });
+    setFormData({ studentId: '', subjectId: '', subjectName: '', attendancePercentage: '', marks: '', semester: '' });
+    setFormErrors({ studentId: '', subjectId: '', attendancePercentage: '', marks: '', semester: '' });
     setSelectedStudent(null);
     setAssignedSubjects([]);
     setEditingRecordId(null);
@@ -313,7 +326,8 @@ export default function Performance() {
     const duplicate = records.find((r) =>
       r._id !== editingRecordId &&
       String(r.studentObjectId || r.studentId?._id || r.studentId) === formData.studentId &&
-      String(r.subjectName).toLowerCase() === formData.subjectName.trim().toLowerCase() &&
+      (String(r.subjectId?._id || r.subjectId || '') === formData.subjectId ||
+        String(r.subjectName).toLowerCase() === formData.subjectName.trim().toLowerCase()) &&
       String(r.semester).toLowerCase() === formData.semester.trim().toLowerCase()
     );
     if (duplicate) {
@@ -324,10 +338,10 @@ export default function Performance() {
 
     const payload = {
       studentId: formData.studentId,
+      subjectId: formData.subjectId,
       subjectName: formData.subjectName.trim(),
       attendancePercentage: Number(formData.attendancePercentage),
-      marks: Number(formData.marks),
-      semester: formData.semester
+      marks: Number(formData.marks)
     };
 
     setLoading(true);
@@ -344,7 +358,7 @@ export default function Performance() {
         attendancePercentage: payload.attendancePercentage,
         marks: payload.marks,
         grade: computedGrade,
-        semester: payload.semester,
+        semester: formData.semester,
         lastUpdated: new Date().toISOString()
       };
       setRecords((prev) => prev.map((r) => (r._id === editingRecordId ? optimistic : r)));
@@ -386,7 +400,7 @@ export default function Performance() {
       attendancePercentage: payload.attendancePercentage,
       marks: payload.marks,
       grade: computedGrade,
-      semester: payload.semester,
+      semester: formData.semester,
       lastUpdated: new Date().toISOString()
     };
     setRecords((prev) => [optimistic, ...prev]);
@@ -445,12 +459,17 @@ export default function Performance() {
     setShowForm(true);
     setFormData({
       studentId: String(record.studentObjectId || record.studentId?._id || record.studentId),
+      subjectId: String(record.subjectId?._id || record.subjectId || ''),
       subjectName: record.subjectName,
       attendancePercentage: String(record.attendancePercentage),
       marks: String(record.marks),
       semester: record.semester
     });
-    await handleStudentChange(String(record.studentObjectId || record.studentId?._id || record.studentId));
+    await handleStudentChange(
+      String(record.studentObjectId || record.studentId?._id || record.studentId),
+      String(record.semester || ''),
+      String(record.subjectId?._id || record.subjectId || '')
+    );
   };
 
   const generateSampleData = async () => {
@@ -460,17 +479,23 @@ export default function Performance() {
       return;
     }
     setIsGeneratingSamples(true);
-    const sampleSubjects = ['Mathematics', 'Physics', 'Computer Science', 'English'];
     let created = 0;
     for (const student of students.slice(0, 5)) {
+      let eligible: any[] = [];
+      try {
+        const resp = await studentsAPI.getSubjects(String(student._id));
+        eligible = resp.data?.data?.subjects || [];
+      } catch {}
+      if (!eligible.length) continue;
       for (let i = 0; i < 2; i += 1) {
+        const chosen = eligible[Math.floor(Math.random() * eligible.length)];
         try {
           await api.post('/performance', {
             studentId: student._id,
-            subjectName: sampleSubjects[(i + Math.floor(Math.random() * sampleSubjects.length)) % sampleSubjects.length],
+            subjectId: String(chosen._id),
+            subjectName: String(chosen.subjectName || chosen.name || ''),
             attendancePercentage: 60 + Math.floor(Math.random() * 40),
-            marks: 55 + Math.floor(Math.random() * 45),
-            semester: student.semester ? `Semester ${student.semester}` : 'Semester 1'
+            marks: 55 + Math.floor(Math.random() * 45)
           });
           created += 1;
         } catch {}
@@ -571,31 +596,28 @@ export default function Performance() {
               )}
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Subject Name</label>
-                {assignedSubjects.length > 0 ? (
-                  <CustomDropdown
-                    value={formData.subjectName}
-                    onChange={(value) => setFormData({ ...formData, subjectName: value })}
-                    placeholder="Select Subject"
-                    options={[
-                      { value: '', label: 'Select Subject' },
-                      ...assignedSubjects.map((subject) => ({
-                        value: subject.name,
-                        label: `${subject.code} - ${subject.name}`,
-                      })),
-                    ]}
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    required
-                    value={formData.subjectName}
-                    onChange={(e) => setFormData({ ...formData, subjectName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., Mathematics"
-                  />
-                )}
-                {formErrors.subjectName && <p className="mt-1 text-xs text-red-600">{formErrors.subjectName}</p>}
+                <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                <CustomDropdown
+                  value={formData.subjectId}
+                  onChange={(value) => {
+                    const selected = assignedSubjects.find((subject) => String(subject._id) === String(value));
+                    setFormData((prev) => ({
+                      ...prev,
+                      subjectId: value,
+                      subjectName: selected ? String(selected.subjectName || selected.name || '') : ''
+                    }));
+                  }}
+                  placeholder={formData.studentId ? 'Select Subject' : 'Select Student first'}
+                  disabled={!formData.studentId || !assignedSubjects.length}
+                  options={[
+                    { value: '', label: assignedSubjects.length ? 'Select Subject' : 'No eligible subjects available' },
+                    ...assignedSubjects.map((subject) => ({
+                      value: String(subject._id),
+                      label: `${subject.subjectCode || subject.code || ''} - ${subject.subjectName || subject.name || 'Subject'}`,
+                    })),
+                  ]}
+                />
+                {formErrors.subjectId && <p className="mt-1 text-xs text-red-600">{formErrors.subjectId}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Attendance %</label>
@@ -626,12 +648,13 @@ export default function Performance() {
                 {formErrors.marks && <p className="mt-1 text-xs text-red-600">{formErrors.marks}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Semester</label>
-                <CustomDropdown
+                <label className="block text-sm font-medium text-gray-700 mb-2">Semester (Auto)</label>
+                <input
+                  type="text"
                   value={formData.semester}
-                  onChange={(value) => setFormData({ ...formData, semester: value })}
-                  placeholder="Select Semester"
-                  options={[{ value: '', label: 'Select Semester' }, ...semesterOptions.filter((s) => s !== 'all').map((s) => ({ value: s, label: s }))]}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-900"
+                  placeholder="Select Student first"
                 />
                 {formErrors.semester && <p className="mt-1 text-xs text-red-600">{formErrors.semester}</p>}
               </div>
@@ -660,7 +683,7 @@ export default function Performance() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by student/subject" className="px-3 py-2 border border-gray-300 rounded-md text-sm" />
           <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-md text-sm">{departmentOptions.map((d) => <option key={d} value={d}>{d === 'all' ? 'All Departments' : d}</option>)}</select>
-          <select value={semesterFilter} onChange={(e) => setSemesterFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-md text-sm">{semesterOptions.map((s) => <option key={s} value={s}>{s === 'all' ? 'All Semesters' : s}</option>)}</select>
+          <select value={semesterFilter} onChange={(e) => setSemesterFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-md text-sm">{semesterFilterOptions.map((s) => <option key={s} value={s}>{s === 'all' ? 'All Semesters' : s}</option>)}</select>
           <select value={subjectFilter} onChange={(e) => setSubjectFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-md text-sm">{subjectOptions.map((s) => <option key={s} value={s}>{s === 'all' ? 'All Subjects' : s}</option>)}</select>
           <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-md text-sm" />
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-md text-sm" />

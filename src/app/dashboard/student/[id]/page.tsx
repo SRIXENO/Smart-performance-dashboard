@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Line, Bar } from 'react-chartjs-2';
-import { studentsAPI, subjectsAPI } from '@/lib/api';
+import { studentsAPI } from '@/lib/api';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -26,6 +26,7 @@ export default function IndividualStudentDashboard() {
   const [dateRange, setDateRange] = useState('all');
   const [selectedSemester, setSelectedSemester] = useState('all');
   const [assignedSubjects, setAssignedSubjects] = useState<any[]>([]);
+  const [studentAnalytics, setStudentAnalytics] = useState<any>(null);
 
   const [creditsHistory] = useState([
     { date: '2025-02-01', time: '10:30 AM', credits: 400, activity: 'Semester Exam Excellence', cumulative: 400 },
@@ -41,20 +42,15 @@ export default function IndividualStudentDashboard() {
 
   const fetchStudent = async () => {
     try {
-      const response = await studentsAPI.getById(params.id as string);
-      const studentData = response.data.data.student;
+      const [profileResp, subjectsResp, analyticsResp] = await Promise.all([
+        studentsAPI.getProfile(params.id as string),
+        studentsAPI.getSubjects(params.id as string),
+        studentsAPI.getAnalytics(params.id as string),
+      ]);
+      const studentData = profileResp.data?.data?.student || analyticsResp.data?.data?.student;
       setStudent(studentData);
-      
-      // Fetch subjects for student's department and year
-      if (studentData.department && studentData.year) {
-        try {
-          const subjectsResponse = await subjectsAPI.getByDeptYear(studentData.department, studentData.year);
-          const subjects = subjectsResponse.data.data.subjectGroup?.subjects || [];
-          setAssignedSubjects(subjects);
-        } catch (error) {
-          console.error('Failed to fetch subjects:', error);
-        }
-      }
+      setAssignedSubjects(subjectsResp.data?.data?.subjects || []);
+      setStudentAnalytics(analyticsResp.data?.data?.metrics || null);
     } catch (error) {
       console.error('Failed to fetch student:', error);
     } finally {
@@ -136,15 +132,15 @@ export default function IndividualStudentDashboard() {
           </div>
           <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <p className="text-sm text-gray-500 mb-1">Average Marks</p>
-            <p className="text-3xl font-bold text-gray-900">N/A</p>
+            <p className="text-3xl font-bold text-gray-900">{studentAnalytics?.averageMarks ?? 'N/A'}</p>
           </div>
           <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <p className="text-sm text-gray-500 mb-1">Attendance</p>
-            <p className="text-3xl font-bold text-gray-900">{student.attendance || 'N/A'}%</p>
+            <p className="text-3xl font-bold text-gray-900">{(studentAnalytics?.averageAttendance ?? student.attendance ?? 'N/A')}%</p>
           </div>
           <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-            <p className="text-sm text-gray-500 mb-1">CGPA</p>
-            <p className="text-3xl font-bold text-gray-900">{student.cgpa || 'N/A'}</p>
+            <p className="text-sm text-gray-500 mb-1">Pass Rate</p>
+            <p className="text-3xl font-bold text-gray-900">{studentAnalytics?.passRate ?? 'N/A'}%</p>
           </div>
         </div>
 
@@ -163,10 +159,9 @@ export default function IndividualStudentDashboard() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
               <select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-md text-sm">
                 <option value="all">All Semesters</option>
-                <option value="1">Semester 1</option>
-                <option value="2">Semester 2</option>
-                <option value="3">Semester 3</option>
-                <option value="4">Semester 4</option>
+                <option value={String(student.currentSemester || `Semester ${student.semester || 1}`)}>
+                  {String(student.currentSemester || `Semester ${student.semester || 1}`)}
+                </option>
               </select>
             </div>
           </div>
@@ -245,14 +240,16 @@ export default function IndividualStudentDashboard() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Academic Performance - Assigned Subjects</h3>
           {assignedSubjects.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {assignedSubjects.map((subject) => (
-                <div key={subject.code} className="border border-gray-200 rounded-lg p-4">
-                  <p className="text-xs text-gray-500 mb-1">{subject.code}</p>
-                  <p className="text-sm font-semibold text-gray-900 mb-2">{subject.name}</p>
-                  <p className="text-2xl font-bold text-gray-900">N/A</p>
+              {assignedSubjects.map((subject) => {
+                const subjectMetric = studentAnalytics?.subjectBreakdown?.find((row: any) => row.subjectName === (subject.subjectName || subject.name));
+                return (
+                <div key={subject._id || subject.code} className="border border-gray-200 rounded-lg p-4">
+                  <p className="text-xs text-gray-500 mb-1">{subject.subjectCode || subject.code}</p>
+                  <p className="text-sm font-semibold text-gray-900 mb-2">{subject.subjectName || subject.name}</p>
+                  <p className="text-2xl font-bold text-gray-900">{subjectMetric?.averageMarks ?? 'N/A'}</p>
                   <p className="text-xs text-gray-500 mt-1">Marks</p>
                 </div>
-              ))}
+              )})}
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">

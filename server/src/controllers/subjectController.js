@@ -1,5 +1,36 @@
 const SubjectGroup = require('../models/SubjectGroup');
 const Student = require('../models/Student');
+const Subject = require('../models/Subject');
+const { inferSemesterNumber, ensureStudentEnrollment } = require('../services/academicDataService');
+
+const syncSubjectsToCatalog = async ({ department, year, subjects }) => {
+  const semester = inferSemesterNumber(year);
+  for (const item of subjects) {
+    const code = String(item.code || '').trim().toUpperCase();
+    const name = String(item.name || '').trim();
+    if (!code || !name) continue;
+    await Subject.findOneAndUpdate(
+      { subjectCode: code, department, year, semester },
+      {
+        subjectId: `SUB-${code}-${year}-${semester}`,
+        subjectName: name,
+        subjectCode: code,
+        department,
+        year,
+        semester,
+        credits: 3,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  }
+};
+
+const syncEnrollmentsForDepartmentYear = async (department, year) => {
+  const students = await Student.find({ department, year }).select('_id studentId name email department year semester currentSemester status').lean();
+  for (const student of students) {
+    await ensureStudentEnrollment(student);
+  }
+};
 
 exports.assignSubjects = async (req, res) => {
   try {
@@ -14,12 +45,14 @@ exports.assignSubjects = async (req, res) => {
       { department, year, subjects },
       { new: true, upsert: true, runValidators: true }
     );
+    await syncSubjectsToCatalog({ department, year, subjects });
 
     const subjectNames = subjects.map(s => s.name);
     await Student.updateMany(
       { department, year },
       { $set: { subjects: subjectNames } }
     );
+    await syncEnrollmentsForDepartmentYear(department, year);
 
     res.status(200).json({
       success: true,
@@ -106,11 +139,14 @@ exports.updateSubjectGroup = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Subject group not found' });
     }
 
+    await syncSubjectsToCatalog({ department: subjectGroup.department, year: subjectGroup.year, subjects });
+
     const subjectNames = subjects.map(s => s.name);
     await Student.updateMany(
       { department: subjectGroup.department, year: subjectGroup.year },
       { $set: { subjects: subjectNames } }
     );
+    await syncEnrollmentsForDepartmentYear(subjectGroup.department, subjectGroup.year);
 
     res.status(200).json({
       success: true,

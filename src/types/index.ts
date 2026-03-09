@@ -14,6 +14,7 @@ export interface Student {
   email: string;
   department: string;
   year: number;
+  semester?: number;
   currentSemester?: string;
   phone?: string;
   dateOfBirth: string;

@@ -14,11 +14,15 @@ const {
   getPerformanceGrowth,
   getDifficultSubjects,
   getAttendancePerformanceCorrelation,
-  getRecentStudents
+  getRecentStudents,
+  getAnalytics,
+  getMetrics
 } = require('../controllers/dashboardController');
 
 const router = express.Router();
 
+router.get('/analytics', authMiddleware, roleMiddleware(['admin', 'faculty', 'viewer']), getAnalytics);
+router.get('/metrics', authMiddleware, roleMiddleware(['admin', 'faculty', 'viewer']), getMetrics);
 router.get('/summary', authMiddleware, roleMiddleware(['admin', 'faculty']), getSummary);
 router.get('/attendance-trend', authMiddleware, roleMiddleware(['admin', 'faculty']), getAttendanceTrend);
 router.get('/grade-distribution', authMiddleware, roleMiddleware(['admin', 'faculty']), getGradeDistribution);

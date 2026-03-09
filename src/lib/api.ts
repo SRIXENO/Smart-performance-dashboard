@@ -131,6 +131,9 @@ export const viewersAPI = {
 export const studentsAPI = {
   getAll: (params?: any) => withTimeoutRetry(() => api.get('/students', { params }), 1),
   getById: (id: string) => api.get(`/students/${id}`),
+  getProfile: (id: string) => api.get(`/students/${id}/profile`),
+  getSubjects: (id: string) => api.get(`/students/${id}/subjects`),
+  getAnalytics: (id: string) => api.get(`/students/${id}/analytics`),
   create: (data: any) =>
     api.post('/students', data, {
       timeout: Number.isFinite(STUDENT_CREATE_TIMEOUT_MS) ? STUDENT_CREATE_TIMEOUT_MS : 45000,
@@ -140,6 +143,8 @@ export const studentsAPI = {
 };
 
 export const dashboardAPI = {
+  getAnalytics: () => api.get('/dashboard/analytics'),
+  getMetrics: () => api.get('/dashboard/metrics'),
   getSummary: (params?: any) => api.get('/dashboard/summary', { params }),
   getAttendanceTrend: () => api.get('/dashboard/attendance-trend'),
   getGradeDistribution: () => api.get('/dashboard/grade-distribution'),

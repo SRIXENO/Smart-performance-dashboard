@@ -6,6 +6,8 @@ const AIAnalytics = require('../models/AIAnalytics');
 const ActivityLog = require('../models/ActivityLog');
 const User = require('../models/User');
 const { generateId } = require('../utils/generateId');
+const { ensureStudentEnrollment, getStudentConnectedProfile, inferSemesterNumber } = require('../services/academicDataService');
+const { getCacheIfFresh, upsertStudentCache } = require('../services/analyticsService');
 
 const DEPARTMENT_CODE_MAP = {
   CS: 'Computer Science',
@@ -25,6 +27,43 @@ const detectDepartmentFromRegisterNumber = (value) => {
   const match = upper.match(/[A-Z]{2}/);
   if (!match) return '';
   return DEPARTMENT_CODE_MAP[match[0]] || '';
+};
+
+const getYearSemesterDefaults = (year) => {
+  const numericYear = Number(year);
+  if (!Number.isFinite(numericYear) || numericYear < 1 || numericYear > 4) {
+    return { semester: 1, currentSemester: 'Semester 1' };
+  }
+  const semester = ((numericYear - 1) * 2) + 1;
+  return { semester, currentSemester: `Semester ${semester}` };
+};
+
+const normalizeSemesterFields = (incoming, existingStudent) => {
+  const payload = { ...incoming };
+  const fallbackYear = existingStudent?.year;
+  const year = Number(payload.year ?? fallbackYear);
+  const defaults = getYearSemesterDefaults(year);
+
+  const existingSemester = Number(existingStudent?.semester);
+  const existingCurrent = String(existingStudent?.currentSemester || '').trim();
+
+  let numericSemester = Number(payload.semester ?? existingSemester);
+  let currentSemester = String(payload.currentSemester ?? existingCurrent).trim();
+
+  if (!Number.isFinite(numericSemester) && currentSemester) {
+    const match = currentSemester.match(/(\d+)/);
+    if (match) numericSemester = Number(match[1]);
+  }
+
+  if (!Number.isFinite(numericSemester) || numericSemester < 1 || numericSemester > 8) numericSemester = defaults.semester;
+
+  if (!currentSemester) {
+    currentSemester = `Semester ${numericSemester}`;
+  }
+
+  payload.semester = numericSemester;
+  payload.currentSemester = currentSemester;
+  return payload;
 };
 
 const getStudents = async (req, res) => {
@@ -65,18 +104,34 @@ const getStudents = async (req, res) => {
       .limit(limitNum);
 
     if (isViewer) {
-      studentsQuery.select('_id name department year');
+      studentsQuery.select('_id name department year semester currentSemester');
     } else {
       // Keep list responses lean; avoid sending heavy profile/document fields.
-      studentsQuery.select('_id studentId name email gender year department cgpa attendance status enrollmentDate');
+      studentsQuery.select('_id studentId name email gender year semester currentSemester department cgpa attendance status enrollmentDate');
     }
 
     const students = await studentsQuery;
+    const normalizedStudents = students.map((studentDoc) => {
+      const student = typeof studentDoc.toObject === 'function' ? studentDoc.toObject() : studentDoc;
+      const defaults = getYearSemesterDefaults(student.year);
+      const numericSemester = Number(student.semester);
+      const currentSemester = String(student.currentSemester || '').trim();
+      return {
+        ...student,
+        semester: Number.isFinite(numericSemester) && numericSemester >= 1 && numericSemester <= 8 ? numericSemester : defaults.semester,
+        currentSemester: currentSemester || `Semester ${Number.isFinite(numericSemester) && numericSemester >= 1 && numericSemester <= 8 ? numericSemester : defaults.semester}`,
+      };
+    });
+
+    const withDerived = normalizedStudents.map((student) => ({
+      ...student,
+      currentSemester: student.currentSemester || `Semester ${inferSemesterNumber(student.year, student.semester, student.currentSemester)}`,
+    }));
 
     res.json({
       success: true,
       data: {
-        students,
+        students: withDerived,
         pagination: {
           currentPage: pageNum,
           totalPages,
@@ -162,12 +217,15 @@ const createStudent = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Register number already exists in login accounts' });
     }
 
+    const normalizedStudentPayload = normalizeSemesterFields(studentPayload);
+
     const newStudent = await Student.create({
       studentId,
-      ...studentPayload,
+      ...normalizedStudentPayload,
       email: normalizedEmail,
-      department: detectedDepartment || studentPayload.department,
+      department: detectedDepartment || normalizedStudentPayload.department,
     });
+    await ensureStudentEnrollment(newStudent);
 
     const userId = await generateId('userId');
     await User.create({
@@ -206,10 +264,10 @@ const updateStudent = async (req, res) => {
     }
 
     const detectedDepartment = detectDepartmentFromRegisterNumber(studentPayload.rollNumber);
-    const updatePayload = {
+    const updatePayload = normalizeSemesterFields({
       ...studentPayload,
       ...(detectedDepartment ? { department: detectedDepartment } : {}),
-    };
+    }, existingStudent);
 
     console.log('Update request body:', JSON.stringify(req.body, null, 2));
     const updatedStudent = await Student.findByIdAndUpdate(
@@ -217,6 +275,7 @@ const updateStudent = async (req, res) => {
       updatePayload,
       { new: true, runValidators: true }
     );
+    await ensureStudentEnrollment(updatedStudent);
 
     const oldEmail = String(existingStudent.email || '').toLowerCase();
     const newEmail = String(updatedStudent.email || '').toLowerCase();
@@ -315,4 +374,59 @@ const deleteStudent = async (req, res) => {
   }
 };
 
-module.exports = { getStudents, getStudentById, createStudent, updateStudent, deleteStudent };
+const getStudentProfile = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id).lean();
+    if (!student) {
+      return res.status(404).json({ success: false, error: 'Student not found' });
+    }
+    const profile = await getStudentConnectedProfile(student);
+    res.json({ success: true, data: profile });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const getStudentSubjects = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id).lean();
+    if (!student) {
+      return res.status(404).json({ success: false, error: 'Student not found' });
+    }
+    const profile = await getStudentConnectedProfile(student);
+    res.json({
+      success: true,
+      data: {
+        student: profile.student,
+        semester: profile.semester,
+        subjects: profile.eligibleSubjects
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const getStudentAnalytics = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id).select('_id studentId name department year semester currentSemester status').lean();
+    if (!student) {
+      return res.status(404).json({ success: false, error: 'Student not found' });
+    }
+
+    const cached = await getCacheIfFresh({ scope: 'student', studentId: student._id, maxAgeSeconds: 90 });
+    const metrics = cached || await upsertStudentCache(student._id);
+
+    res.json({
+      success: true,
+      data: {
+        student,
+        metrics,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+module.exports = { getStudents, getStudentById, getStudentProfile, getStudentSubjects, getStudentAnalytics, createStudent, updateStudent, deleteStudent };

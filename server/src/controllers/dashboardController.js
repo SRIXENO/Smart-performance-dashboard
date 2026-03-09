@@ -3,6 +3,7 @@ const Performance = require('../models/Performance');
 const AcademicRecord = require('../models/AcademicRecord');
 const AIAnalytics = require('../models/AIAnalytics');
 const ActivityLog = require('../models/ActivityLog');
+const { getCacheIfFresh, upsertGlobalCache } = require('../services/analyticsService');
 
 const buildLastSixMonths = () => {
   const months = [];
@@ -503,6 +504,18 @@ const getRecentStudents = async (req, res) => {
   }
 };
 
+const getAnalytics = async (_req, res) => {
+  try {
+    const cached = await getCacheIfFresh({ scope: 'global', maxAgeSeconds: 90 });
+    const metrics = cached || await upsertGlobalCache();
+    res.json({ success: true, data: metrics });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const getMetrics = getAnalytics;
+
 module.exports = { 
   getSummary, 
   getAttendanceTrend, 
@@ -516,5 +529,7 @@ module.exports = {
   getPerformanceGrowth,
   getDifficultSubjects,
   getAttendancePerformanceCorrelation,
-  getRecentStudents
+  getRecentStudents,
+  getAnalytics,
+  getMetrics
 };
