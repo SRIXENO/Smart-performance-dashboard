@@ -91,6 +91,19 @@ export default function Performance() {
   }, [showForm]);
 
   useEffect(() => {
+    const refresh = () => {
+      fetchStudents();
+      fetchRecords();
+    };
+    const intervalId = window.setInterval(refresh, 30000);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refresh);
+    };
+  }, []);
+
+  useEffect(() => {
     if (initialPrefillApplied.current) return;
     const studentIdFromQuery = String(searchParams.get('studentId') || '').trim();
     const openFormFromQuery = String(searchParams.get('openForm') || '').trim() === '1';
@@ -281,6 +294,13 @@ export default function Performance() {
       return { id, studentName: latest.studentName, studentCode: latest.studentCode, reasons, marks: Number(latest.marks), attendance: Number(latest.attendancePercentage) };
     }).filter((x) => x.reasons.length).sort((a, b) => b.reasons.length - a.reasons.length || a.marks - b.marks).slice(0, 6);
   }, [records]);
+
+  const studentsWithoutPerformance = useMemo(() => {
+    const hasPerformance = new Set(
+      records.map((record) => String(record.studentObjectId || record.studentId?._id || record.studentId))
+    );
+    return students.filter((student) => !hasPerformance.has(String(student._id)));
+  }, [students, records]);
 
   const handleStudentChange = async (studentId: string, preferredSemester?: string, preferredSubjectId?: string) => {
     if (!studentId) {
@@ -493,6 +513,11 @@ export default function Performance() {
       String(record.semester || ''),
       String(record.subjectId?._id || record.subjectId || '')
     );
+  };
+
+  const handleQuickAddForStudent = async (studentId: string) => {
+    setShowForm(true);
+    await handleStudentChange(studentId);
   };
 
   const generateSampleData = async () => {
@@ -755,6 +780,30 @@ export default function Performance() {
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
+        {studentsWithoutPerformance.length > 0 && (
+          <div className="px-6 py-4 border-b border-gray-100 bg-blue-50/40">
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+              <h3 className="text-sm font-semibold text-blue-900">
+                Students Without Performance Records ({studentsWithoutPerformance.length})
+              </h3>
+              <span className="text-xs text-blue-700">Newly created students appear here automatically</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {studentsWithoutPerformance.slice(0, 8).map((student) => (
+                <button
+                  key={student._id}
+                  onClick={() => handleQuickAddForStudent(String(student._id))}
+                  className="text-xs px-3 py-1.5 rounded-full border border-blue-200 bg-white text-blue-700 hover:bg-blue-50"
+                >
+                  {student.name} ({student.studentId || 'N/A'})
+                </button>
+              ))}
+              {studentsWithoutPerformance.length > 8 && (
+                <span className="text-xs text-gray-500 self-center">+{studentsWithoutPerformance.length - 8} more</span>
+              )}
+            </div>
+          </div>
+        )}
         <div className="overflow-x-auto">
         <table className="min-w-[880px] w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 sticky top-0 z-10">
