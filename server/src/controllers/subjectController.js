@@ -9,19 +9,33 @@ const syncSubjectsToCatalog = async ({ department, year, semester, subjects }) =
     const code = String(item.code || '').trim().toUpperCase();
     const name = String(item.name || '').trim();
     if (!code || !name) continue;
-    await Subject.findOneAndUpdate(
-      { subjectCode: code, department, year, semester: resolvedSemester },
-      {
-        subjectId: `SUB-${code}-${year}-${resolvedSemester}`,
-        subjectName: name,
-        subjectCode: code,
-        department,
-        year,
-        semester: resolvedSemester,
-        credits: 3,
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    const payload = {
+      subjectId: `SUB-${code}-${year}-${resolvedSemester}`,
+      subjectName: name,
+      subjectCode: code,
+      department,
+      year,
+      semester: resolvedSemester,
+      credits: 3,
+    };
+    try {
+      await Subject.findOneAndUpdate(
+        { subjectCode: code, department, year, semester: resolvedSemester },
+        payload,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    } catch (error) {
+      // Backward compatibility for deployments where a legacy unique index on subjectCode still exists.
+      if (error?.code === 11000 && String(error?.message || '').includes('subjectCode')) {
+        await Subject.findOneAndUpdate(
+          { subjectCode: code },
+          payload,
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+      } else {
+        throw error;
+      }
+    }
   }
 };
 
