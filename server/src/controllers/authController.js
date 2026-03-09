@@ -69,9 +69,10 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
+      res.set('Retry-After', '20');
       return res.status(503).json({
         success: false,
-        error: 'Authentication service is starting. Please try again in 10-20 seconds.'
+        error: 'Authentication service is waking up. Please try again in 10-20 seconds.'
       });
     }
 
@@ -132,7 +133,7 @@ const login = async (req, res) => {
 
     const token = generateToken(user._id, user.role);
 
-    await ActivityLog.log({
+    void ActivityLog.log({
       userId: user._id,
       userRole: user.role,
       userName: user.name,

@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { GOOGLE_AUTH_URL } from '@/lib/api';
+import { GOOGLE_AUTH_URL, systemAPI } from '@/lib/api';
 import styles from './LoginForm.module.css';
 
 function LoginContent() {
@@ -24,6 +24,7 @@ function LoginContent() {
     document.body.classList.remove('dark');
     document.documentElement.classList.add('light');
     document.body.classList.add('light');
+    systemAPI.warmup().catch(() => {});
   }, []);
 
   const googleErrorMessage =
@@ -44,11 +45,17 @@ function LoginContent() {
       await login(email, password);
       router.push('/dashboard');
     } catch (error: any) {
+      const backendMessage = String(error?.response?.data?.error || '');
+      const backendMessageLower = backendMessage.toLowerCase();
+      const isServerWaking =
+        error?.response?.status === 503 ||
+        backendMessageLower.includes('service is starting') ||
+        backendMessageLower.includes('waking up');
       const isTimeout =
         error?.code === 'ECONNABORTED' || String(error?.message || '').toLowerCase().includes('timeout');
-      const errorMessage = isTimeout
-        ? 'Login is taking longer than expected (server wake-up). Please wait and try again in 20-30 seconds.'
-        : error.response?.data?.error || error.message || 'Login failed';
+      const errorMessage = isServerWaking || isTimeout
+        ? 'Backend is waking up on free hosting. Please wait 10-20 seconds and try Sign In again.'
+        : backendMessage || error.message || 'Login failed';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -125,6 +132,9 @@ function LoginContent() {
           <button type="submit" className={styles.buttonSubmit} disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
+          {loading && (
+            <p className={styles.loadingHint}>If this is the first request, the backend may take 10-20 seconds to wake up.</p>
+          )}
 
           <p className={styles.p}>
             Don&apos;t have an account?{' '}

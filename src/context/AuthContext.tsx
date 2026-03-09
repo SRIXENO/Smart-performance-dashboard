@@ -59,32 +59,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (email: string, password: string) => {
-    try {
-      const response = await authAPI.login({ email, password });
-      if (response.data.token && typeof window !== 'undefined') {
-        localStorage.setItem(TOKEN_CACHE_KEY, response.data.token);
-      }
-      setUser(response.data.user);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(USER_CACHE_KEY, JSON.stringify(response.data.user));
-      }
-    } catch (error: any) {
-      const isTimeout =
-        error?.code === 'ECONNABORTED' || String(error?.message || '').toLowerCase().includes('timeout');
-
-      if (!isTimeout) {
-        throw error;
-      }
-
-      // Retry once for backend cold starts.
-      const retryResponse = await authAPI.login({ email, password });
-      if (retryResponse.data.token && typeof window !== 'undefined') {
-        localStorage.setItem(TOKEN_CACHE_KEY, retryResponse.data.token);
-      }
-      setUser(retryResponse.data.user);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(USER_CACHE_KEY, JSON.stringify(retryResponse.data.user));
-      }
+    const response = await authAPI.login({ email, password });
+    if (response.data.token && typeof window !== 'undefined') {
+      localStorage.setItem(TOKEN_CACHE_KEY, response.data.token);
+    }
+    setUser(response.data.user);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(response.data.user));
     }
   };
 

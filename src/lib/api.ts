@@ -9,9 +9,13 @@ const apiOrigin = normalizedApiBase.endsWith('/api')
   ? normalizedApiBase.slice(0, -4)
   : normalizedApiBase;
 const API_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS || 15000);
-const LOGIN_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_LOGIN_TIMEOUT_MS || 45000);
+const LOGIN_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_LOGIN_TIMEOUT_MS || 12000);
+const LOGIN_RETRY_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_LOGIN_RETRY_TIMEOUT_MS || 18000);
+const LOGIN_RETRY_DELAY_MS = Number(process.env.NEXT_PUBLIC_LOGIN_RETRY_DELAY_MS || 1200);
+const LOGIN_MAX_RETRIES = Number(process.env.NEXT_PUBLIC_LOGIN_MAX_RETRIES || 1);
 const STUDENT_CREATE_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_STUDENT_CREATE_TIMEOUT_MS || 45000);
 const AUTH_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_AUTH_TIMEOUT_MS || 8000);
+const WARMUP_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_WARMUP_TIMEOUT_MS || 6000);
 
 export const GOOGLE_AUTH_URL =
   normalizedApiBase === '/api' ? '/api/auth/google' : `${apiOrigin}/api/auth/google`;
@@ -42,6 +46,15 @@ const isTimeoutError = (error: any) => {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const toPositiveNumber = (value: number, fallback: number) =>
+  Number.isFinite(value) && value > 0 ? value : fallback;
+
+const isServiceStartingError = (error: any) => {
+  const status = Number(error?.response?.status || 0);
+  const message = String(error?.response?.data?.error || '').toLowerCase();
+  return status === 503 || message.includes('service is starting') || message.includes('waking up');
+};
+
 const withTimeoutRetry = async <T>(fn: () => Promise<T>, retries = 1): Promise<T> => {
   try {
     return await fn();
@@ -54,11 +67,52 @@ const withTimeoutRetry = async <T>(fn: () => Promise<T>, retries = 1): Promise<T
   }
 };
 
+const warmupBackend = async () => {
+  try {
+    await api.get('/healthz', {
+      timeout: toPositiveNumber(WARMUP_TIMEOUT_MS, 6000),
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const loginWithRetry = async (data: any) => {
+  const retries = Math.max(0, Math.min(3, Math.floor(Number.isFinite(LOGIN_MAX_RETRIES) ? LOGIN_MAX_RETRIES : 1)));
+  let attempt = 0;
+  let lastError: unknown;
+
+  while (attempt <= retries) {
+    try {
+      return await api.post('/auth/login', data, {
+        timeout: attempt === 0
+          ? toPositiveNumber(LOGIN_TIMEOUT_MS, 12000)
+          : toPositiveNumber(LOGIN_RETRY_TIMEOUT_MS, 18000),
+      });
+    } catch (error) {
+      lastError = error;
+      const shouldRetry = attempt < retries && (isTimeoutError(error) || isServiceStartingError(error));
+      if (!shouldRetry) throw error;
+
+      await warmupBackend();
+      await sleep(toPositiveNumber(LOGIN_RETRY_DELAY_MS, 1200));
+      attempt += 1;
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('Login request failed after retries.');
+};
+
 export const authAPI = {
   register: (data: any) => api.post('/auth/register', data),
-  login: (data: any) => api.post('/auth/login', data, { timeout: Number.isFinite(LOGIN_TIMEOUT_MS) ? LOGIN_TIMEOUT_MS : 45000 }),
+  login: (data: any) => loginWithRetry(data),
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me', { timeout: Number.isFinite(AUTH_TIMEOUT_MS) ? AUTH_TIMEOUT_MS : 8000 }),
+};
+
+export const systemAPI = {
+  warmup: () => warmupBackend(),
 };
 
 export const approvalsAPI = {
