@@ -252,6 +252,14 @@ export default function Students() {
                                   >
                                     Edit
                                   </Link>
+                                  {user?.role === 'admin' && (
+                                    <Link
+                                      href={`/performance?studentId=${student._id}&openForm=1`}
+                                      className="block rounded px-2 py-1 text-sky-700 hover:bg-sky-50"
+                                    >
+                                      Performance
+                                    </Link>
+                                  )}
                                   {canManageStudentAccess && (
                                     <button
                                       onClick={() => handleToggleBlock(student)}
@@ -282,6 +290,14 @@ export default function Students() {
                               >
                                 Edit
                               </Link>
+                              {user?.role === 'admin' && (
+                                <Link
+                                  href={`/performance?studentId=${student._id}&openForm=1`}
+                                  className="hidden sm:inline text-sky-600 hover:text-sky-900"
+                                >
+                                  Performance
+                                </Link>
+                              )}
                               {canManageStudentAccess && (
                                 <button
                                   onClick={() => handleToggleBlock(student)}

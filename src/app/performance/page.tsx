@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BarElement,
   CategoryScale,
@@ -25,6 +25,8 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 export default function Performance() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialPrefillApplied = useRef(false);
   const [records, setRecords] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -87,6 +89,27 @@ export default function Performance() {
   useEffect(() => {
     if (showForm) fetchStudents();
   }, [showForm]);
+
+  useEffect(() => {
+    if (initialPrefillApplied.current) return;
+    const studentIdFromQuery = String(searchParams.get('studentId') || '').trim();
+    const openFormFromQuery = String(searchParams.get('openForm') || '').trim() === '1';
+    if (!studentIdFromQuery) {
+      initialPrefillApplied.current = true;
+      return;
+    }
+    if (!students.length) return;
+
+    const exists = students.some((student) => String(student._id) === studentIdFromQuery);
+    if (!exists) {
+      initialPrefillApplied.current = true;
+      return;
+    }
+
+    if (openFormFromQuery) setShowForm(true);
+    handleStudentChange(studentIdFromQuery);
+    initialPrefillApplied.current = true;
+  }, [searchParams, students]);
 
   const fetchRecords = async () => {
     try {
