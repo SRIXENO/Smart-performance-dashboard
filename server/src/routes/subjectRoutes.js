@@ -2,8 +2,8 @@ const express = require('express');
 const { body, param, query } = require('express-validator');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const roleMiddleware = require('../middleware/roleMiddleware');
 const validateRequest = require('../middleware/validateRequest');
+const permissionMiddleware = require('../middleware/permissionMiddleware');
 const {
   assignSubjects,
   getSubjectGroups,
@@ -16,7 +16,7 @@ const {
 router.post(
   '/assign',
   authMiddleware,
-  roleMiddleware(['admin']),
+  permissionMiddleware('subjects.assign'),
   [
     body('department').isString().trim().isLength({ min: 2, max: 100 }).withMessage('department is required'),
     body('year').isInt({ min: 1, max: 4 }).withMessage('year must be between 1 and 4'),
@@ -50,7 +50,7 @@ router.get(
 router.put(
   '/:id',
   authMiddleware,
-  roleMiddleware(['admin']),
+  permissionMiddleware('subjects.assign'),
   [
     param('id').isMongoId().withMessage('Invalid subject group id'),
     body('subjects').isArray({ min: 1 }).withMessage('subjects must be a non-empty array'),
@@ -63,7 +63,7 @@ router.put(
 router.delete(
   '/:id',
   authMiddleware,
-  roleMiddleware(['admin']),
+  permissionMiddleware('subjects.assign'),
   [param('id').isMongoId().withMessage('Invalid subject group id')],
   validateRequest,
   deleteSubjectGroup

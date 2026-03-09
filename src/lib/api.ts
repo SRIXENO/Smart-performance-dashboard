@@ -16,6 +16,7 @@ const LOGIN_MAX_RETRIES = Number(process.env.NEXT_PUBLIC_LOGIN_MAX_RETRIES || 1)
 const STUDENT_CREATE_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_STUDENT_CREATE_TIMEOUT_MS || 45000);
 const AUTH_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_AUTH_TIMEOUT_MS || 8000);
 const WARMUP_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_WARMUP_TIMEOUT_MS || 6000);
+const TOKEN_CACHE_KEY = 'token';
 
 export const GOOGLE_AUTH_URL =
   normalizedApiBase === '/api' ? '/api/auth/google' : `${apiOrigin}/api/auth/google`;
@@ -31,13 +32,76 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(TOKEN_CACHE_KEY);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
   return config;
 });
+
+let refreshPromise: Promise<string | null> | null = null;
+
+const performTokenRefresh = async (): Promise<string | null> => {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = api.post('/auth/refresh', {}, {
+    timeout: Number.isFinite(AUTH_TIMEOUT_MS) ? AUTH_TIMEOUT_MS : 8000,
+  })
+    .then((response) => {
+      const nextToken = response.data?.token || null;
+      if (typeof window !== 'undefined') {
+        if (nextToken) {
+          localStorage.setItem(TOKEN_CACHE_KEY, nextToken);
+          if (response.data?.user) {
+            localStorage.setItem('auth_user', JSON.stringify(response.data.user));
+          }
+        } else {
+          localStorage.removeItem(TOKEN_CACHE_KEY);
+          localStorage.removeItem('auth_user');
+        }
+      }
+      return nextToken;
+    })
+    .catch(() => {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(TOKEN_CACHE_KEY);
+        localStorage.removeItem('auth_user');
+      }
+      return null;
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
+};
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error?.config;
+    if (!originalRequest || originalRequest._retry || error?.response?.status !== 401) {
+      return Promise.reject(error);
+    }
+
+    if (String(originalRequest.url || '').includes('/auth/login')
+      || String(originalRequest.url || '').includes('/auth/register')
+      || String(originalRequest.url || '').includes('/auth/refresh')) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+    const nextToken = await performTokenRefresh();
+    if (!nextToken) {
+      return Promise.reject(error);
+    }
+
+    originalRequest.headers = originalRequest.headers || {};
+    originalRequest.headers.Authorization = `Bearer ${nextToken}`;
+    return api(originalRequest);
+  }
+);
 
 const isTimeoutError = (error: any) => {
   const message = String(error?.message || '').toLowerCase();
@@ -107,6 +171,7 @@ const loginWithRetry = async (data: any) => {
 export const authAPI = {
   register: (data: any) => api.post('/auth/register', data),
   login: (data: any) => loginWithRetry(data),
+  refresh: () => api.post('/auth/refresh'),
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me', { timeout: Number.isFinite(AUTH_TIMEOUT_MS) ? AUTH_TIMEOUT_MS : 8000 }),
 };
@@ -125,6 +190,8 @@ export const viewersAPI = {
   getAll: () => api.get('/auth/viewers'),
   updateStatus: (id: string, status: 'active' | 'blocked') =>
     api.patch(`/auth/viewers/${id}/status`, { status }),
+  updatePermissions: (id: string, permissions: Record<string, boolean>) =>
+    api.patch(`/auth/users/${id}/permissions`, { permissions }),
   delete: (id: string) => api.delete(`/auth/viewers/${id}`),
 };
 

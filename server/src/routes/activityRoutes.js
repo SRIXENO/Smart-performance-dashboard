@@ -3,8 +3,8 @@ const { param, query } = require('express-validator');
 const router = express.Router();
 const ActivityLog = require('../models/ActivityLog');
 const authMiddleware = require('../middleware/authMiddleware');
-const roleMiddleware = require('../middleware/roleMiddleware');
 const validateRequest = require('../middleware/validateRequest');
+const permissionMiddleware = require('../middleware/permissionMiddleware');
 
 // Get student timeline
 router.get('/student/:studentId', [
@@ -102,7 +102,7 @@ router.get('/by-action/:action', [
 });
 
 // Admin-only login history
-router.get('/login-history', authMiddleware, roleMiddleware(['admin']), [
+router.get('/login-history', authMiddleware, permissionMiddleware('activities.view'), [
   query('limit').optional().isInt({ min: 1, max: 200 }),
   query('page').optional().isInt({ min: 1, max: 500 }),
   query('search').optional().isString(),
@@ -165,7 +165,7 @@ router.get('/login-history', authMiddleware, roleMiddleware(['admin']), [
 });
 
 // Admin-only clear login history by date-time range
-router.delete('/login-history', authMiddleware, roleMiddleware(['admin']), async (req, res) => {
+router.delete('/login-history', authMiddleware, permissionMiddleware('activities.view'), async (req, res) => {
   try {
     const { from, to } = req.query;
 

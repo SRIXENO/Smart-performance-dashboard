@@ -9,14 +9,15 @@ const {
   bootstrapMissingPerformance,
 } = require('../controllers/performanceController');
 const authMiddleware = require('../middleware/authMiddleware');
-const roleMiddleware = require('../middleware/roleMiddleware');
 const validateRequest = require('../middleware/validateRequest');
+const permissionMiddleware = require('../middleware/permissionMiddleware');
 
 const router = express.Router();
 
 router.get(
   '/',
   authMiddleware,
+  permissionMiddleware('performance.view'),
   [
     query('limit').optional().isInt({ min: 1, max: 1000 }).withMessage('limit must be between 1 and 1000'),
     query('page').optional().isInt({ min: 1, max: 500 }).withMessage('page must be between 1 and 500'),
@@ -35,7 +36,7 @@ router.get(
 router.get(
   '/missing-summary',
   authMiddleware,
-  roleMiddleware(['admin', 'faculty', 'viewer']),
+  permissionMiddleware('performance.view'),
   [query('limit').optional().isInt({ min: 1, max: 500 }).withMessage('limit must be between 1 and 500')],
   validateRequest,
   getMissingPerformanceSummary
@@ -43,7 +44,7 @@ router.get(
 router.post(
   '/bootstrap-missing',
   authMiddleware,
-  roleMiddleware(['admin']),
+  permissionMiddleware('performance.edit'),
   [
     body('studentIds').optional().isArray().withMessage('studentIds must be an array'),
     body('studentIds.*').optional().isMongoId().withMessage('Invalid studentId in studentIds'),
@@ -59,7 +60,7 @@ router.post(
 router.post(
   '/',
   authMiddleware,
-  roleMiddleware(['admin']),
+  permissionMiddleware('performance.edit'),
   [
     body('studentId').isMongoId().withMessage('Valid studentId is required'),
     body('subjectId').optional({ values: 'falsy' }).isMongoId().withMessage('Invalid subjectId'),
@@ -73,7 +74,7 @@ router.post(
 router.put(
   '/:id',
   authMiddleware,
-  roleMiddleware(['admin']),
+  permissionMiddleware('performance.edit'),
   [
     param('id').isMongoId().withMessage('Invalid performance id'),
     body('subjectId').optional({ values: 'falsy' }).isMongoId().withMessage('Invalid subjectId'),
@@ -93,7 +94,7 @@ router.put(
 router.delete(
   '/:id',
   authMiddleware,
-  roleMiddleware(['admin']),
+  permissionMiddleware('performance.edit'),
   [param('id').isMongoId().withMessage('Invalid performance id')],
   validateRequest,
   deletePerformance

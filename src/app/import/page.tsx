@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { importAPI } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
+import { hasPermission } from '@/lib/permissions';
 
 type PreviewRow = {
   rowNumber: number;
@@ -26,6 +28,8 @@ type PreviewRow = {
 };
 
 export default function Import() {
+  const { user } = useAuth();
+  const canImport = hasPermission(user, 'import.manage');
   const [file, setFile] = useState<File | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [loadingImport, setLoadingImport] = useState(false);
@@ -132,20 +136,21 @@ STU000002,CS302,91,82,Semester 5`;
           type="file"
           accept=".csv,text/csv"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
+          disabled={!canImport}
           className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
         />
 
         <div className="flex flex-wrap gap-3">
           <button
             onClick={handlePreview}
-            disabled={loadingPreview || !file}
+            disabled={loadingPreview || !file || !canImport}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {loadingPreview ? 'Previewing...' : 'Preview CSV'}
           </button>
           <button
             onClick={handleImport}
-            disabled={loadingImport || validRows.length === 0}
+            disabled={loadingImport || validRows.length === 0 || !canImport}
             className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
           >
             {loadingImport ? 'Importing...' : 'Import Valid Rows'}
@@ -164,6 +169,12 @@ STU000002,CS302,91,82,Semester 5`;
       {(message || error) && (
         <div className={`rounded-md border px-4 py-3 text-sm ${error ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
           {error || message}
+        </div>
+      )}
+
+      {!canImport && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Your account can view import guidance but cannot preview or commit imports.
         </div>
       )}
 

@@ -19,11 +19,14 @@ import ConfirmModal from '@/components/ConfirmModal';
 import SuccessToast from '@/components/SuccessToast';
 import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
+import { hasPermission } from '@/lib/permissions';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend);
 
 export default function Performance() {
   const { user } = useAuth();
+  const canEditPerformance = hasPermission(user, 'performance.edit');
+  const canExportReports = hasPermission(user, 'reports.export');
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialPrefillApplied = useRef(false);
@@ -650,7 +653,7 @@ export default function Performance() {
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
         <h1 className="text-2xl font-semibold text-gray-900">Performance Management</h1>
         <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={() => {
+          {canExportReports && <button onClick={() => {
             if (!sortedRecords.length) return;
             const head = ['Student', 'Code', 'Department', 'Subject', 'Attendance', 'Marks', 'Grade', 'Semester', 'Updated'];
             const rows = sortedRecords.map((r) => [r.studentName, r.studentCode, r.department, r.subjectName, r.attendancePercentage, r.marks, r.grade, r.semester, new Date(r.lastUpdated || Date.now()).toLocaleString()]);
@@ -662,8 +665,8 @@ export default function Performance() {
             link.download = `performance-report-${new Date().toISOString().slice(0, 10)}.csv`;
             link.click();
             URL.revokeObjectURL(url);
-          }} className="bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-50">Export CSV</button>
-          <button onClick={() => {
+          }} className="bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-50">Export CSV</button>}
+          {canExportReports && <button onClick={() => {
             if (!sortedRecords.length) return;
             const win = window.open('', '_blank');
             if (!win) return;
@@ -671,8 +674,8 @@ export default function Performance() {
             win.document.write(`<html><head><title>Performance Report</title><style>body{font-family:Arial;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px}th{background:#f3f4f6}</style></head><body><h1>SPID Performance Report</h1><p>${new Date().toLocaleString()}</p><table><thead><tr><th>Student</th><th>Subject</th><th>Attendance</th><th>Marks</th><th>Grade</th><th>Semester</th></tr></thead><tbody>${body}</tbody></table></body></html>`);
             win.document.close();
             win.print();
-          }} className="bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-50">Export PDF</button>
-          {user?.role === 'admin' && (
+          }} className="bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-50">Export PDF</button>}
+          {canEditPerformance && (
             <button
               onClick={() => {
                 if (showForm) resetForm();
@@ -887,7 +890,7 @@ export default function Performance() {
                 {missingByDepartment.map(([dept, count]) => (
                   <span key={dept} className="px-2 py-1 rounded-full bg-white border border-blue-200">{dept}: {count}</span>
                 ))}
-                {user?.role === 'admin' && (
+                {canEditPerformance && (
                   <button
                     onClick={handleBootstrapMissing}
                     disabled={isBootstrappingMissing || filteredMissingStudents.length === 0}
@@ -959,7 +962,7 @@ export default function Performance() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.semester}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
-                  {user?.role === 'admin' && (
+                  {canEditPerformance && (
                     <div className="flex gap-3">
                       <button onClick={() => handleEdit(record)} className="text-blue-600 hover:text-blue-800">Edit</button>
                       <button onClick={() => handleDelete(record)} className="text-red-600 hover:text-red-900">Delete</button>
@@ -976,12 +979,12 @@ export default function Performance() {
             <p>No records found for current filters.</p>
             <div className="mt-4 flex justify-center gap-2 flex-wrap">
               <Link href="/import" className="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-100">Import CSV</Link>
-              {user?.role === 'admin' && (
+              {canEditPerformance && (
                 <button onClick={generateSampleData} disabled={isGeneratingSamples || loading} className="bg-white text-gray-700 border border-gray-300 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-50 disabled:opacity-60">
                   {isGeneratingSamples ? 'Adding...' : 'Add sample data'}
                 </button>
               )}
-              {user?.role === 'admin' && (
+              {canEditPerformance && (
                 <button onClick={() => setShowForm(true)} className="app-primary-btn">
                   Create first record
                 </button>

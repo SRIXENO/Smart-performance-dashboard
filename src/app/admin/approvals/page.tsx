@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { approvalsAPI } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
+import { hasPermission } from '@/lib/permissions';
 
 type PendingUser = {
   _id: string;
@@ -18,6 +19,7 @@ type PendingUser = {
 
 export default function AdminApprovalsPage() {
   const { user, loading } = useAuth();
+  const canManageApprovals = hasPermission(user, 'approvals.manage');
   const router = useRouter();
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,16 +46,16 @@ export default function AdminApprovalsPage() {
   };
 
   useEffect(() => {
-    if (!loading && user?.role !== 'admin') {
+    if (!loading && !canManageApprovals) {
       router.push('/dashboard');
     }
-  }, [loading, router, user]);
+  }, [canManageApprovals, loading, router]);
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (canManageApprovals) {
       fetchPending();
     }
-  }, [user]);
+  }, [canManageApprovals]);
 
   const handleDecision = async (id: string, decision: 'approved' | 'rejected') => {
     const target = pendingUsers.find((u) => u._id === id);
@@ -88,7 +90,7 @@ export default function AdminApprovalsPage() {
     return <div className="text-gray-700">Loading approvals...</div>;
   }
 
-  if (user?.role !== 'admin') {
+  if (!canManageApprovals) {
     return null;
   }
 

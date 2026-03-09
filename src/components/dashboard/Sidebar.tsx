@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import type { ReactNode } from 'react';
 import MotionReveal from '@/components/ui/MotionReveal';
+import { hasPermission } from '@/lib/permissions';
 
 type NavItem = {
   name: string;
@@ -102,7 +103,12 @@ const viewersItem: NavItem = {
 export default function Sidebar({ isOpen = false, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const { user } = useAuth();
-  const items = user?.role === 'admin' ? [...navigation, adminItem, viewersItem, loginHistoryItem] : navigation;
+  const items = [
+    ...navigation,
+    ...(hasPermission(user, 'approvals.manage') ? [adminItem] : []),
+    ...(hasPermission(user, 'viewers.manage') ? [viewersItem] : []),
+    ...(hasPermission(user, 'activities.view') ? [loginHistoryItem] : []),
+  ];
 
   return (
     <>

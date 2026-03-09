@@ -2,15 +2,15 @@ const express = require('express');
 const { body, param, query } = require('express-validator');
 const { getStudents, getStudentById, getStudentProfile, getStudentSubjects, getStudentAnalytics, createStudent, updateStudent, deleteStudent } = require('../controllers/studentController');
 const authMiddleware = require('../middleware/authMiddleware');
-const roleMiddleware = require('../middleware/roleMiddleware');
 const validateRequest = require('../middleware/validateRequest');
+const permissionMiddleware = require('../middleware/permissionMiddleware');
 
 const router = express.Router();
 
 router.get(
   '/',
   authMiddleware,
-  roleMiddleware(['admin', 'faculty', 'viewer']),
+  permissionMiddleware('students.view'),
   [
     query('page').optional().isInt({ min: 1 }),
     query('limit').optional().isInt({ min: 1, max: 1000 }),
@@ -22,14 +22,14 @@ router.get(
   validateRequest,
   getStudents
 );
-router.get('/:id/profile', authMiddleware, roleMiddleware(['admin', 'faculty', 'viewer']), [param('id').isMongoId()], validateRequest, getStudentProfile);
-router.get('/:id/subjects', authMiddleware, roleMiddleware(['admin', 'faculty', 'viewer']), [param('id').isMongoId()], validateRequest, getStudentSubjects);
-router.get('/:id/analytics', authMiddleware, roleMiddleware(['admin', 'faculty', 'viewer']), [param('id').isMongoId()], validateRequest, getStudentAnalytics);
-router.get('/:id', authMiddleware, roleMiddleware(['admin', 'faculty']), [param('id').isMongoId()], validateRequest, getStudentById);
+router.get('/:id/profile', authMiddleware, permissionMiddleware('students.view'), [param('id').isMongoId()], validateRequest, getStudentProfile);
+router.get('/:id/subjects', authMiddleware, permissionMiddleware('students.view'), [param('id').isMongoId()], validateRequest, getStudentSubjects);
+router.get('/:id/analytics', authMiddleware, permissionMiddleware('students.view'), [param('id').isMongoId()], validateRequest, getStudentAnalytics);
+router.get('/:id', authMiddleware, permissionMiddleware('students.view'), [param('id').isMongoId()], validateRequest, getStudentById);
 router.post(
   '/',
   authMiddleware,
-  roleMiddleware(['admin']),
+  permissionMiddleware('students.manage'),
   [
     body('name').isString().trim().isLength({ min: 2, max: 100 }),
     body('email').isEmail().normalizeEmail(),
@@ -43,7 +43,7 @@ router.post(
 router.put(
   '/:id',
   authMiddleware,
-  roleMiddleware(['admin', 'faculty']),
+  permissionMiddleware('students.manage'),
   [
     param('id').isMongoId(),
     body('email').optional().isEmail().normalizeEmail(),
@@ -54,6 +54,6 @@ router.put(
   validateRequest,
   updateStudent
 );
-router.delete('/:id', authMiddleware, roleMiddleware(['admin']), [param('id').isMongoId()], validateRequest, deleteStudent);
+router.delete('/:id', authMiddleware, permissionMiddleware('students.manage'), [param('id').isMongoId()], validateRequest, deleteStudent);
 
 module.exports = router;

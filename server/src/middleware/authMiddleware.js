@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { resolvePermissions } = require('../utils/permissions');
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -17,7 +18,10 @@ const authMiddleware = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId).select('role status approvalStatus');
+    if (decoded.type && decoded.type !== 'access') {
+      return res.status(401).json({ success: false, error: 'Invalid token type' });
+    }
+    const user = await User.findById(decoded.userId).select('userId name email role status approvalStatus permissions');
 
     if (!user) {
       return res.status(401).json({ success: false, error: 'User not found' });
@@ -32,8 +36,13 @@ const authMiddleware = async (req, res, next) => {
     }
 
     req.user = {
-      userId: decoded.userId,
-      role: user.role
+      _id: user._id,
+      userId: user._id,
+      publicUserId: user.userId,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      permissions: resolvePermissions(user),
     };
     
     next();

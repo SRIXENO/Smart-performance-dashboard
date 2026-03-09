@@ -5,6 +5,7 @@ import { facultyAPI } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import ConfirmModal from '@/components/ConfirmModal';
+import { hasPermission } from '@/lib/permissions';
 
 type FacultyMember = {
   _id: string;
@@ -32,7 +33,7 @@ const DEPARTMENTS = [
 
 export default function FacultyPage() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const canManageFaculty = hasPermission(user, 'faculty.manage');
   const [faculty, setFaculty] = useState<FacultyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [departmentFilter, setDepartmentFilter] = useState('');
@@ -169,7 +170,7 @@ export default function FacultyPage() {
             <h1 className="text-2xl font-bold text-slate-900">Faculty Members</h1>
             <p className="text-slate-500 text-sm mt-1">Admin can add/edit/delete. Faculty and students are view-only.</p>
           </div>
-          {isAdmin && (
+          {canManageFaculty && (
             <button onClick={() => setShowForm((v) => !v)} className="app-primary-btn">
               {showForm ? 'Close Form' : 'Add Faculty'}
             </button>
@@ -177,7 +178,7 @@ export default function FacultyPage() {
         </div>
       </section>
 
-      {isAdmin && showForm && (
+      {canManageFaculty && showForm && (
         <section className="rounded-2xl border border-slate-200 bg-white p-5">
           <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Name" className="px-3 py-2 border rounded-md" />
@@ -258,7 +259,7 @@ export default function FacultyPage() {
                     <p className="text-xs text-slate-500 truncate">{member.email}</p>
                   </div>
                 </div>
-                {isAdmin && (
+                {canManageFaculty && (
                   <div className="mt-3 flex gap-3 text-sm">
                     <button onClick={(e) => { e.stopPropagation(); startEdit(member); }} className="text-indigo-600 hover:text-indigo-800">Edit</button>
                     <button onClick={(e) => { e.stopPropagation(); handleDelete(member._id); }} className="text-red-600 hover:text-red-800">Delete</button>

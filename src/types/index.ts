@@ -5,6 +5,20 @@ export interface User {
   role: 'admin' | 'faculty' | 'student' | 'viewer';
   status?: 'active' | 'blocked';
   approvalStatus?: 'pending' | 'approved' | 'rejected';
+  permissions?: {
+    studentsView?: boolean;
+    studentsManage?: boolean;
+    performanceView?: boolean;
+    performanceEdit?: boolean;
+    subjectsAssign?: boolean;
+    reportsExport?: boolean;
+    dashboardView?: boolean;
+    approvalsManage?: boolean;
+    viewersManage?: boolean;
+    facultyManage?: boolean;
+    importManage?: boolean;
+    activitiesView?: boolean;
+  };
 }
 
 export interface Student {

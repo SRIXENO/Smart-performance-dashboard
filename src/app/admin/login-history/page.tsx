@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { activityAPI } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
+import { hasPermission } from '@/lib/permissions';
 
 type LoginHistoryItem = {
   id: string;
@@ -17,6 +18,7 @@ type LoginHistoryItem = {
 
 export default function AdminLoginHistoryPage() {
   const { user, loading } = useAuth();
+  const canViewActivities = hasPermission(user, 'activities.view');
   const router = useRouter();
   const [history, setHistory] = useState<LoginHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +42,7 @@ export default function AdminLoginHistoryPage() {
   });
 
   const fetchHistory = async (nextPage = page) => {
-    if (user?.role !== 'admin') return;
+    if (!canViewActivities) return;
 
     try {
       const response = await activityAPI.getLoginHistory({
@@ -63,10 +65,10 @@ export default function AdminLoginHistoryPage() {
   };
 
   useEffect(() => {
-    if (!loading && user?.role !== 'admin') {
+    if (!loading && !canViewActivities) {
       router.push('/dashboard');
     }
-  }, [loading, router, user]);
+  }, [canViewActivities, loading, router]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -118,7 +120,7 @@ export default function AdminLoginHistoryPage() {
     return <div className="text-gray-700">Loading login history...</div>;
   }
 
-  if (user?.role !== 'admin') {
+  if (!canViewActivities) {
     return null;
   }
 

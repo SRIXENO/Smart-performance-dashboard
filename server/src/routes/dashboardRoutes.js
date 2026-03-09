@@ -1,6 +1,6 @@
 const express = require('express');
 const authMiddleware = require('../middleware/authMiddleware');
-const roleMiddleware = require('../middleware/roleMiddleware');
+const permissionMiddleware = require('../middleware/permissionMiddleware');
 const { 
   getSummary, 
   getAttendanceTrend, 
@@ -21,20 +21,20 @@ const {
 
 const router = express.Router();
 
-router.get('/analytics', authMiddleware, roleMiddleware(['admin', 'faculty', 'viewer']), getAnalytics);
-router.get('/metrics', authMiddleware, roleMiddleware(['admin', 'faculty', 'viewer']), getMetrics);
-router.get('/summary', authMiddleware, roleMiddleware(['admin', 'faculty']), getSummary);
-router.get('/attendance-trend', authMiddleware, roleMiddleware(['admin', 'faculty']), getAttendanceTrend);
-router.get('/grade-distribution', authMiddleware, roleMiddleware(['admin', 'faculty']), getGradeDistribution);
-router.get('/subject-performance', authMiddleware, roleMiddleware(['admin', 'faculty']), getSubjectPerformance);
-router.get('/at-risk-students', authMiddleware, roleMiddleware(['admin', 'faculty']), getAtRiskStudents);
-router.get('/department-comparison', authMiddleware, roleMiddleware(['admin', 'faculty']), getDepartmentComparison);
-router.get('/semester-distribution', authMiddleware, roleMiddleware(['admin', 'faculty']), getSemesterDistribution);
-router.get('/attendance-heatmap', authMiddleware, roleMiddleware(['admin', 'faculty']), getAttendanceHeatmap);
-router.get('/cgpa-distribution', authMiddleware, roleMiddleware(['admin', 'faculty']), getCGPADistribution);
-router.get('/performance-growth', authMiddleware, roleMiddleware(['admin', 'faculty']), getPerformanceGrowth);
-router.get('/difficult-subjects', authMiddleware, roleMiddleware(['admin', 'faculty']), getDifficultSubjects);
-router.get('/attendance-performance-correlation', authMiddleware, roleMiddleware(['admin', 'faculty']), getAttendancePerformanceCorrelation);
-router.get('/recent-students', authMiddleware, roleMiddleware(['admin', 'faculty']), getRecentStudents);
+router.get('/analytics', authMiddleware, permissionMiddleware('dashboard.view'), getAnalytics);
+router.get('/metrics', authMiddleware, permissionMiddleware('dashboard.view'), getMetrics);
+router.get('/summary', authMiddleware, permissionMiddleware('dashboard.view'), getSummary);
+router.get('/attendance-trend', authMiddleware, permissionMiddleware('dashboard.view'), getAttendanceTrend);
+router.get('/grade-distribution', authMiddleware, permissionMiddleware('dashboard.view'), getGradeDistribution);
+router.get('/subject-performance', authMiddleware, permissionMiddleware('dashboard.view'), getSubjectPerformance);
+router.get('/at-risk-students', authMiddleware, permissionMiddleware('dashboard.view'), getAtRiskStudents);
+router.get('/department-comparison', authMiddleware, permissionMiddleware('dashboard.view'), getDepartmentComparison);
+router.get('/semester-distribution', authMiddleware, permissionMiddleware('dashboard.view'), getSemesterDistribution);
+router.get('/attendance-heatmap', authMiddleware, permissionMiddleware('dashboard.view'), getAttendanceHeatmap);
+router.get('/cgpa-distribution', authMiddleware, permissionMiddleware('dashboard.view'), getCGPADistribution);
+router.get('/performance-growth', authMiddleware, permissionMiddleware('dashboard.view'), getPerformanceGrowth);
+router.get('/difficult-subjects', authMiddleware, permissionMiddleware('dashboard.view'), getDifficultSubjects);
+router.get('/attendance-performance-correlation', authMiddleware, permissionMiddleware('dashboard.view'), getAttendancePerformanceCorrelation);
+router.get('/recent-students', authMiddleware, permissionMiddleware('dashboard.view'), getRecentStudents);
 
 module.exports = router;

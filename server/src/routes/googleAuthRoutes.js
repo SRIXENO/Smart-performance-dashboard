@@ -1,7 +1,7 @@
 const express = require('express');
 const passport = require('../config/passport');
-const jwt = require('jsonwebtoken');
 const ActivityLog = require('../models/ActivityLog');
+const { issueSessionTokens } = require('../utils/authTokens');
 
 const router = express.Router();
 
@@ -10,8 +10,6 @@ const frontendUrl =
   normalizeUrl(process.env.FRONTEND_URL) ||
   normalizeUrl((process.env.FRONTEND_URLS || '').split(',')[0]) ||
   'http://localhost:3000';
-const SESSION_MAX_AGE_MS = 3 * 60 * 60 * 1000; // 3 hours
-
 router.get('/google', passport.authenticate('google', {
   scope: ['profile', 'email']
 }));
@@ -39,11 +37,7 @@ router.get('/google/callback',
         return res.redirect(`${frontendUrl}/login?error=approval_rejected`);
       }
       
-      const token = jwt.sign(
-        { userId: req.user._id, role: req.user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRE }
-      );
+      const { accessToken } = await issueSessionTokens(req.user, req, res);
 
       await ActivityLog.log({
         userId: req.user._id,
@@ -61,17 +55,8 @@ router.get('/google/callback',
         status: 'success'
       });
       
-      console.log('Token created:', token);
-      
-      res.cookie('token', token, {
-        maxAge: SESSION_MAX_AGE_MS,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-      });
-      
       console.log('Redirecting to frontend callback');
-      res.redirect(`${frontendUrl}/auth/google-success?token=${encodeURIComponent(token)}`);
+      res.redirect(`${frontendUrl}/auth/google-success?token=${encodeURIComponent(accessToken)}`);
     } catch (error) {
       console.error('Callback error:', error);
       res.redirect(`${frontendUrl}/login?error=callback_failed`);

@@ -8,7 +8,7 @@ const roleMiddleware = (allowedRoles) => {
       return res.status(403).json({ success: false, error: 'Access denied' });
     }
 
-    next();
+    return next();
   };
 };
 

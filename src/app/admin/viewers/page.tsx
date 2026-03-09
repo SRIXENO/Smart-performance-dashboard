@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { viewersAPI } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
+import { hasPermission } from '@/lib/permissions';
+import type { User } from '@/types';
 
 type Viewer = {
   _id: string;
@@ -15,14 +17,29 @@ type Viewer = {
   createdAt: string;
   status: 'active' | 'blocked';
   approvalStatus: 'pending' | 'approved' | 'rejected';
+  permissions?: User['permissions'];
 };
+
+const PERMISSION_FIELDS = [
+  { key: 'studentsView', label: 'View Students' },
+  { key: 'studentsManage', label: 'Manage Students' },
+  { key: 'performanceView', label: 'View Performance' },
+  { key: 'performanceEdit', label: 'Edit Performance' },
+  { key: 'subjectsAssign', label: 'Assign Subjects' },
+  { key: 'reportsExport', label: 'Export Reports' },
+  { key: 'dashboardView', label: 'View Dashboard' },
+  { key: 'importManage', label: 'Manage Imports' },
+  { key: 'activitiesView', label: 'View Login History' },
+] as const;
 
 export default function AdminViewersPage() {
   const { user, loading } = useAuth();
+  const canManageViewers = hasPermission(user, 'viewers.manage');
   const router = useRouter();
   const [viewers, setViewers] = useState<Viewer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actioningId, setActioningId] = useState<string | null>(null);
+  const [permissionEditor, setPermissionEditor] = useState<{ userId: string; name: string; permissions: Record<string, boolean> } | null>(null);
   const [error, setError] = useState('');
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -45,16 +62,16 @@ export default function AdminViewersPage() {
   };
 
   useEffect(() => {
-    if (!loading && user?.role !== 'admin') {
+    if (!loading && !canManageViewers) {
       router.push('/dashboard');
     }
-  }, [loading, router, user]);
+  }, [canManageViewers, loading, router]);
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (canManageViewers) {
       fetchViewers();
     }
-  }, [user]);
+  }, [canManageViewers]);
 
   const openStatusConfirm = (item: Viewer, nextStatus: 'active' | 'blocked') => {
     const isBlocking = nextStatus === 'blocked';
@@ -107,11 +124,38 @@ export default function AdminViewersPage() {
     });
   };
 
+  const openPermissionEditor = (item: Viewer) => {
+    setPermissionEditor({
+      userId: item._id,
+      name: item.name,
+      permissions: Object.fromEntries(PERMISSION_FIELDS.map(({ key }) => [key, Boolean(item.permissions?.[key])])),
+    });
+  };
+
+  const savePermissions = async () => {
+    if (!permissionEditor) return;
+    setActioningId(permissionEditor.userId);
+    setError('');
+    try {
+      await viewersAPI.updatePermissions(permissionEditor.userId, permissionEditor.permissions);
+      setViewers((prev) => prev.map((viewer) => (
+        viewer._id === permissionEditor.userId
+          ? { ...viewer, permissions: { ...permissionEditor.permissions } }
+          : viewer
+      )));
+      setPermissionEditor(null);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update permissions');
+    } finally {
+      setActioningId(null);
+    }
+  };
+
   if (loading || isLoading) {
     return <div className="text-gray-700">Loading viewers...</div>;
   }
 
-  if (user?.role !== 'admin') {
+  if (!canManageViewers) {
     return null;
   }
 
@@ -189,6 +233,13 @@ export default function AdminViewersPage() {
                         </button>
                       )}
                       <button
+                        onClick={() => openPermissionEditor(item)}
+                        disabled={actioningId === item._id}
+                        className="px-3 py-1.5 rounded-md bg-slate-700 text-white hover:bg-slate-800 disabled:opacity-50"
+                      >
+                        Permissions
+                      </button>
+                      <button
                         onClick={() => openDeleteConfirm(item)}
                         disabled={actioningId === item._id}
                         className="px-3 py-1.5 rounded-md bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50"
@@ -219,6 +270,48 @@ export default function AdminViewersPage() {
         cancelText="Cancel"
         loading={actioningId !== null}
       />
+
+      {permissionEditor && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl">
+            <div className="border-b border-slate-200 px-6 py-4">
+              <h2 className="text-lg font-semibold text-slate-900">Permission Matrix</h2>
+              <p className="mt-1 text-sm text-slate-500">Update module access for {permissionEditor.name}.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-6 py-5">
+              {PERMISSION_FIELDS.map(({ key, label }) => (
+                <label key={key} className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3 text-sm">
+                  <span className="text-slate-700">{label}</span>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(permissionEditor.permissions[key])}
+                    onChange={(e) => setPermissionEditor((prev) => prev ? {
+                      ...prev,
+                      permissions: { ...prev.permissions, [key]: e.target.checked },
+                    } : prev)}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
+              <button
+                onClick={() => setPermissionEditor(null)}
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={savePermissions}
+                disabled={actioningId === permissionEditor.userId}
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {actioningId === permissionEditor.userId ? 'Saving...' : 'Save Permissions'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

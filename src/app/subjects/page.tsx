@@ -6,6 +6,7 @@ import ConfirmModal from '@/components/ConfirmModal';
 import SuccessToast from '@/components/SuccessToast';
 import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
+import { hasPermission } from '@/lib/permissions';
 
 interface Subject {
   code: string;
@@ -14,6 +15,7 @@ interface Subject {
 
 export default function SubjectManagement() {
   const { user } = useAuth();
+  const canAssignSubjects = hasPermission(user, 'subjects.assign');
   const [subjectGroups, setSubjectGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -190,7 +192,7 @@ export default function SubjectManagement() {
           <h1 className="text-3xl font-bold text-gray-900">Subject Management</h1>
           <p className="text-gray-600 mt-2">Assign subjects by department, year, and semester - automatically applies to matching students</p>
         </div>
-        {!showForm && user?.role === 'admin' && (
+        {!showForm && canAssignSubjects && (
           <button
             onClick={() => setShowForm(true)}
             className="app-primary-btn"
@@ -397,7 +399,7 @@ export default function SubjectManagement() {
                     </p>
                   </div>
 
-                  {user?.role === 'admin' && (
+                  {canAssignSubjects && (
                     <div className="flex space-x-2 ml-4">
                       <button
                         onClick={() => handleEdit(group)}

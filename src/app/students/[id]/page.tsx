@@ -6,13 +6,16 @@ import { studentsAPI } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useAuth } from '@/context/AuthContext';
 import { logger } from '@/lib/logger';
+import { hasPermission } from '@/lib/permissions';
 
 export default function StudentDetail() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const canManageStudentAccess = user?.role === 'admin' || user?.role === 'faculty';
-  const canManageStudentFiles = user?.role === 'admin' || user?.role === 'faculty';
+  const canManageStudentAccess = hasPermission(user, 'students.manage');
+  const canManageStudentFiles = hasPermission(user, 'students.manage');
+  const canDeleteStudent = hasPermission(user, 'students.manage');
+  const canExportReports = hasPermission(user, 'reports.export');
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('personal');
@@ -221,7 +224,7 @@ export default function StudentDetail() {
           </div>
           
           <div className="flex flex-wrap gap-2">
-            {(user?.role === 'admin' || user?.role === 'faculty') && (
+            {canManageStudentAccess && (
               <button
                 onClick={() => router.push(`/students/${student._id}/edit`)}
                 className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
@@ -235,12 +238,14 @@ export default function StudentDetail() {
             >
               <span>Print</span>
             </button>
-            <button
-              onClick={handleExport}
-              className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
-            >
-              <span>Export</span>
-            </button>
+            {canExportReports && (
+              <button
+                onClick={handleExport}
+                className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
+              >
+                <span>Export</span>
+              </button>
+            )}
             {canManageStudentAccess && (
               <button
                 onClick={handleToggleBlock}
@@ -254,7 +259,7 @@ export default function StudentDetail() {
                 <span>{isUpdatingStatus ? 'Saving...' : isBlocked ? 'Unblock' : 'Block'}</span>
               </button>
             )}
-            {user?.role === 'admin' && (
+            {canDeleteStudent && (
               <button
                 onClick={handleDelete}
                 className="bg-white border border-rose-300 hover:bg-rose-50 text-rose-700 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"

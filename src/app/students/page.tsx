@@ -8,11 +8,14 @@ import ConfirmModal from '@/components/ConfirmModal';
 import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import { logger } from '@/lib/logger';
+import { hasPermission } from '@/lib/permissions';
 
 export default function Students() {
   const { user } = useAuth();
   const isViewer = user?.role === 'viewer';
-  const canManageStudentAccess = user?.role === 'admin' || user?.role === 'faculty';
+  const canManageStudents = hasPermission(user, 'students.manage');
+  const canManageStudentAccess = canManageStudents;
+  const canEditPerformance = hasPermission(user, 'performance.edit');
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -135,7 +138,7 @@ export default function Students() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-900">Students</h1>
-        {user?.role === 'admin' && (
+        {canManageStudents && (
           <Link
             href="/students/add"
             className="app-primary-btn"
@@ -257,7 +260,7 @@ export default function Students() {
                           >
                             View
                           </Link>
-                          {(user?.role === 'admin' || user?.role === 'faculty') && (
+                          {canManageStudents && (
                             <>
                               <details className="relative sm:hidden">
                                 <summary className="list-none cursor-pointer rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 hover:bg-gray-50">
@@ -270,7 +273,7 @@ export default function Students() {
                                   >
                                     Edit
                                   </Link>
-                                  {user?.role === 'admin' && (
+                                  {canEditPerformance && (
                                     <Link
                                       href={`/performance?studentId=${student._id}&openForm=1`}
                                       className="block rounded px-2 py-1 text-sky-700 hover:bg-sky-50"
@@ -292,7 +295,7 @@ export default function Students() {
                                           : 'Block'}
                                     </button>
                                   )}
-                                  {user?.role === 'admin' && (
+                                  {canManageStudents && (
                                     <button
                                       onClick={() => handleDelete(student._id, student.name)}
                                       className="block w-full text-left rounded px-2 py-1 text-red-600 hover:bg-red-50"
@@ -308,7 +311,7 @@ export default function Students() {
                               >
                                 Edit
                               </Link>
-                              {user?.role === 'admin' && (
+                              {canEditPerformance && (
                                 <Link
                                   href={`/performance?studentId=${student._id}&openForm=1`}
                                   className="hidden sm:inline text-sky-600 hover:text-sky-900"
@@ -333,7 +336,7 @@ export default function Students() {
                                       : 'Block'}
                                 </button>
                               )}
-                              {user?.role === 'admin' && (
+                              {canManageStudents && (
                                 <button
                                   onClick={() => handleDelete(student._id, student.name)}
                                   className="hidden sm:inline text-red-600 hover:text-red-900"
@@ -356,7 +359,7 @@ export default function Students() {
             {students.length === 0 && (
               <div className="text-center py-12">
                 <div className="text-gray-500 mb-4">No students found</div>
-                {user?.role === 'admin' && (
+                {canManageStudents && (
                   <Link
                     href="/students/add"
                     className="app-primary-btn"

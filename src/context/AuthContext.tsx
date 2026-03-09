@@ -38,10 +38,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const token = localStorage.getItem(TOKEN_CACHE_KEY);
     if (!token) {
-      localStorage.removeItem(USER_CACHE_KEY);
-      setUser(null);
-      if (!background) setLoading(false);
-      return;
+      try {
+        const refreshResponse = await authAPI.refresh();
+        if (refreshResponse.data?.token) {
+          localStorage.setItem(TOKEN_CACHE_KEY, refreshResponse.data.token);
+          if (refreshResponse.data?.user) {
+            localStorage.setItem(USER_CACHE_KEY, JSON.stringify(refreshResponse.data.user));
+            setUser(refreshResponse.data.user);
+          }
+          if (!background) setLoading(false);
+          return;
+        }
+      } catch {
+        localStorage.removeItem(USER_CACHE_KEY);
+        setUser(null);
+        if (!background) setLoading(false);
+        return;
+      }
     }
 
     try {

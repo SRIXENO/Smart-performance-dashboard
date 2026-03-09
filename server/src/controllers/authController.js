@@ -3,16 +3,20 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Student = require('../models/Student');
 const ActivityLog = require('../models/ActivityLog');
-
-const SESSION_MAX_AGE_MS = 3 * 60 * 60 * 1000; // 3 hours
+const { ROLE_PERMISSION_DEFAULTS, resolvePermissions } = require('../utils/permissions');
+const { hashToken, getCookieOptions, issueSessionTokens } = require('../utils/authTokens');
 
 const normalizeIdentifier = (value) => String(value || '').trim().slice(0, 254);
 
-const generateToken = (userId, role) => {
-  return jwt.sign({ userId, role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE
-  });
-};
+const buildAuthPayload = (user) => ({
+  userId: user.userId,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  status: user.status,
+  approvalStatus: user.approvalStatus,
+  permissions: resolvePermissions(user),
+});
 
 const register = async (req, res) => {
   try {
@@ -40,27 +44,13 @@ const register = async (req, res) => {
       authProvider: 'local'
     });
 
-    const token = generateToken(newUser._id, newUser.role);
-    
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: SESSION_MAX_AGE_MS,
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-    });
+    const { accessToken } = await issueSessionTokens(newUser, req, res);
 
     res.status(201).json({
       success: true,
       message: 'Registration received. Waiting for admin approval.',
-      token,
-      user: {
-        userId: newUser.userId,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-        status: newUser.status,
-        approvalStatus: newUser.approvalStatus,
-      }
+      token: accessToken,
+      user: buildAuthPayload(newUser)
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -134,7 +124,7 @@ const login = async (req, res) => {
       return res.status(403).json({ success: false, error: 'Account is blocked. Contact admin or faculty.' });
     }
 
-    const token = generateToken(user._id, user.role);
+    const { accessToken } = await issueSessionTokens(user, req, res);
 
     void ActivityLog.log({
       userId: user._id,
@@ -153,25 +143,11 @@ const login = async (req, res) => {
       status: 'success'
     });
     
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: SESSION_MAX_AGE_MS,
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-    });
-
     res.json({
       success: true,
       message: 'Login successful',
-      token,
-      user: {
-        userId: user.userId,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-        approvalStatus: user.approvalStatus,
-      }
+      token: accessToken,
+      user: buildAuthPayload(user)
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -179,8 +155,27 @@ const login = async (req, res) => {
   }
 };
 
-const logout = (req, res) => {
-  res.cookie('token', '', { maxAge: 0 });
+const logout = async (req, res) => {
+  const refreshToken = req.cookies.refresh_token;
+  if (refreshToken) {
+    try {
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET);
+      const user = await User.findById(decoded.userId);
+      if (user) {
+        user.refreshTokens = (user.refreshTokens || []).map((session) => {
+          if (session.tokenId === decoded.tokenId) {
+            session.revokedAt = new Date();
+          }
+          return session;
+        });
+        await user.save();
+      }
+    } catch (_error) {
+      // Ignore invalid refresh token on logout.
+    }
+  }
+  res.cookie('token', '', getCookieOptions(0));
+  res.cookie('refresh_token', '', getCookieOptions(0));
   res.json({ success: true, message: 'Logged out successfully' });
 };
 
@@ -194,13 +189,8 @@ const me = async (req, res) => {
     res.json({
       success: true,
       user: {
-        userId: user.userId,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        ...buildAuthPayload(user),
         avatar: user.avatar,
-        status: user.status,
-        approvalStatus: user.approvalStatus,
       }
     });
   } catch (error) {
@@ -260,7 +250,7 @@ const updateApprovalStatus = async (req, res) => {
 const getViewers = async (_req, res) => {
   try {
     const viewers = await User.find({ role: 'viewer' })
-      .select('userId name email authProvider createdAt status approvalStatus')
+      .select('userId name email authProvider createdAt status approvalStatus permissions')
       .sort({ createdAt: -1 });
 
     res.json({ success: true, data: viewers });
@@ -321,9 +311,98 @@ const deleteViewer = async (req, res) => {
   }
 };
 
+const refresh = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refresh_token;
+    if (!refreshToken) {
+      return res.status(401).json({ success: false, error: 'Refresh token missing' });
+    }
+
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET);
+    if (decoded.type !== 'refresh') {
+      return res.status(401).json({ success: false, error: 'Invalid refresh token' });
+    }
+
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'User not found' });
+    }
+
+    const session = (user.refreshTokens || []).find((item) => item.tokenId === decoded.tokenId);
+    if (!session || session.revokedAt || new Date(session.expiresAt).getTime() <= Date.now()) {
+      user.refreshTokens = [];
+      await user.save();
+      res.cookie('token', '', getCookieOptions(0));
+      res.cookie('refresh_token', '', getCookieOptions(0));
+      return res.status(401).json({ success: false, error: 'Refresh session expired' });
+    }
+
+    if (session.tokenHash !== hashToken(refreshToken)) {
+      user.refreshTokens = [];
+      await user.save();
+      res.cookie('token', '', getCookieOptions(0));
+      res.cookie('refresh_token', '', getCookieOptions(0));
+      return res.status(401).json({ success: false, error: 'Refresh token reuse detected' });
+    }
+
+    session.lastUsedAt = new Date();
+    const { accessToken } = await issueSessionTokens(user, req, res, decoded.tokenId);
+
+    return res.json({
+      success: true,
+      token: accessToken,
+      user: buildAuthPayload(user),
+    });
+  } catch (error) {
+    res.cookie('token', '', getCookieOptions(0));
+    res.cookie('refresh_token', '', getCookieOptions(0));
+    return res.status(401).json({ success: false, error: 'Invalid refresh token' });
+  }
+};
+
+const updateUserPermissions = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const permissions = (req.body && typeof req.body.permissions === 'object' && req.body.permissions) ? req.body.permissions : null;
+
+    if (!permissions) {
+      return res.status(400).json({ success: false, error: 'permissions object is required' });
+    }
+
+    const allowedKeys = Object.keys(ROLE_PERMISSION_DEFAULTS.admin);
+    const sanitizedPermissions = allowedKeys.reduce((acc, key) => {
+      if (Object.prototype.hasOwnProperty.call(permissions, key)) {
+        acc[key] = Boolean(permissions[key]);
+      }
+      return acc;
+    }, {});
+
+    const updated = await User.findByIdAndUpdate(
+      id,
+      { $set: { permissions: sanitizedPermissions } },
+      { new: true, runValidators: true }
+    ).select('userId name email role status approvalStatus permissions');
+
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Permissions updated successfully',
+      data: {
+        user: buildAuthPayload(updated),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
+  refresh,
   logout,
   me,
   getPendingApprovals,
@@ -331,4 +410,5 @@ module.exports = {
   getViewers,
   updateViewerStatus,
   deleteViewer,
+  updateUserPermissions,
 };
