@@ -11,19 +11,69 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Validate healthcheck URL
+        id: validate
+        env:
+          RENDER_HEALTHCHECK_URL: ${{ secrets.RENDER_HEALTHCHECK_URL }}
         run: |
-          if [ -z "${{ secrets.RENDER_HEALTHCHECK_URL }}" ]; then
-            echo "Missing secret RENDER_HEALTHCHECK_URL"
-            exit 1
+          if [ -z "$RENDER_HEALTHCHECK_URL" ]; then
+            echo "::warning::Missing secret RENDER_HEALTHCHECK_URL. Skipping keepalive ping."
+            echo "skip_ping=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
+          case "$RENDER_HEALTHCHECK_URL" in
+            https://*)
+              echo "skip_ping=false" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::warning::RENDER_HEALTHCHECK_URL must start with https:// . Current value is invalid."
+              echo "skip_ping=true" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
       - name: Ping backend health endpoint
+        if: steps.validate.outputs.skip_ping != 'true'
+        env:
+          RENDER_HEALTHCHECK_URL: ${{ secrets.RENDER_HEALTHCHECK_URL }}
         run: |
-          URL="${{ secrets.RENDER_HEALTHCHECK_URL }}"
+          URL="$RENDER_HEALTHCHECK_URL"
           echo "Pinging $URL"
-          curl --silent --show-error --fail \
-            --connect-timeout 8 \
-            --max-time 20 \
-            --retry 2 \
-            --retry-delay 2 \
-            "$URL"
+
+          http_code=$(curl --silent --show-error \
+            --output /tmp/render-health-response.txt \
+            --write-out "%{http_code}" \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --retry 4 \
+            --retry-delay 5 \
+            --retry-connrefused \
+            "$URL" || true)
+
+          echo "HTTP status: $http_code"
+
+          case "$http_code" in
+            200|201|202|204)
+              echo "Keepalive ping succeeded."
+              ;;
+            301|302|307|308)
+              echo "::notice::Healthcheck responded with redirect ($http_code). URL is reachable."
+              ;;
+            401|403)
+              echo "::notice::Healthcheck responded with auth status ($http_code). Service is reachable, but endpoint is protected."
+              ;;
+            404)
+              echo "::warning::Healthcheck URL returned 404. Service may be awake, but the path is wrong. Expected something like /api/healthz."
+              ;;
+            000)
+              echo "::warning::No HTTP response received from Render. This can happen during cold start, DNS issues, or if the service is down."
+              ;;
+            *)
+              echo "::warning::Unexpected HTTP status from keepalive request: $http_code"
+              ;;
+          esac
+
+          if [ -s /tmp/render-health-response.txt ]; then
+            echo "Response preview:"
+            head -c 300 /tmp/render-health-response.txt
+            echo
+          fi
