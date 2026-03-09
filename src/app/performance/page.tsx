@@ -27,6 +27,8 @@ export default function Performance() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialPrefillApplied = useRef(false);
+  const isMountedRef = useRef(true);
+  const studentProfileRequestIdRef = useRef(0);
   const [records, setRecords] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -56,6 +58,7 @@ export default function Performance() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
   const [isGeneratingSamples, setIsGeneratingSamples] = useState(false);
+  const [missingSearch, setMissingSearch] = useState('');
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     title: '',
@@ -81,6 +84,10 @@ export default function Performance() {
     return 'F';
   }, [formData.marks]);
 
+  useEffect(() => () => {
+    isMountedRef.current = false;
+  }, []);
+
   useEffect(() => {
     fetchRecords();
     fetchStudents();
@@ -92,6 +99,7 @@ export default function Performance() {
 
   useEffect(() => {
     const refresh = () => {
+      if (document.hidden) return;
       fetchStudents();
       fetchRecords();
     };
@@ -134,6 +142,7 @@ export default function Performance() {
         department: record.studentId?.department || 'N/A',
         year: record.studentId?.year || 'N/A'
       }));
+      if (!isMountedRef.current) return;
       setRecords(populatedRecords);
     } catch (error) {
       console.error('Failed to fetch records:', error);
@@ -143,6 +152,7 @@ export default function Performance() {
   const fetchStudents = async () => {
     try {
       const response = await studentsAPI.getAll({ limit: 1000 });
+      if (!isMountedRef.current) return;
       setStudents(response.data.data.students);
     } catch (error) {
       console.error('Failed to fetch students:', error);
@@ -302,7 +312,30 @@ export default function Performance() {
     return students.filter((student) => !hasPerformance.has(String(student._id)));
   }, [students, records]);
 
+  const filteredMissingStudents = useMemo(() => {
+    const q = missingSearch.trim().toLowerCase();
+    if (!q) return studentsWithoutPerformance;
+    return studentsWithoutPerformance.filter((student) =>
+      String(student.name || '').toLowerCase().includes(q)
+      || String(student.studentId || '').toLowerCase().includes(q)
+      || String(student.department || '').toLowerCase().includes(q)
+    );
+  }, [missingSearch, studentsWithoutPerformance]);
+
+  const missingByDepartment = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const student of studentsWithoutPerformance) {
+      const key = String(student.department || 'Unknown');
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3);
+  }, [studentsWithoutPerformance]);
+
   const handleStudentChange = async (studentId: string, preferredSemester?: string, preferredSubjectId?: string) => {
+    const requestId = studentProfileRequestIdRef.current + 1;
+    studentProfileRequestIdRef.current = requestId;
     if (!studentId) {
       setSelectedStudent(null);
       setAssignedSubjects([]);
@@ -321,6 +354,7 @@ export default function Performance() {
       const student = profile?.student || students.find((s) => s._id === studentId);
       const subjects = subjectResponse.data?.data?.subjects || profile?.eligibleSubjects || [];
 
+      if (!isMountedRef.current || studentProfileRequestIdRef.current !== requestId) return;
       if (student) {
         setSelectedStudent(student);
         setAssignedSubjects(subjects);
@@ -337,6 +371,7 @@ export default function Performance() {
     } catch (error) {
       console.error('Failed to fetch student details:', error);
     } finally {
+      if (!isMountedRef.current || studentProfileRequestIdRef.current !== requestId) return;
       setLoading(false);
     }
   };
@@ -521,14 +556,15 @@ export default function Performance() {
   };
 
   const generateSampleData = async () => {
-    if (!students.length) {
+    const candidates = studentsWithoutPerformance.length ? studentsWithoutPerformance : students;
+    if (!candidates.length) {
       setErrorMessage('No students available for sample data');
       setShowErrorToast(true);
       return;
     }
     setIsGeneratingSamples(true);
     let created = 0;
-    for (const student of students.slice(0, 5)) {
+    for (const student of candidates.slice(0, 5)) {
       let eligible: any[] = [];
       try {
         const resp = await studentsAPI.getSubjects(String(student._id));
@@ -550,6 +586,7 @@ export default function Performance() {
       }
     }
     await fetchRecords();
+    if (!isMountedRef.current) return;
     setIsGeneratingSamples(false);
     if (created > 0) {
       setSuccessMessage(`Added ${created} sample records`);
@@ -782,24 +819,45 @@ export default function Performance() {
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {studentsWithoutPerformance.length > 0 && (
           <div className="px-6 py-4 border-b border-gray-100 bg-blue-50/40">
-            <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
               <h3 className="text-sm font-semibold text-blue-900">
                 Students Without Performance Records ({studentsWithoutPerformance.length})
               </h3>
               <span className="text-xs text-blue-700">Newly created students appear here automatically</span>
             </div>
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-3">
+              <input
+                value={missingSearch}
+                onChange={(e) => setMissingSearch(e.target.value)}
+                placeholder="Search missing students by name, ID, department"
+                className="w-full lg:max-w-md px-3 py-2 border border-blue-200 rounded-md text-sm"
+              />
+              <div className="flex items-center gap-2 text-xs text-blue-800">
+                {missingByDepartment.map(([dept, count]) => (
+                  <span key={dept} className="px-2 py-1 rounded-full bg-white border border-blue-200">{dept}: {count}</span>
+                ))}
+                {filteredMissingStudents.length > 0 && (
+                  <button
+                    onClick={() => handleQuickAddForStudent(String(filteredMissingStudents[0]._id))}
+                    className="px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    Open Next Missing
+                  </button>
+                )}
+              </div>
+            </div>
             <div className="flex flex-wrap gap-2">
-              {studentsWithoutPerformance.slice(0, 8).map((student) => (
+              {filteredMissingStudents.slice(0, 8).map((student) => (
                 <button
                   key={student._id}
                   onClick={() => handleQuickAddForStudent(String(student._id))}
                   className="text-xs px-3 py-1.5 rounded-full border border-blue-200 bg-white text-blue-700 hover:bg-blue-50"
                 >
-                  {student.name} ({student.studentId || 'N/A'})
+                  {student.name} ({student.studentId || 'N/A'}) | {student.department} | Sem {student.semester || '-'}
                 </button>
               ))}
-              {studentsWithoutPerformance.length > 8 && (
-                <span className="text-xs text-gray-500 self-center">+{studentsWithoutPerformance.length - 8} more</span>
+              {filteredMissingStudents.length > 8 && (
+                <span className="text-xs text-gray-500 self-center">+{filteredMissingStudents.length - 8} more</span>
               )}
             </div>
           </div>

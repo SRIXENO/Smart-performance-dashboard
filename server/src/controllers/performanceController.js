@@ -7,6 +7,8 @@ const { upsertGlobalCache, upsertStudentCache } = require('../services/analytics
 const getPerformance = async (req, res) => {
   try {
     const { studentId, subjectId, semester } = req.query;
+    const limitRaw = Number(req.query.limit || 500);
+    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(1000, Math.floor(limitRaw))) : 500;
     const query = {};
 
     if (studentId) query.studentId = studentId;
@@ -16,6 +18,7 @@ const getPerformance = async (req, res) => {
     const records = await Performance.find(query)
       .populate('studentId', 'name studentId department year semester currentSemester')
       .populate('subjectId', 'subjectName subjectCode')
+      .limit(limit)
       .sort({ lastUpdated: -1 });
 
     res.json({
@@ -118,30 +121,60 @@ const createPerformance = async (req, res) => {
 const updatePerformance = async (req, res) => {
   try {
     const { attendancePercentage, marks, subjectId } = req.body;
-    
-    // Calculate grade
-    let grade = 'F';
-    const marksValue = parseFloat(marks);
-    if (marksValue >= 90) grade = 'A';
-    else if (marksValue >= 80) grade = 'B';
-    else if (marksValue >= 70) grade = 'C';
-    else if (marksValue >= 60) grade = 'D';
+    const existing = await Performance.findById(req.params.id).lean();
+    if (!existing) {
+      return res.status(404).json({ success: false, error: 'Performance record not found' });
+    }
+
+    const student = await Student.findById(existing.studentId).lean();
+    if (!student) {
+      return res.status(404).json({ success: false, error: 'Student not found for this performance record' });
+    }
+
+    const profile = await getStudentConnectedProfile(student);
+    const resolvedAttendance = attendancePercentage !== undefined ? Number(attendancePercentage) : Number(existing.attendancePercentage);
+    const resolvedMarks = marks !== undefined ? Number(marks) : Number(existing.marks);
+    if (!Number.isFinite(resolvedAttendance) || resolvedAttendance < 0 || resolvedAttendance > 100) {
+      return res.status(400).json({ success: false, error: 'Attendance must be between 0 and 100' });
+    }
+    if (!Number.isFinite(resolvedMarks) || resolvedMarks < 0 || resolvedMarks > 100) {
+      return res.status(400).json({ success: false, error: 'Marks must be between 0 and 100' });
+    }
 
     const updatePayload = {
-      ...req.body,
-      attendancePercentage: parseFloat(attendancePercentage),
-      marks: marksValue,
-      grade,
+      attendancePercentage: resolvedAttendance,
+      marks: resolvedMarks,
+      grade: resolvedMarks >= 90 ? 'A' : resolvedMarks >= 80 ? 'B' : resolvedMarks >= 70 ? 'C' : resolvedMarks >= 60 ? 'D' : 'F',
+      semester: profile.semester?.label || student.currentSemester || existing.semester || `Semester ${student.semester || 1}`,
+      semesterId: profile.semester?._id || existing.semesterId || null,
+      departmentId: profile.department?._id || existing.departmentId || null,
+      year: student.year,
       lastUpdated: new Date()
     };
 
+    const eligibleSubjects = profile.eligibleSubjects || [];
     if (subjectId) {
-      const subjectDoc = await Subject.findById(subjectId).lean();
+      const subjectDoc = eligibleSubjects.find((item) => String(item._id) === String(subjectId))
+        || await Subject.findById(subjectId).lean();
       if (!subjectDoc) {
         return res.status(404).json({ success: false, error: 'Subject not found' });
       }
+      const isEligible = eligibleSubjects.some((item) => String(item._id) === String(subjectDoc._id));
+      if (!isEligible) {
+        return res.status(400).json({ success: false, error: 'Selected subject is not mapped to the student current enrollment' });
+      }
       updatePayload.subjectId = subjectDoc._id;
       updatePayload.subjectName = subjectDoc.subjectName;
+    }
+
+    const duplicate = await Performance.findOne({
+      _id: { $ne: existing._id },
+      studentId: existing.studentId,
+      subjectId: updatePayload.subjectId || existing.subjectId,
+      semesterId: updatePayload.semesterId || existing.semesterId,
+    }).lean();
+    if (duplicate) {
+      return res.status(409).json({ success: false, error: 'Performance already exists for this student, subject, and semester' });
     }
 
     const updated = await Performance.findByIdAndUpdate(
@@ -149,10 +182,6 @@ const updatePerformance = async (req, res) => {
       updatePayload,
       { new: true }
     );
-
-    if (!updated) {
-      return res.status(404).json({ success: false, error: 'Performance record not found' });
-    }
     await Promise.all([
       upsertStudentCache(updated.studentId),
       upsertGlobalCache(),
