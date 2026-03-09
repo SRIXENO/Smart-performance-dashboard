@@ -110,6 +110,8 @@ const studentSchema = new mongoose.Schema({
 });
 
 studentSchema.index({ department: 1, year: 1 });
+studentSchema.index({ department: 1, year: 1, semester: 1, status: 1 });
+studentSchema.index({ semester: 1, createdAt: -1 });
 studentSchema.index({ status: 1 });
 studentSchema.index({ currentCGPA: -1 });
 

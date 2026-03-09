@@ -68,9 +68,12 @@ const normalizeSemesterFields = (incoming, existingStudent) => {
 
 const getStudents = async (req, res) => {
   try {
-    const { page = 1, limit = 20, search, department, year, status } = req.query;
+    const { page = 1, limit = 20, search, department, year, semester, status, sortBy = 'createdAt', sortDir = 'desc' } = req.query;
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
+    const allowedSortFields = new Set(['createdAt', 'name', 'studentId', 'department', 'year', 'semester', 'status']);
+    const sortField = allowedSortFields.has(String(sortBy)) ? String(sortBy) : 'createdAt';
+    const sortOrder = String(sortDir).toLowerCase() === 'asc' ? 1 : -1;
 
     const query = {};
 
@@ -91,6 +94,10 @@ const getStudents = async (req, res) => {
       query.year = parseInt(year, 10);
     }
 
+    if (semester) {
+      query.semester = parseInt(semester, 10);
+    }
+
     if (status) {
       query.status = status;
     }
@@ -99,7 +106,7 @@ const getStudents = async (req, res) => {
     const totalPages = Math.ceil(totalStudents / limitNum);
 
     const studentsQuery = Student.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ [sortField]: sortOrder, _id: -1 })
       .skip((pageNum - 1) * limitNum)
       .limit(limitNum);
 
@@ -137,7 +144,16 @@ const getStudents = async (req, res) => {
           totalPages,
           totalStudents,
           limit: limitNum
-        }
+        },
+        filters: {
+          search: search || '',
+          department: department || '',
+          year: year || '',
+          semester: semester || '',
+          status: status || '',
+          sortBy: sortField,
+          sortDir: sortOrder === 1 ? 'asc' : 'desc',
+        },
       }
     });
   } catch (error) {

@@ -187,6 +187,19 @@ export const activityAPI = {
   clearLoginHistory: (from: string, to: string) => api.delete('/activities/login-history', { params: { from, to } }),
 };
 
+export const importAPI = {
+  previewPerformanceCsv: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/import/performance/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000,
+    });
+  },
+  commitPerformanceImport: (rows: any[], partial = true) =>
+    api.post('/import/performance/commit', { rows, partial }, { timeout: 60000 }),
+};
+
 export const subjectsAPI = {
   assign: (data: any) => api.post('/subjects/assign', data),
   getAll: () => api.get('/subjects'),

@@ -19,6 +19,7 @@ const academicRoutes = require('./routes/academicRoutes');
 const aiAnalyticsRoutes = require('./routes/aiAnalyticsRoutes');
 const activityRoutes = require('./routes/activityRoutes');
 const facultyRoutes = require('./routes/facultyRoutes');
+const importRoutes = require('./routes/importRoutes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -70,6 +71,7 @@ app.use('/api/academic', academicRoutes);
 app.use('/api/ai-analytics', aiAnalyticsRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/faculty', facultyRoutes);
+app.use('/api/import', importRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

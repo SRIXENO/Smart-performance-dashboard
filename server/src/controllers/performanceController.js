@@ -70,24 +70,156 @@ const buildMissingSummary = async ({ limit = 200, studentIds = null } = {}) => {
 
 const getPerformance = async (req, res) => {
   try {
-    const { studentId, subjectId, semester } = req.query;
-    const limitRaw = Number(req.query.limit || 500);
-    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(1000, Math.floor(limitRaw))) : 500;
-    const query = {};
+    const {
+      studentId,
+      subjectId,
+      semester,
+      department,
+      subject,
+      search,
+      atRiskOnly,
+      from,
+      to,
+      page = 1,
+      limit = 20,
+      sortBy = 'lastUpdated',
+      sortDir = 'desc',
+    } = req.query;
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 20));
+    const sortMap = {
+      lastUpdated: 'lastUpdated',
+      studentName: 'student.name',
+      subjectName: 'subjectName',
+      attendancePercentage: 'attendancePercentage',
+      marks: 'marks',
+      grade: 'grade',
+      semester: 'semester',
+    };
+    const sortField = sortMap[String(sortBy)] || 'lastUpdated';
+    const sortOrder = String(sortDir).toLowerCase() === 'asc' ? 1 : -1;
 
-    if (studentId) query.studentId = studentId;
-    if (subjectId) query.subjectId = subjectId;
-    if (semester) query.semester = semester;
+    const match = {};
+    if (studentId) match.studentId = studentId;
+    if (subjectId) match.subjectId = subjectId;
+    if (semester) match.semester = semester;
+    if (from || to) {
+      match.lastUpdated = {};
+      if (from) match.lastUpdated.$gte = new Date(`${from}T00:00:00`);
+      if (to) match.lastUpdated.$lte = new Date(`${to}T23:59:59`);
+    }
 
-    const records = await Performance.find(query)
-      .populate('studentId', 'name studentId department year semester currentSemester')
-      .populate('subjectId', 'subjectName subjectCode')
-      .limit(limit)
-      .sort({ lastUpdated: -1 });
+    const pipeline = [
+      { $match: match },
+      {
+        $lookup: {
+          from: 'students',
+          localField: 'studentId',
+          foreignField: '_id',
+          as: 'student',
+        },
+      },
+      { $unwind: '$student' },
+      {
+        $lookup: {
+          from: 'subjects',
+          localField: 'subjectId',
+          foreignField: '_id',
+          as: 'subject',
+        },
+      },
+      {
+        $addFields: {
+          subject: { $arrayElemAt: ['$subject', 0] },
+          studentObjectId: '$student._id',
+          studentName: '$student.name',
+          studentCode: '$student.studentId',
+          department: '$student.department',
+          year: '$student.year',
+          isAtRisk: {
+            $or: [
+              { $lt: ['$attendancePercentage', 75] },
+              { $lt: ['$marks', 60] },
+            ],
+          },
+        },
+      },
+    ];
+
+    const postLookupMatch = {};
+    if (department) postLookupMatch.department = department;
+    if (subject) postLookupMatch.subjectName = subject;
+    if (search) {
+      const regex = new RegExp(String(search), 'i');
+      postLookupMatch.$or = [
+        { studentName: regex },
+        { studentCode: regex },
+        { subjectName: regex },
+      ];
+    }
+    if (String(atRiskOnly).toLowerCase() === 'true') {
+      postLookupMatch.isAtRisk = true;
+    }
+    if (Object.keys(postLookupMatch).length) {
+      pipeline.push({ $match: postLookupMatch });
+    }
+
+    pipeline.push({
+      $facet: {
+        records: [
+          { $sort: { [sortField]: sortOrder, _id: -1 } },
+          { $skip: (pageNum - 1) * limitNum },
+          { $limit: limitNum },
+          {
+            $project: {
+              _id: 1,
+              studentId: {
+                _id: '$student._id',
+                name: '$student.name',
+                studentId: '$student.studentId',
+                department: '$student.department',
+                year: '$student.year',
+                semester: '$student.semester',
+                currentSemester: '$student.currentSemester',
+              },
+              studentObjectId: 1,
+              studentName: 1,
+              studentCode: 1,
+              department: 1,
+              year: 1,
+              subjectId: {
+                _id: '$subject._id',
+                subjectName: '$subject.subjectName',
+                subjectCode: '$subject.subjectCode',
+              },
+              subjectName: 1,
+              attendancePercentage: 1,
+              marks: 1,
+              grade: 1,
+              semester: 1,
+              lastUpdated: 1,
+            },
+          },
+        ],
+        totalCount: [{ $count: 'count' }],
+      },
+    });
+
+    const [result] = await Performance.aggregate(pipeline);
+    const totalRecords = result?.totalCount?.[0]?.count || 0;
+    const totalPages = Math.max(1, Math.ceil(totalRecords / limitNum));
 
     res.json({
       success: true,
-      data: { records }
+      data: {
+        records: result?.records || [],
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalRecords,
+          limit: limitNum,
+        },
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

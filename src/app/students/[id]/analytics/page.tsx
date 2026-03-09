@@ -33,7 +33,7 @@ export default function StudentAnalyticsPage() {
 
       setAcademicRecord(academicRes.data.data);
       setAiAnalytics(aiRes.data.data);
-      setTimeline(timelineRes.data.data);
+      setTimeline(timelineRes.data.data?.items || []);
     } catch (error) {
       console.error('Failed to fetch student analytics:', error);
     } finally {

@@ -16,6 +16,9 @@ const performanceSchema = new mongoose.Schema({
 
 performanceSchema.index({ studentId: 1, subjectName: 1, semester: 1 }, { unique: true });
 performanceSchema.index({ studentId: 1, subjectId: 1, semesterId: 1 }, { unique: true, sparse: true });
+performanceSchema.index({ studentId: 1, semester: 1, lastUpdated: -1 });
+performanceSchema.index({ departmentId: 1, year: 1, semesterId: 1, lastUpdated: -1 });
+performanceSchema.index({ lastUpdated: -1 });
 
 performanceSchema.pre('validate', function() {
   // Auto-calculate grade based on marks

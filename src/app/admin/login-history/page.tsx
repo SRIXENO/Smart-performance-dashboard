@@ -21,6 +21,11 @@ export default function AdminLoginHistoryPage() {
   const [history, setHistory] = useState<LoginHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isClearing, setIsClearing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [methodFilter, setMethodFilter] = useState('');
+  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalRecords: 0, limit: 50 });
   const [fromDateTime, setFromDateTime] = useState('');
   const [toDateTime, setToDateTime] = useState('');
   const [message, setMessage] = useState('');
@@ -34,12 +39,22 @@ export default function AdminLoginHistoryPage() {
     confirmStyle: 'danger' as 'danger' | 'primary' | 'warning',
   });
 
-  const fetchHistory = async () => {
+  const fetchHistory = async (nextPage = page) => {
     if (user?.role !== 'admin') return;
 
     try {
-      const response = await activityAPI.getLoginHistory();
-      setHistory(response.data.data || []);
+      const response = await activityAPI.getLoginHistory({
+        page: nextPage,
+        limit: 50,
+        search: search || undefined,
+        role: roleFilter || undefined,
+        loginMethod: methodFilter || undefined,
+        from: fromDateTime || undefined,
+        to: toDateTime || undefined,
+      });
+      setHistory(response.data.data?.items || []);
+      setPagination(response.data.data?.pagination || { currentPage: 1, totalPages: 1, totalRecords: 0, limit: 50 });
+      setPage(nextPage);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to load login history');
     } finally {
@@ -54,8 +69,11 @@ export default function AdminLoginHistoryPage() {
   }, [loading, router, user]);
 
   useEffect(() => {
-    fetchHistory();
-  }, [user]);
+    const timeoutId = setTimeout(() => {
+      fetchHistory(1);
+    }, 250);
+    return () => clearTimeout(timeoutId);
+  }, [user, search, roleFilter, methodFilter, fromDateTime, toDateTime]);
 
   const executeClearByRange = async () => {
     setIsClearing(true);
@@ -112,7 +130,35 @@ export default function AdminLoginHistoryPage() {
       </div>
 
       <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Search</label>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Name or email"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Role</label>
+            <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+              <option value="">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="faculty">Faculty</option>
+              <option value="student">Student</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Method</label>
+            <select value={methodFilter} onChange={(e) => setMethodFilter(e.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+              <option value="">All Methods</option>
+              <option value="local">Local</option>
+              <option value="google">Google</option>
+            </select>
+          </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">From</label>
             <input
@@ -185,6 +231,18 @@ export default function AdminLoginHistoryPage() {
           <div className="text-center py-12 text-gray-500">No login history found.</div>
         )}
       </div>
+
+      {history.length > 0 && (
+        <div className="flex items-center justify-between text-sm text-gray-600">
+          <span>
+            Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.totalRecords} records)
+          </span>
+          <div className="flex items-center gap-2">
+            <button disabled={page <= 1} onClick={() => fetchHistory(page - 1)} className="rounded border border-gray-300 px-3 py-1 disabled:opacity-50">Prev</button>
+            <button disabled={page >= pagination.totalPages} onClick={() => fetchHistory(page + 1)} className="rounded border border-gray-300 px-3 py-1 disabled:opacity-50">Next</button>
+          </div>
+        </div>
+      )}
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}

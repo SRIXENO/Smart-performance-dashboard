@@ -62,6 +62,8 @@ const activityLogSchema = new mongoose.Schema({
 activityLogSchema.index({ userId: 1, timestamp: -1 });
 activityLogSchema.index({ targetId: 1, timestamp: -1 });
 activityLogSchema.index({ action: 1, timestamp: -1 });
+activityLogSchema.index({ action: 1, userRole: 1, timestamp: -1 });
+activityLogSchema.index({ userName: 1, timestamp: -1 });
 activityLogSchema.index({ timestamp: -1 });
 
 // Static method to log activity

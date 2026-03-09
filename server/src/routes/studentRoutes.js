@@ -15,6 +15,9 @@ router.get(
     query('page').optional().isInt({ min: 1 }),
     query('limit').optional().isInt({ min: 1, max: 1000 }),
     query('year').optional().isInt({ min: 1, max: 4 }),
+    query('semester').optional().isInt({ min: 1, max: 8 }),
+    query('sortBy').optional().isIn(['createdAt', 'name', 'studentId', 'department', 'year', 'semester', 'status']),
+    query('sortDir').optional().isIn(['asc', 'desc']),
   ],
   validateRequest,
   getStudents

@@ -18,6 +18,7 @@ export default function Students() {
   const [search, setSearch] = useState('');
   const [department, setDepartment] = useState('');
   const [year, setYear] = useState('');
+  const [semester, setSemester] = useState('');
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -53,6 +54,7 @@ export default function Students() {
       if (search) params.search = search;
       if (department) params.department = department;
       if (year) params.year = year;
+      if (semester) params.semester = semester;
 
       const response = await studentsAPI.getAll(params);
       setStudents(response.data.data.students);
@@ -70,7 +72,7 @@ export default function Students() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [search, department, year]);
+  }, [search, department, year, semester]);
 
   const handleDelete = async (id: string, name: string) => {
     setConfirmModal({
@@ -144,7 +146,7 @@ export default function Students() {
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="md:col-span-2">
             <input
               type="text"
@@ -173,6 +175,22 @@ export default function Students() {
               { value: '2', label: 'Year 2' },
               { value: '3', label: 'Year 3' },
               { value: '4', label: 'Year 4' },
+            ]}
+          />
+          <CustomDropdown
+            value={semester}
+            onChange={setSemester}
+            placeholder="All Semesters"
+            options={[
+              { value: '', label: 'All Semesters' },
+              { value: '1', label: 'Semester 1' },
+              { value: '2', label: 'Semester 2' },
+              { value: '3', label: 'Semester 3' },
+              { value: '4', label: 'Semester 4' },
+              { value: '5', label: 'Semester 5' },
+              { value: '6', label: 'Semester 6' },
+              { value: '7', label: 'Semester 7' },
+              { value: '8', label: 'Semester 8' },
             ]}
           />
         </div>
@@ -351,6 +369,30 @@ export default function Students() {
           </>
         )}
       </div>
+
+      {!loading && students.length > 0 && (
+        <div className="flex items-center justify-between text-sm text-gray-600">
+          <span>
+            Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.totalStudents} students)
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={pagination.currentPage <= 1}
+              onClick={() => fetchStudents(pagination.currentPage - 1)}
+              className="rounded border border-gray-300 px-3 py-1 disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <button
+              disabled={pagination.currentPage >= pagination.totalPages}
+              onClick={() => fetchStudents(pagination.currentPage + 1)}
+              className="rounded border border-gray-300 px-3 py-1 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}

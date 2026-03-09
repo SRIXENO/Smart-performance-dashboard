@@ -57,6 +57,7 @@ export default function Performance() {
   const [sortKey, setSortKey] = useState<'studentName' | 'subjectName' | 'attendancePercentage' | 'marks' | 'grade' | 'semester' | 'lastUpdated'>('lastUpdated');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
+  const [serverPagination, setServerPagination] = useState({ currentPage: 1, totalPages: 1, totalRecords: 0, limit: 10 });
   const [isGeneratingSamples, setIsGeneratingSamples] = useState(false);
   const [isBootstrappingMissing, setIsBootstrappingMissing] = useState(false);
   const [missingSearch, setMissingSearch] = useState('');
@@ -97,7 +98,6 @@ export default function Performance() {
   }, []);
 
   useEffect(() => {
-    fetchRecords();
     fetchStudents();
     fetchMissingSummary();
   }, []);
@@ -105,6 +105,10 @@ export default function Performance() {
   useEffect(() => {
     if (showForm) fetchStudents();
   }, [showForm]);
+
+  useEffect(() => {
+    fetchRecords();
+  }, [page, searchQuery, departmentFilter, semesterFilter, subjectFilter, atRiskOnly, dateFrom, dateTo, sortKey, sortDir]);
 
   useEffect(() => {
     const refresh = () => {
@@ -144,7 +148,19 @@ export default function Performance() {
 
   const fetchRecords = async () => {
     try {
-      const response = await performanceAPI.getAll({ limit: 1000 });
+      const response = await performanceAPI.getAll({
+        page,
+        limit: 10,
+        search: searchQuery || undefined,
+        department: departmentFilter !== 'all' ? departmentFilter : undefined,
+        semester: semesterFilter !== 'all' ? semesterFilter : undefined,
+        subject: subjectFilter !== 'all' ? subjectFilter : undefined,
+        atRiskOnly: atRiskOnly || undefined,
+        from: dateFrom || undefined,
+        to: dateTo || undefined,
+        sortBy: sortKey,
+        sortDir,
+      });
       const populatedRecords = response.data.data.records.map((record: any) => ({
         ...record,
         studentName: record.studentId?.name || 'Unknown',
@@ -154,6 +170,7 @@ export default function Performance() {
       }));
       if (!isMountedRef.current) return;
       setRecords(populatedRecords);
+      setServerPagination(response.data.data.pagination || { currentPage: 1, totalPages: 1, totalRecords: populatedRecords.length, limit: 10 });
     } catch (error) {
       console.error('Failed to fetch records:', error);
     }
@@ -208,48 +225,15 @@ export default function Performance() {
     [records]
   );
 
-  const filteredRecords = useMemo(() => {
-    const from = dateFrom ? new Date(`${dateFrom}T00:00:00`) : null;
-    const to = dateTo ? new Date(`${dateTo}T23:59:59`) : null;
-    const q = searchQuery.trim().toLowerCase();
-    return records.filter((record) => {
-      const risky = Number(record.attendancePercentage) < 75 || Number(record.marks) < 60;
-      if (q) {
-        const match =
-          String(record.studentName).toLowerCase().includes(q) ||
-          String(record.studentCode).toLowerCase().includes(q) ||
-          String(record.subjectName).toLowerCase().includes(q);
-        if (!match) return false;
-      }
-      if (departmentFilter !== 'all' && record.department !== departmentFilter) return false;
-      if (semesterFilter !== 'all' && record.semester !== semesterFilter) return false;
-      if (subjectFilter !== 'all' && record.subjectName !== subjectFilter) return false;
-      if (atRiskOnly && !risky) return false;
-      if (from && new Date(record.lastUpdated || Date.now()) < from) return false;
-      if (to && new Date(record.lastUpdated || Date.now()) > to) return false;
-      return true;
-    });
-  }, [records, searchQuery, departmentFilter, semesterFilter, subjectFilter, atRiskOnly, dateFrom, dateTo]);
-
-  const sortedRecords = useMemo(() => {
-    const cloned = [...filteredRecords].sort((a, b) => {
-      const left = a[sortKey];
-      const right = b[sortKey];
-      if (sortKey === 'lastUpdated') {
-        return new Date(String(left)).getTime() - new Date(String(right)).getTime();
-      }
-      if (typeof left === 'number' && typeof right === 'number') return left - right;
-      return String(left).localeCompare(String(right));
-    });
-    return sortDir === 'asc' ? cloned : cloned.reverse();
-  }, [filteredRecords, sortKey, sortDir]);
+  const filteredRecords = useMemo(() => records, [records]);
+  const sortedRecords = useMemo(() => records, [records]);
 
   useEffect(() => {
     setPage(1);
   }, [searchQuery, departmentFilter, semesterFilter, subjectFilter, atRiskOnly, dateFrom, dateTo]);
 
-  const totalPages = Math.max(1, Math.ceil(sortedRecords.length / 10));
-  const paginatedRecords = useMemo(() => sortedRecords.slice((page - 1) * 10, page * 10), [sortedRecords, page]);
+  const totalPages = Math.max(1, serverPagination.totalPages || 1);
+  const paginatedRecords = useMemo(() => records, [records]);
 
   const metrics = useMemo(() => {
     if (!filteredRecords.length) return { avgMarks: 0, avgAttendance: 0, atRiskPercent: 0, passRate: 0, topSubject: 'N/A', totalStudents: 0 };
@@ -1008,7 +992,7 @@ export default function Performance() {
         {sortedRecords.length > 0 && (
           <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between text-sm">
             <p className="text-gray-600">
-              Showing {(page - 1) * 10 + 1}-{Math.min(page * 10, sortedRecords.length)} of {sortedRecords.length}
+              Showing {(page - 1) * serverPagination.limit + 1}-{Math.min(page * serverPagination.limit, serverPagination.totalRecords)} of {serverPagination.totalRecords}
             </p>
             <div className="flex items-center gap-2">
               <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="border border-gray-300 rounded px-3 py-1 disabled:opacity-40">Prev</button>

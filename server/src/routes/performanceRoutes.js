@@ -19,8 +19,15 @@ router.get(
   authMiddleware,
   [
     query('limit').optional().isInt({ min: 1, max: 1000 }).withMessage('limit must be between 1 and 1000'),
+    query('page').optional().isInt({ min: 1, max: 500 }).withMessage('page must be between 1 and 500'),
     query('studentId').optional().isMongoId().withMessage('Invalid studentId'),
     query('subjectId').optional().isMongoId().withMessage('Invalid subjectId'),
+    query('search').optional().isString(),
+    query('department').optional().isString(),
+    query('subject').optional().isString(),
+    query('sortBy').optional().isIn(['lastUpdated', 'studentName', 'subjectName', 'attendancePercentage', 'marks', 'grade', 'semester']),
+    query('sortDir').optional().isIn(['asc', 'desc']),
+    query('atRiskOnly').optional().isBoolean().withMessage('atRiskOnly must be boolean'),
   ],
   validateRequest,
   getPerformance
