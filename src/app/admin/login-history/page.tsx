@@ -14,6 +14,9 @@ type LoginHistoryItem = {
   date: string;
   loginMethod: string;
   role: string;
+  status: string;
+  anomalySeverity?: string | null;
+  anomalyReasons?: string[];
 };
 
 export default function AdminLoginHistoryPage() {
@@ -27,6 +30,8 @@ export default function AdminLoginHistoryPage() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [methodFilter, setMethodFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [anomalyOnly, setAnomalyOnly] = useState(false);
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalRecords: 0, limit: 50 });
   const [fromDateTime, setFromDateTime] = useState('');
   const [toDateTime, setToDateTime] = useState('');
@@ -51,6 +56,8 @@ export default function AdminLoginHistoryPage() {
         search: search || undefined,
         role: roleFilter || undefined,
         loginMethod: methodFilter || undefined,
+        status: statusFilter || undefined,
+        anomalyOnly: anomalyOnly || undefined,
         from: fromDateTime || undefined,
         to: toDateTime || undefined,
       });
@@ -75,7 +82,7 @@ export default function AdminLoginHistoryPage() {
       fetchHistory(1);
     }, 250);
     return () => clearTimeout(timeoutId);
-  }, [user, search, roleFilter, methodFilter, fromDateTime, toDateTime]);
+  }, [user, search, roleFilter, methodFilter, statusFilter, anomalyOnly, fromDateTime, toDateTime]);
 
   const executeClearByRange = async () => {
     setIsClearing(true);
@@ -132,7 +139,7 @@ export default function AdminLoginHistoryPage() {
       </div>
 
       <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Search</label>
             <input
@@ -162,6 +169,15 @@ export default function AdminLoginHistoryPage() {
             </select>
           </div>
           <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+              <option value="">All Statuses</option>
+              <option value="success">Success</option>
+              <option value="failed">Failed</option>
+              <option value="pending">Pending Review</option>
+            </select>
+          </div>
+          <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">From</label>
             <input
               type="datetime-local"
@@ -187,6 +203,10 @@ export default function AdminLoginHistoryPage() {
             {isClearing ? 'Clearing...' : 'Clear by Date-Time'}
           </button>
         </div>
+        <label className="mt-3 inline-flex items-center gap-2 text-sm text-gray-700">
+          <input type="checkbox" checked={anomalyOnly} onChange={(e) => setAnomalyOnly(e.target.checked)} />
+          Show suspicious logins only
+        </label>
       </div>
 
       {message && (
@@ -203,13 +223,15 @@ export default function AdminLoginHistoryPage() {
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
-        <table className="min-w-[920px] w-full divide-y divide-gray-200">
+        <table className="min-w-[1120px] w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Anomaly</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
             </tr>
           </thead>
@@ -220,6 +242,35 @@ export default function AdminLoginHistoryPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.email}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 capitalize">{item.role}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 capitalize">{item.loginMethod}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    item.status === 'success'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : item.status === 'failed'
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'bg-amber-100 text-amber-700'
+                  }`}>
+                    {item.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-700">
+                  {item.anomalySeverity ? (
+                    <div className="space-y-1">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        item.anomalySeverity === 'high'
+                          ? 'bg-rose-100 text-rose-700'
+                          : item.anomalySeverity === 'medium'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {item.anomalySeverity}
+                      </span>
+                      <p className="max-w-xs text-xs text-gray-500">{(item.anomalyReasons || []).join(' | ')}</p>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-400">None</span>
+                  )}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                   {new Date(item.date).toLocaleString()}
                 </td>

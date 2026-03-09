@@ -12,6 +12,12 @@ router.post(
   authMiddleware,
   permissionMiddleware('import.manage'),
   upload.single('file'),
+  (req, res, next) => {
+    if (!req.file?.buffer) {
+      return res.status(400).json({ success: false, error: 'CSV file is required' });
+    }
+    return next();
+  },
   previewPerformanceImport
 );
 

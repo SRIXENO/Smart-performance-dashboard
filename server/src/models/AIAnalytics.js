@@ -95,6 +95,33 @@ const aiAnalyticsSchema = new mongoose.Schema({
     percentile: { type: Number, min: 0, max: 100 },
     aboveAverage: { type: Boolean }
   },
+
+  interventionScoring: {
+    riskTrendScore: { type: Number, min: 0, max: 100, default: 0 },
+    attendanceDropVelocity: { type: Number, default: 0 },
+    marksDeclineLast3: { type: Number, default: 0 },
+    backlogProbability: { type: Number, min: 0, max: 100, default: 0 },
+    departmentComparisonPercentile: { type: Number, min: 0, max: 100, default: 0 },
+    attendanceMomentum: {
+      type: String,
+      enum: ['improving', 'stable', 'declining', 'critical'],
+      default: 'stable',
+    },
+    performanceMomentum: {
+      type: String,
+      enum: ['improving', 'stable', 'declining', 'critical'],
+      default: 'stable',
+    },
+    recommendations: [{
+      category: {
+        type: String,
+        enum: ['attendance', 'study-habits', 'subject-focus', 'time-management', 'counseling'],
+      },
+      priority: { type: String, enum: ['low', 'medium', 'high'] },
+      suggestion: { type: String },
+      expectedImpact: { type: String },
+    }],
+  },
   
   // Engagement Metrics
   engagementScore: { type: Number, min: 0, max: 100, default: 50 },

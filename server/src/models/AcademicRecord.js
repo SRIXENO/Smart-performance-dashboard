@@ -156,7 +156,6 @@ academicRecordSchema.methods.getYearWiseSGPA = function() {
   return result.sort((a, b) => a.year - b.year);
 };
 
-academicRecordSchema.index({ studentId: 1 });
 academicRecordSchema.index({ cgpa: -1 });
 academicRecordSchema.index({ academicStatus: 1 });
 

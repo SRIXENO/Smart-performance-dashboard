@@ -1,7 +1,7 @@
 const express = require('express');
 const passport = require('../config/passport');
-const ActivityLog = require('../models/ActivityLog');
 const { issueSessionTokens } = require('../utils/authTokens');
+const { evaluateLoginAnomaly, logSuccessfulLogin } = require('../services/loginSecurityService');
 
 const router = express.Router();
 
@@ -39,20 +39,20 @@ router.get('/google/callback',
       
       const { accessToken } = await issueSessionTokens(req.user, req, res);
 
-      await ActivityLog.log({
-        userId: req.user._id,
-        userRole: req.user.role,
-        userName: req.user.name,
-        action: 'login',
-        targetType: 'system',
-        description: 'User logged in with Google OAuth',
-        metadata: {
-          email: req.user.email,
-          loginMethod: 'google'
-        },
+      const anomaly = await evaluateLoginAnomaly({
+        user: req.user,
+        identifier: req.user.email,
         ipAddress: req.ip,
         userAgent: req.get('user-agent'),
-        status: 'success'
+      });
+      await logSuccessfulLogin({
+        user: req.user,
+        identifier: req.user.email,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        anomaly,
+        loginMethod: 'google',
+        description: 'User logged in with Google OAuth',
       });
       
       console.log('Redirecting to frontend callback');

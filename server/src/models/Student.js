@@ -1,5 +1,13 @@
 const mongoose = require('mongoose');
 
+const advisorNoteSchema = new mongoose.Schema({
+  note: { type: String, required: true, maxlength: 1000 },
+  authorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  authorName: { type: String },
+  authorRole: { type: String, enum: ['admin', 'faculty', 'student', 'viewer', 'system'] },
+  createdAt: { type: Date, default: Date.now },
+}, { _id: true });
+
 const studentSchema = new mongoose.Schema({
   studentId: { type: String, unique: true, required: true },
   name: { type: String, required: true, maxlength: 100 },
@@ -103,7 +111,8 @@ const studentSchema = new mongoose.Schema({
   
   // Metadata
   lastActive: { type: Date },
-  tags: [{ type: String }]
+  tags: [{ type: String }],
+  advisorNotes: { type: [advisorNoteSchema], default: [] }
 }, {
   timestamps: true,
   strict: false

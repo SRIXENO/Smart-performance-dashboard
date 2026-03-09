@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, param } = require('express-validator');
+const { body, param, cookie } = require('express-validator');
 const {
   register,
   login,
@@ -41,8 +41,18 @@ router.post(
   validateRequest,
   login
 );
-router.post('/refresh', refresh);
-router.post('/logout', logout);
+router.post(
+  '/refresh',
+  [cookie('refresh_token').optional().isString().isLength({ min: 20, max: 2000 })],
+  validateRequest,
+  refresh
+);
+router.post(
+  '/logout',
+  [cookie('refresh_token').optional().isString().isLength({ min: 20, max: 2000 })],
+  validateRequest,
+  logout
+);
 router.get('/me', authMiddleware, me);
 router.get('/approvals/pending', authMiddleware, permissionMiddleware('approvals.manage'), getPendingApprovals);
 router.put(

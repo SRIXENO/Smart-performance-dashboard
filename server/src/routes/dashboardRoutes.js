@@ -1,6 +1,8 @@
 const express = require('express');
+const { query } = require('express-validator');
 const authMiddleware = require('../middleware/authMiddleware');
 const permissionMiddleware = require('../middleware/permissionMiddleware');
+const validateRequest = require('../middleware/validateRequest');
 const { 
   getSummary, 
   getAttendanceTrend, 
@@ -27,14 +29,35 @@ router.get('/summary', authMiddleware, permissionMiddleware('dashboard.view'), g
 router.get('/attendance-trend', authMiddleware, permissionMiddleware('dashboard.view'), getAttendanceTrend);
 router.get('/grade-distribution', authMiddleware, permissionMiddleware('dashboard.view'), getGradeDistribution);
 router.get('/subject-performance', authMiddleware, permissionMiddleware('dashboard.view'), getSubjectPerformance);
-router.get('/at-risk-students', authMiddleware, permissionMiddleware('dashboard.view'), getAtRiskStudents);
+router.get(
+  '/at-risk-students',
+  authMiddleware,
+  permissionMiddleware('dashboard.view'),
+  [query('limit').optional().isInt({ min: 1, max: 100 })],
+  validateRequest,
+  getAtRiskStudents
+);
 router.get('/department-comparison', authMiddleware, permissionMiddleware('dashboard.view'), getDepartmentComparison);
 router.get('/semester-distribution', authMiddleware, permissionMiddleware('dashboard.view'), getSemesterDistribution);
 router.get('/attendance-heatmap', authMiddleware, permissionMiddleware('dashboard.view'), getAttendanceHeatmap);
 router.get('/cgpa-distribution', authMiddleware, permissionMiddleware('dashboard.view'), getCGPADistribution);
 router.get('/performance-growth', authMiddleware, permissionMiddleware('dashboard.view'), getPerformanceGrowth);
-router.get('/difficult-subjects', authMiddleware, permissionMiddleware('dashboard.view'), getDifficultSubjects);
+router.get(
+  '/difficult-subjects',
+  authMiddleware,
+  permissionMiddleware('dashboard.view'),
+  [query('limit').optional().isInt({ min: 1, max: 100 })],
+  validateRequest,
+  getDifficultSubjects
+);
 router.get('/attendance-performance-correlation', authMiddleware, permissionMiddleware('dashboard.view'), getAttendancePerformanceCorrelation);
-router.get('/recent-students', authMiddleware, permissionMiddleware('dashboard.view'), getRecentStudents);
+router.get(
+  '/recent-students',
+  authMiddleware,
+  permissionMiddleware('dashboard.view'),
+  [query('limit').optional().isInt({ min: 1, max: 100 })],
+  validateRequest,
+  getRecentStudents
+);
 
 module.exports = router;

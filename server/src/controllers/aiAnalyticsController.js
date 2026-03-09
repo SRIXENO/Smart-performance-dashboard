@@ -3,6 +3,7 @@ const AcademicRecord = require('../models/AcademicRecord');
 const Performance = require('../models/Performance');
 const Student = require('../models/Student');
 const ActivityLog = require('../models/ActivityLog');
+const { computeAcademicIntelligence } = require('../services/academicIntelligenceService');
 
 // Get or create AI analytics for a student
 const getStudentAnalytics = async (req, res) => {
@@ -53,6 +54,9 @@ const runStudentAnalysis = async (studentId) => {
     
     // Analyze trends
     await analyzeTrends(analytics);
+
+    // Advanced intervention scoring from recent performance history
+    await applyInterventionScoring(analytics);
     
     // Generate suggestions
     await generateSuggestions(analytics);
@@ -124,6 +128,52 @@ const analyzeTrends = async (analytics) => {
         timestamp: s.completedDate || new Date()
       }));
   }
+};
+
+const applyInterventionScoring = async (analytics) => {
+  const intelligence = await computeAcademicIntelligence(analytics.studentId);
+  if (!intelligence) return;
+
+  analytics.interventionScoring = intelligence;
+
+  if (intelligence.riskTrendScore >= 70) {
+    analytics.riskScore = Math.min(100, Math.max(Number(analytics.riskScore || 0), intelligence.riskTrendScore));
+    if (!analytics.riskFactors.some((factor) => factor.factor === 'High Trend Risk')) {
+      analytics.riskFactors.push({
+        factor: 'High Trend Risk',
+        impact: intelligence.riskTrendScore >= 85 ? 'high' : 'medium',
+        value: intelligence.riskTrendScore,
+      });
+    }
+  }
+
+  if (intelligence.attendanceMomentum) {
+    analytics.attendanceTrend = intelligence.attendanceMomentum;
+  }
+
+  if (intelligence.performanceMomentum) {
+    analytics.performanceTrend = intelligence.performanceMomentum;
+  }
+
+  if (Array.isArray(intelligence.recommendations) && intelligence.recommendations.length > 0) {
+    const existingSuggestions = Array.isArray(analytics.suggestions) ? analytics.suggestions : [];
+    const merged = [...existingSuggestions];
+    for (const recommendation of intelligence.recommendations) {
+      const exists = merged.some((item) => item.suggestion === recommendation.suggestion);
+      if (!exists) merged.push(recommendation);
+    }
+    analytics.suggestions = merged;
+  }
+
+  if (!analytics.peerComparison) {
+    analytics.peerComparison = {};
+  }
+  analytics.peerComparison.percentile = intelligence.departmentComparisonPercentile;
+
+  if (analytics.riskScore >= 75) analytics.riskLevel = 'critical';
+  else if (analytics.riskScore >= 50) analytics.riskLevel = 'high';
+  else if (analytics.riskScore >= 25) analytics.riskLevel = 'medium';
+  else analytics.riskLevel = 'low';
 };
 
 // Calculate trend slope (simple linear regression)

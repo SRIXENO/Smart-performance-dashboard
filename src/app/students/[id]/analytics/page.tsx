@@ -73,6 +73,13 @@ export default function StudentAnalyticsPage() {
     }
   };
 
+  const getMomentumTone = (value?: string) => {
+    if (value === 'critical') return 'bg-red-100 text-red-700';
+    if (value === 'declining') return 'bg-amber-100 text-amber-700';
+    if (value === 'improving') return 'bg-emerald-100 text-emerald-700';
+    return 'bg-slate-100 text-slate-700';
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-xl shadow-lg p-6 text-white">
@@ -148,6 +155,46 @@ export default function StudentAnalyticsPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {aiAnalytics?.interventionScoring && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="text-sm text-gray-500 mb-2">Risk Trend Score</div>
+            <div className="text-4xl font-bold text-slate-900">{aiAnalytics.interventionScoring.riskTrendScore.toFixed(1)}</div>
+            <div className="mt-2 text-xs text-gray-500">Combined intervention urgency score</div>
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="text-sm text-gray-500 mb-2">Attendance Drop Velocity</div>
+            <div className="text-4xl font-bold text-slate-900">{aiAnalytics.interventionScoring.attendanceDropVelocity.toFixed(1)}</div>
+            <div className="mt-2 flex items-center gap-2">
+              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getMomentumTone(aiAnalytics.interventionScoring.attendanceMomentum)}`}>
+                {aiAnalytics.interventionScoring.attendanceMomentum}
+              </span>
+              <span className="text-xs text-gray-500">points per entry</span>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="text-sm text-gray-500 mb-2">Marks Decline Last 3</div>
+            <div className="text-4xl font-bold text-slate-900">{aiAnalytics.interventionScoring.marksDeclineLast3.toFixed(1)}</div>
+            <div className="mt-2 flex items-center gap-2">
+              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getMomentumTone(aiAnalytics.interventionScoring.performanceMomentum)}`}>
+                {aiAnalytics.interventionScoring.performanceMomentum}
+              </span>
+              <span className="text-xs text-gray-500">points decline</span>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="text-sm text-gray-500 mb-2">Backlog Probability</div>
+            <div className="text-4xl font-bold text-slate-900">{aiAnalytics.interventionScoring.backlogProbability.toFixed(1)}%</div>
+            <div className="mt-2 text-xs text-gray-500">Estimated probability from trend + failures</div>
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="text-sm text-gray-500 mb-2">Dept Comparison Percentile</div>
+            <div className="text-4xl font-bold text-slate-900">{aiAnalytics.interventionScoring.departmentComparisonPercentile.toFixed(1)}%</div>
+            <div className="mt-2 text-xs text-gray-500">Compared with same department/year peers</div>
+          </div>
         </div>
       )}
 
@@ -299,6 +346,32 @@ export default function StudentAnalyticsPage() {
           </div>
         )}
       </div>
+
+      {aiAnalytics?.interventionScoring?.recommendations?.length ? (
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Intervention Scoring Recommendations</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {aiAnalytics.interventionScoring.recommendations.map((item, idx) => (
+              <div key={`${item.category}-${idx}`} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-semibold text-slate-900 capitalize">{item.category}</span>
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    item.priority === 'high'
+                      ? 'bg-red-100 text-red-700'
+                      : item.priority === 'medium'
+                        ? 'bg-amber-100 text-amber-700'
+                        : 'bg-blue-100 text-blue-700'
+                  }`}>
+                    {item.priority}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-slate-800">{item.suggestion}</p>
+                <p className="mt-2 text-xs text-slate-500">{item.expectedImpact}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

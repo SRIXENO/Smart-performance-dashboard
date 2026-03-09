@@ -21,6 +21,57 @@ type FacultyMember = {
   expertise?: string[];
 };
 
+type FacultyInsight = {
+  facultyId: string;
+  userId?: string;
+  name: string;
+  email?: string;
+  department?: string;
+  designation?: string;
+  status?: string;
+  scopeType: 'assigned_subjects' | 'department_fallback';
+  assignedSubjects: number;
+  totalRecords: number;
+  failRate: number;
+  averageImprovement: number;
+  attendanceCorrelation: number;
+  poorAttendanceCorrelationScore: number;
+  atRiskStudents: number;
+  averageAttendance: number;
+};
+
+type SubjectInsight = {
+  subjectId: string;
+  subjectName: string;
+  subjectCode?: string;
+  facultyId?: string | null;
+  department?: string;
+  year?: string;
+  semester?: string;
+  totalRecords: number;
+  failRate: number;
+  averageImprovement: number;
+  attendanceCorrelation: number;
+  poorAttendanceCorrelationScore: number;
+  atRiskStudents: number;
+  averageAttendance: number;
+};
+
+type FacultyInsightsResponse = {
+  facultyInsights: FacultyInsight[];
+  subjectInsights: SubjectInsight[];
+  leaders: {
+    highestFailRateFaculty: FacultyInsight | null;
+    bestStudentImprovementFaculty: FacultyInsight | null;
+    poorAttendanceCorrelationFaculty: FacultyInsight | null;
+    mostAtRiskStudentsFaculty: FacultyInsight | null;
+    highestFailRateSubject: SubjectInsight | null;
+    bestStudentImprovementSubject: SubjectInsight | null;
+    poorAttendanceCorrelationSubject: SubjectInsight | null;
+    mostAtRiskStudentsSubject: SubjectInsight | null;
+  };
+};
+
 const DEPARTMENTS = [
   'Computer Science',
   'Information Technology',
@@ -35,6 +86,7 @@ export default function FacultyPage() {
   const { user } = useAuth();
   const canManageFaculty = hasPermission(user, 'faculty.manage');
   const [faculty, setFaculty] = useState<FacultyMember[]>([]);
+  const [insights, setInsights] = useState<FacultyInsightsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -66,10 +118,18 @@ export default function FacultyPage() {
   const loadFaculty = async () => {
     setLoading(true);
     try {
-      const response = await facultyAPI.getAll({ department: departmentFilter || undefined, search: search || undefined });
-      const list = response.data?.data?.faculty || [];
+      const [facultyResponse, insightsResponse] = await Promise.all([
+        facultyAPI.getAll({ department: departmentFilter || undefined, search: search || undefined }),
+        facultyAPI.getInsights({ department: departmentFilter || undefined }),
+      ]);
+      const list = facultyResponse.data?.data?.faculty || [];
+      const insightData = insightsResponse.data?.data || null;
       setFaculty(list);
+      setInsights(insightData);
       if (!selected && list.length) setSelected(list[0]);
+      if (selected && !list.some((item: FacultyMember) => item._id === selected._id)) {
+        setSelected(list[0] || null);
+      }
     } catch (error) {
       console.error('Failed to load faculty:', error);
     } finally {
@@ -85,6 +145,19 @@ export default function FacultyPage() {
     const fromData = Array.from(new Set(faculty.map((f) => f.department).filter((d): d is string => Boolean(d))));
     return Array.from(new Set([...DEPARTMENTS, ...fromData]));
   }, [faculty]);
+
+  const selectedInsight = useMemo(
+    () => insights?.facultyInsights?.find((item) => item.facultyId === selected?._id) || null,
+    [insights, selected]
+  );
+
+  const selectedSubjectInsights = useMemo(() => {
+    if (!selected || !insights?.subjectInsights) return [];
+    return insights.subjectInsights
+      .filter((item) => item.facultyId === selected._id)
+      .sort((a, b) => b.failRate - a.failRate)
+      .slice(0, 6);
+  }, [insights, selected]);
 
   const resetForm = () => {
     setForm({ name: '', email: '', password: '', registerNumber: '', status: 'active', department: '', designation: '', bio: '', profilePhoto: '', expertiseText: '' });
@@ -230,6 +303,108 @@ export default function FacultyPage() {
         </div>
       </section>
 
+      {insights && (
+        <>
+          <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <InsightLeaderCard
+              title="Highest Fail Rate"
+              value={insights.leaders.highestFailRateFaculty?.name || 'No data'}
+              meta={insights.leaders.highestFailRateFaculty ? `${insights.leaders.highestFailRateFaculty.failRate}% fail rate` : 'Waiting for performance data'}
+              accent="rose"
+            />
+            <InsightLeaderCard
+              title="Best Improvement"
+              value={insights.leaders.bestStudentImprovementFaculty?.name || 'No data'}
+              meta={insights.leaders.bestStudentImprovementFaculty ? `${insights.leaders.bestStudentImprovementFaculty.averageImprovement} marks gained` : 'Waiting for performance data'}
+              accent="emerald"
+            />
+            <InsightLeaderCard
+              title="Poor Attendance Correlation"
+              value={insights.leaders.poorAttendanceCorrelationFaculty?.name || 'No data'}
+              meta={insights.leaders.poorAttendanceCorrelationFaculty ? `Score ${insights.leaders.poorAttendanceCorrelationFaculty.poorAttendanceCorrelationScore}` : 'Waiting for performance data'}
+              accent="amber"
+            />
+            <InsightLeaderCard
+              title="Most At-Risk Students"
+              value={insights.leaders.mostAtRiskStudentsFaculty?.name || 'No data'}
+              meta={insights.leaders.mostAtRiskStudentsFaculty ? `${insights.leaders.mostAtRiskStudentsFaculty.atRiskStudents} students flagged` : 'Waiting for performance data'}
+              accent="slate"
+            />
+          </section>
+
+          <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Subject Signals</h2>
+                  <p className="text-sm text-slate-500">Subjects leading each faculty intelligence metric.</p>
+                </div>
+                <span className="text-xs text-slate-500">{insights.subjectInsights.length} analyzed</span>
+              </div>
+              <div className="mt-4 space-y-3">
+                <SubjectLeaderRow
+                  label="Highest Fail Rate"
+                  item={insights.leaders.highestFailRateSubject}
+                  meta={(item) => `${item.failRate}% fail rate`}
+                />
+                <SubjectLeaderRow
+                  label="Best Improvement"
+                  item={insights.leaders.bestStudentImprovementSubject}
+                  meta={(item) => `${item.averageImprovement} marks gained`}
+                />
+                <SubjectLeaderRow
+                  label="Poor Attendance Correlation"
+                  item={insights.leaders.poorAttendanceCorrelationSubject}
+                  meta={(item) => `Score ${item.poorAttendanceCorrelationScore}`}
+                />
+                <SubjectLeaderRow
+                  label="Most At-Risk Students"
+                  item={insights.leaders.mostAtRiskStudentsSubject}
+                  meta={(item) => `${item.atRiskStudents} students flagged`}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Faculty Coverage</h2>
+                  <p className="text-sm text-slate-500">Insight scope is based on assigned subjects or department fallback.</p>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                {insights.facultyInsights.slice(0, 6).map((item) => (
+                  <button
+                    key={item.facultyId}
+                    type="button"
+                    onClick={() => {
+                      const member = faculty.find((entry) => entry._id === item.facultyId);
+                      if (member) setSelected(member);
+                    }}
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-left hover:border-violet-300 hover:bg-violet-50/50 transition"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-slate-900">{item.name}</p>
+                        <p className="text-sm text-slate-500">{item.department || 'Department not set'}</p>
+                      </div>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${item.scopeType === 'assigned_subjects' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {item.scopeType === 'assigned_subjects' ? 'Assigned subjects' : 'Dept fallback'}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                      <MetricPill label="Fail" value={`${item.failRate}%`} tone="rose" />
+                      <MetricPill label="Improve" value={`${item.averageImprovement}`} tone="emerald" />
+                      <MetricPill label="At risk" value={`${item.atRiskStudents}`} tone="amber" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
       {loading ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500">Loading faculty...</div>
       ) : (
@@ -295,6 +470,66 @@ export default function FacultyPage() {
                   <h3 className="font-semibold text-slate-900 mb-2">Profile Summary</h3>
                   <p className="text-sm text-slate-600">{selected.bio || 'No bio provided yet.'}</p>
                 </div>
+
+                {selectedInsight && (
+                  <>
+                    <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <h3 className="font-semibold text-slate-900">Faculty Intelligence</h3>
+                          <p className="text-sm text-slate-500">
+                            Based on {selectedInsight.scopeType === 'assigned_subjects' ? 'assigned subject ownership' : 'department-level fallback records'}.
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                          {selectedInsight.assignedSubjects} assigned subjects
+                        </span>
+                      </div>
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                        <MetricPanel title="Fail Rate" value={`${selectedInsight.failRate}%`} hint={`${selectedInsight.totalRecords} records`} tone="rose" />
+                        <MetricPanel title="Student Improvement" value={`${selectedInsight.averageImprovement}`} hint="avg marks delta" tone="emerald" />
+                        <MetricPanel title="Attendance Correlation" value={`${selectedInsight.attendanceCorrelation}`} hint={`risk score ${selectedInsight.poorAttendanceCorrelationScore}`} tone="amber" />
+                        <MetricPanel title="At-Risk Students" value={`${selectedInsight.atRiskStudents}`} hint="marks < 60 or attendance < 75" tone="slate" />
+                        <MetricPanel title="Average Attendance" value={`${selectedInsight.averageAttendance}%`} hint="across tracked records" tone="blue" />
+                        <MetricPanel title="Coverage Mode" value={selectedInsight.scopeType === 'assigned_subjects' ? 'Assigned' : 'Fallback'} hint={selectedInsight.department || 'No department'} tone="violet" />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <h3 className="font-semibold text-slate-900">Subject Weakness Map</h3>
+                          <p className="text-sm text-slate-500">Top subjects under this faculty sorted by fail rate.</p>
+                        </div>
+                        <span className="text-xs text-slate-500">{selectedSubjectInsights.length} subjects shown</span>
+                      </div>
+                      {selectedSubjectInsights.length > 0 ? (
+                        <div className="mt-4 space-y-3">
+                          {selectedSubjectInsights.map((subject) => (
+                            <div key={subject.subjectId} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                <div>
+                                  <p className="font-semibold text-slate-900">{subject.subjectName}</p>
+                                  <p className="text-sm text-slate-500">
+                                    {[subject.subjectCode, subject.year, subject.semester].filter(Boolean).join(' • ') || 'Subject metadata unavailable'}
+                                  </p>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  <MetricPill label="Fail" value={`${subject.failRate}%`} tone="rose" />
+                                  <MetricPill label="Improve" value={`${subject.averageImprovement}`} tone="emerald" />
+                                  <MetricPill label="At risk" value={`${subject.atRiskStudents}`} tone="amber" />
+                                  <MetricPill label="Attend" value={`${subject.averageAttendance}%`} tone="blue" />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-4 text-sm text-slate-500">No assigned-subject insight records yet for this faculty.</p>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-slate-500">Select a faculty member to view details.</div>
@@ -313,6 +548,109 @@ export default function FacultyPage() {
         cancelText="Cancel"
         loading={isDeleting}
       />
+    </div>
+  );
+}
+
+function InsightLeaderCard({
+  title,
+  value,
+  meta,
+  accent,
+}: {
+  title: string;
+  value: string;
+  meta: string;
+  accent: 'rose' | 'emerald' | 'amber' | 'slate';
+}) {
+  const accentClasses = {
+    rose: 'border-rose-200 bg-rose-50/70 text-rose-700',
+    emerald: 'border-emerald-200 bg-emerald-50/70 text-emerald-700',
+    amber: 'border-amber-200 bg-amber-50/70 text-amber-700',
+    slate: 'border-slate-200 bg-slate-50 text-slate-700',
+  };
+
+  return (
+    <div className={`rounded-2xl border p-5 ${accentClasses[accent]}`}>
+      <p className="text-xs font-semibold uppercase tracking-[0.2em]">{title}</p>
+      <p className="mt-3 text-xl font-bold text-slate-900">{value}</p>
+      <p className="mt-1 text-sm text-slate-600">{meta}</p>
+    </div>
+  );
+}
+
+function MetricPanel({
+  title,
+  value,
+  hint,
+  tone,
+}: {
+  title: string;
+  value: string;
+  hint: string;
+  tone: 'rose' | 'emerald' | 'amber' | 'slate' | 'blue' | 'violet';
+}) {
+  const toneClasses = {
+    rose: 'border-rose-200 bg-rose-50/70',
+    emerald: 'border-emerald-200 bg-emerald-50/70',
+    amber: 'border-amber-200 bg-amber-50/70',
+    slate: 'border-slate-200 bg-slate-50',
+    blue: 'border-blue-200 bg-blue-50/70',
+    violet: 'border-violet-200 bg-violet-50/70',
+  };
+  return (
+    <div className={`rounded-xl border p-4 ${toneClasses[tone]}`}>
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{title}</p>
+      <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
+      <p className="mt-1 text-sm text-slate-500">{hint}</p>
+    </div>
+  );
+}
+
+function MetricPill({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: 'rose' | 'emerald' | 'amber' | 'blue';
+}) {
+  const toneClasses = {
+    rose: 'bg-rose-100 text-rose-700',
+    emerald: 'bg-emerald-100 text-emerald-700',
+    amber: 'bg-amber-100 text-amber-700',
+    blue: 'bg-blue-100 text-blue-700',
+  };
+
+  return (
+    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${toneClasses[tone]}`}>
+      {label}: {value}
+    </span>
+  );
+}
+
+function SubjectLeaderRow({
+  label,
+  item,
+  meta,
+}: {
+  label: string;
+  item: SubjectInsight | null;
+  meta: (item: SubjectInsight) => string;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p>
+          <p className="mt-1 font-semibold text-slate-900">{item?.subjectName || 'No data'}</p>
+          <p className="text-sm text-slate-500">
+            {item ? [item.subjectCode, item.department, item.year, item.semester].filter(Boolean).join(' • ') : 'Waiting for performance data'}
+          </p>
+        </div>
+        <p className="text-sm font-medium text-slate-700">{item ? meta(item) : '-'}</p>
+      </div>
     </div>
   );
 }

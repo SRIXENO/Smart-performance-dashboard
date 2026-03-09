@@ -108,19 +108,30 @@ router.get('/login-history', authMiddleware, permissionMiddleware('activities.vi
   query('search').optional().isString(),
   query('role').optional().isString(),
   query('loginMethod').optional().isString(),
+  query('status').optional().isIn(['success', 'failed', 'pending']),
+  query('anomalyOnly').optional().isBoolean().withMessage('anomalyOnly must be boolean'),
   query('from').optional().isISO8601(),
   query('to').optional().isISO8601(),
 ], validateRequest, async (req, res) => {
   try {
-    const { limit = 50, page = 1, search, role, loginMethod, from, to } = req.query;
+    const { limit = 50, page = 1, search, role, loginMethod, status, anomalyOnly, from, to } = req.query;
     const parsedLimit = Math.max(1, Math.min(200, parseInt(limit, 10) || 50));
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const queryDoc = { action: 'login' };
+    const queryDoc = { action: { $in: ['login', 'login_failed', 'login_anomaly'] } };
     if (role) queryDoc.userRole = role;
     if (loginMethod) queryDoc['metadata.loginMethod'] = loginMethod;
+    if (status) queryDoc.status = status;
+    if (String(anomalyOnly) === 'true') {
+      queryDoc.$or = [
+        { action: 'login_anomaly' },
+        { 'metadata.anomaly': { $ne: null } },
+      ];
+    }
     if (search) {
       const regex = new RegExp(String(search), 'i');
-      queryDoc.$or = [{ userName: regex }, { 'metadata.email': regex }];
+      const searchConditions = [{ userName: regex }, { 'metadata.email': regex }];
+      queryDoc.$and = queryDoc.$and || [];
+      queryDoc.$and.push({ $or: searchConditions });
     }
     if (from || to) {
       queryDoc.timestamp = {};
@@ -144,6 +155,9 @@ router.get('/login-history', authMiddleware, permissionMiddleware('activities.vi
       date: log.timestamp || log.createdAt,
       loginMethod: log.metadata?.loginMethod || 'local',
       role: log.userRole || 'unknown',
+      status: log.status || 'success',
+      anomalySeverity: log.metadata?.severity || log.metadata?.anomaly?.severity || null,
+      anomalyReasons: log.metadata?.reasons || log.metadata?.anomaly?.reasons || [],
       userId: log.userId ? String(log.userId) : null,
     }));
 
@@ -185,7 +199,7 @@ router.delete('/login-history', authMiddleware, permissionMiddleware('activities
     }
 
     const result = await ActivityLog.deleteMany({
-      action: 'login',
+      action: { $in: ['login', 'login_failed', 'login_anomaly'] },
       timestamp: { $gte: fromDate, $lte: toDate },
     });
 

@@ -167,6 +167,16 @@ export interface AIAnalytics {
   suggestions: Suggestion[];
   subjectAnalysis: SubjectAnalysis[];
   peerComparison: PeerComparison;
+  interventionScoring?: {
+    riskTrendScore: number;
+    attendanceDropVelocity: number;
+    marksDeclineLast3: number;
+    backlogProbability: number;
+    departmentComparisonPercentile: number;
+    attendanceMomentum: 'improving' | 'stable' | 'declining' | 'critical';
+    performanceMomentum: 'improving' | 'stable' | 'declining' | 'critical';
+    recommendations: Suggestion[];
+  };
   engagementScore: number;
   lastAnalyzed: string;
 }

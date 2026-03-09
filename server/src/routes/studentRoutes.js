@@ -1,6 +1,18 @@
 const express = require('express');
 const { body, param, query } = require('express-validator');
-const { getStudents, getStudentById, getStudentProfile, getStudentSubjects, getStudentAnalytics, createStudent, updateStudent, deleteStudent } = require('../controllers/studentController');
+const {
+  getStudents,
+  getStudentById,
+  getStudentProfile,
+  getStudentSubjects,
+  getStudentAnalytics,
+  createStudent,
+  updateStudent,
+  deleteStudent,
+  bulkUpdateStudentStatus,
+  bulkPromoteStudents,
+  exportStudents,
+} = require('../controllers/studentController');
 const authMiddleware = require('../middleware/authMiddleware');
 const validateRequest = require('../middleware/validateRequest');
 const permissionMiddleware = require('../middleware/permissionMiddleware');
@@ -21,6 +33,50 @@ router.get(
   ],
   validateRequest,
   getStudents
+);
+router.get(
+  '/export',
+  authMiddleware,
+  permissionMiddleware('reports.export'),
+  [
+    query('year').optional().isInt({ min: 1, max: 4 }),
+    query('semester').optional().isInt({ min: 1, max: 8 }),
+    query('sortBy').optional().isIn(['createdAt', 'name', 'studentId', 'department', 'year', 'semester', 'status']),
+    query('sortDir').optional().isIn(['asc', 'desc']),
+  ],
+  validateRequest,
+  exportStudents
+);
+router.post(
+  '/bulk/status',
+  authMiddleware,
+  permissionMiddleware('students.manage'),
+  [
+    body('studentIds').optional().isArray(),
+    body('studentIds.*').optional().isMongoId(),
+    body('department').optional().isString().trim().isLength({ min: 2, max: 100 }),
+    body('year').optional().isInt({ min: 1, max: 4 }),
+    body('semester').optional().isInt({ min: 1, max: 8 }),
+    body('fromStatus').optional().isIn(['active', 'inactive', 'graduated', 'suspended']),
+    body('toStatus').isIn(['active', 'inactive', 'graduated', 'suspended']),
+  ],
+  validateRequest,
+  bulkUpdateStudentStatus
+);
+router.post(
+  '/bulk/promote-semester',
+  authMiddleware,
+  permissionMiddleware('students.manage'),
+  [
+    body('studentIds').optional().isArray(),
+    body('studentIds.*').optional().isMongoId(),
+    body('department').optional().isString().trim().isLength({ min: 2, max: 100 }),
+    body('year').optional().isInt({ min: 1, max: 4 }),
+    body('semester').optional().isInt({ min: 1, max: 8 }),
+    body('status').optional().isIn(['active', 'inactive', 'graduated', 'suspended']),
+  ],
+  validateRequest,
+  bulkPromoteStudents
 );
 router.get('/:id/profile', authMiddleware, permissionMiddleware('students.view'), [param('id').isMongoId()], validateRequest, getStudentProfile);
 router.get('/:id/subjects', authMiddleware, permissionMiddleware('students.view'), [param('id').isMongoId()], validateRequest, getStudentSubjects);

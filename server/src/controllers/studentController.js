@@ -38,6 +38,49 @@ const getYearSemesterDefaults = (year) => {
   return { semester, currentSemester: `Semester ${semester}` };
 };
 
+const buildStudentQuery = (filters = {}, reqUser = null) => {
+  const { search, department, year, semester, status } = filters;
+  const query = {};
+  const isViewer = reqUser?.role === 'viewer';
+
+  if (search) {
+    const regex = new RegExp(search, 'i');
+    query.$or = isViewer
+      ? [{ name: regex }, { department: regex }]
+      : [{ name: regex }, { email: regex }, { studentId: regex }];
+  }
+
+  if (department) query.department = department;
+  if (year) query.year = parseInt(year, 10);
+  if (semester) query.semester = parseInt(semester, 10);
+  if (status) query.status = status;
+
+  return query;
+};
+
+const buildBulkStudentMatch = ({ studentIds, department, year, semester, status }) => {
+  const query = {};
+  if (Array.isArray(studentIds) && studentIds.length) {
+    query._id = { $in: studentIds };
+  }
+  if (department) query.department = department;
+  if (year) query.year = parseInt(year, 10);
+  if (semester) query.semester = parseInt(semester, 10);
+  if (status) query.status = status;
+  return query;
+};
+
+const toUserStatusFromStudentStatus = (studentStatus) =>
+  ['inactive', 'suspended'].includes(String(studentStatus || '').toLowerCase()) ? 'blocked' : 'active';
+
+const csvEscape = (value) => {
+  const text = String(value ?? '');
+  if (/[",\n]/.test(text)) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+};
+
 const normalizeSemesterFields = (incoming, existingStudent) => {
   const payload = { ...incoming };
   const fallbackYear = existingStudent?.year;
@@ -75,32 +118,8 @@ const getStudents = async (req, res) => {
     const sortField = allowedSortFields.has(String(sortBy)) ? String(sortBy) : 'createdAt';
     const sortOrder = String(sortDir).toLowerCase() === 'asc' ? 1 : -1;
 
-    const query = {};
-
+    const query = buildStudentQuery({ search, department, year, semester, status }, req.user);
     const isViewer = req.user?.role === 'viewer';
-
-    if (search) {
-      const regex = new RegExp(search, 'i');
-      query.$or = isViewer
-        ? [{ name: regex }, { department: regex }]
-        : [{ name: regex }, { email: regex }, { studentId: regex }];
-    }
-
-    if (department) {
-      query.department = department;
-    }
-
-    if (year) {
-      query.year = parseInt(year, 10);
-    }
-
-    if (semester) {
-      query.semester = parseInt(semester, 10);
-    }
-
-    if (status) {
-      query.status = status;
-    }
 
     const totalStudents = await Student.countDocuments(query);
     const totalPages = Math.ceil(totalStudents / limitNum);
@@ -390,6 +409,217 @@ const deleteStudent = async (req, res) => {
   }
 };
 
+const bulkUpdateStudentStatus = async (req, res) => {
+  try {
+    const { studentIds, department, year, semester, fromStatus, toStatus } = req.body;
+    const query = buildBulkStudentMatch({ studentIds, department, year, semester, status: fromStatus });
+    if (!Object.keys(query).length) {
+      return res.status(400).json({ success: false, error: 'Provide studentIds or at least one filter for bulk status update' });
+    }
+
+    const students = await Student.find(query).select('_id name email rollNumber studentId status department year semester').lean();
+    if (!students.length) {
+      return res.status(404).json({ success: false, error: 'No students matched for bulk status update' });
+    }
+
+    const studentIdsToUpdate = students.map((student) => student._id);
+    const targetUserStatus = toUserStatusFromStudentStatus(toStatus);
+    const userEmailList = students.map((student) => String(student.email || '').toLowerCase()).filter(Boolean);
+    const registerNumbers = students.map((student) => String(student.rollNumber || student.studentId || '')).filter(Boolean);
+
+    const [studentResult, userResult] = await Promise.all([
+      Student.updateMany({ _id: { $in: studentIdsToUpdate } }, { $set: { status: toStatus } }),
+      User.updateMany(
+        {
+          role: 'student',
+          $or: [
+            { email: { $in: userEmailList } },
+            { registerNumber: { $in: registerNumbers } },
+          ],
+        },
+        { $set: { status: targetUserStatus } }
+      ),
+    ]);
+
+    await ActivityLog.log({
+      userId: req.user?._id,
+      userRole: req.user?.role || 'admin',
+      userName: req.user?.name || 'System',
+      action: 'bulk_update',
+      targetType: 'student',
+      description: `Bulk student status change to ${toStatus}`,
+      metadata: {
+        matchedStudents: students.length,
+        fromStatus: fromStatus || 'any',
+        toStatus,
+        department: department || null,
+        year: year || null,
+        semester: semester || null,
+      },
+      status: 'success',
+    });
+
+    res.json({
+      success: true,
+      message: `Updated ${studentResult.modifiedCount || 0} students to ${toStatus}`,
+      data: {
+        matchedStudents: students.length,
+        modifiedStudents: studentResult.modifiedCount || 0,
+        modifiedUsers: userResult.modifiedCount || 0,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const bulkPromoteStudents = async (req, res) => {
+  try {
+    const { studentIds, department, year, semester, status = 'active' } = req.body;
+    const query = buildBulkStudentMatch({ studentIds, department, year, semester, status });
+    if (!Object.keys(query).length) {
+      return res.status(400).json({ success: false, error: 'Provide studentIds or at least one filter for bulk promotion' });
+    }
+
+    const students = await Student.find(query).select('_id name email rollNumber studentId status department year semester currentSemester').lean();
+    if (!students.length) {
+      return res.status(404).json({ success: false, error: 'No students matched for semester promotion' });
+    }
+
+    let promoted = 0;
+    let graduated = 0;
+
+    for (const student of students) {
+      const currentSemester = inferSemesterNumber(student.year, student.semester, student.currentSemester);
+      let nextStatus = student.status;
+      let nextSemester = currentSemester;
+      let nextYear = Number(student.year) || 1;
+
+      if (currentSemester >= 8) {
+        nextStatus = 'graduated';
+        nextSemester = 8;
+        nextYear = 4;
+        graduated += 1;
+      } else {
+        nextSemester = currentSemester + 1;
+        nextYear = Math.min(4, Math.ceil(nextSemester / 2));
+        promoted += 1;
+      }
+
+      const updatedStudent = await Student.findByIdAndUpdate(
+        student._id,
+        {
+          $set: {
+            year: nextYear,
+            semester: nextSemester,
+            currentSemester: `Semester ${nextSemester}`,
+            status: nextStatus,
+          },
+        },
+        { new: true }
+      );
+
+      if (updatedStudent) {
+        await ensureStudentEnrollment(updatedStudent);
+        await User.updateMany(
+          {
+            role: 'student',
+            $or: [
+              { email: String(updatedStudent.email || '').toLowerCase() },
+              { registerNumber: String(updatedStudent.rollNumber || updatedStudent.studentId || '') },
+            ],
+          },
+          {
+            $set: {
+              department: updatedStudent.department,
+              status: toUserStatusFromStudentStatus(updatedStudent.status),
+            },
+          }
+        );
+      }
+    }
+
+    await ActivityLog.log({
+      userId: req.user?._id,
+      userRole: req.user?.role || 'admin',
+      userName: req.user?.name || 'System',
+      action: 'bulk_update',
+      targetType: 'student',
+      description: 'Bulk semester promotion completed',
+      metadata: {
+        matchedStudents: students.length,
+        promoted,
+        graduated,
+        department: department || null,
+        year: year || null,
+        semester: semester || null,
+      },
+      status: 'success',
+    });
+
+    res.json({
+      success: true,
+      message: `Processed ${students.length} students`,
+      data: {
+        matchedStudents: students.length,
+        promoted,
+        graduated,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const exportStudents = async (req, res) => {
+  try {
+    const { search, department, year, semester, status, sortBy = 'createdAt', sortDir = 'desc' } = req.query;
+    const allowedSortFields = new Set(['createdAt', 'name', 'studentId', 'department', 'year', 'semester', 'status']);
+    const sortField = allowedSortFields.has(String(sortBy)) ? String(sortBy) : 'createdAt';
+    const sortOrder = String(sortDir).toLowerCase() === 'asc' ? 1 : -1;
+    const query = buildStudentQuery({ search, department, year, semester, status }, req.user);
+
+    const students = await Student.find(query)
+      .sort({ [sortField]: sortOrder, _id: -1 })
+      .select('_id studentId name email department year semester currentSemester status enrollmentDate')
+      .lean();
+
+    const headers = ['studentId', 'name', 'email', 'department', 'year', 'semester', 'currentSemester', 'status', 'enrollmentDate'];
+    const rows = students.map((student) => ([
+      student.studentId,
+      student.name,
+      student.email,
+      student.department,
+      student.year,
+      student.semester,
+      student.currentSemester,
+      student.status,
+      student.enrollmentDate ? new Date(student.enrollmentDate).toISOString() : '',
+    ].map(csvEscape).join(',')));
+
+    const csv = [headers.join(','), ...rows].join('\n');
+    await ActivityLog.log({
+      userId: req.user?._id,
+      userRole: req.user?.role || 'admin',
+      userName: req.user?.name || 'System',
+      action: 'report_exported',
+      targetType: 'system',
+      description: 'Exported filtered student report',
+      metadata: {
+        totalRows: students.length,
+        filters: { search: search || null, department: department || null, year: year || null, semester: semester || null, status: status || null },
+      },
+      status: 'success',
+    });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="students-report-${Date.now()}.csv"`);
+    res.status(200).send(csv);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 const getStudentProfile = async (req, res) => {
   try {
     const student = await Student.findById(req.params.id).lean();
@@ -445,4 +675,16 @@ const getStudentAnalytics = async (req, res) => {
   }
 };
 
-module.exports = { getStudents, getStudentById, getStudentProfile, getStudentSubjects, getStudentAnalytics, createStudent, updateStudent, deleteStudent };
+module.exports = {
+  getStudents,
+  getStudentById,
+  getStudentProfile,
+  getStudentSubjects,
+  getStudentAnalytics,
+  createStudent,
+  updateStudent,
+  deleteStudent,
+  bulkUpdateStudentStatus,
+  bulkPromoteStudents,
+  exportStudents,
+};

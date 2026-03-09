@@ -178,6 +178,9 @@ export const authAPI = {
 
 export const systemAPI = {
   warmup: () => warmupBackend(),
+  getStatus: () => api.get('/healthz', {
+    timeout: toPositiveNumber(WARMUP_TIMEOUT_MS, 6000),
+  }),
 };
 
 export const approvalsAPI = {
@@ -197,6 +200,7 @@ export const viewersAPI = {
 
 export const studentsAPI = {
   getAll: (params?: any) => withTimeoutRetry(() => api.get('/students', { params }), 1),
+  exportCsv: (params?: any) => api.get('/students/export', { params, responseType: 'blob' }),
   getById: (id: string) => api.get(`/students/${id}`),
   getProfile: (id: string) => api.get(`/students/${id}/profile`),
   getSubjects: (id: string) => api.get(`/students/${id}/subjects`),
@@ -205,6 +209,8 @@ export const studentsAPI = {
     api.post('/students', data, {
       timeout: Number.isFinite(STUDENT_CREATE_TIMEOUT_MS) ? STUDENT_CREATE_TIMEOUT_MS : 45000,
     }),
+  bulkUpdateStatus: (data: any) => api.post('/students/bulk/status', data),
+  bulkPromoteSemester: (data: any) => api.post('/students/bulk/promote-semester', data),
   update: (id: string, data: any) => api.put(`/students/${id}`, data),
   delete: (id: string) => api.delete(`/students/${id}`),
 };
@@ -279,6 +285,7 @@ export const subjectsAPI = {
 
 export const facultyAPI = {
   getAll: (params?: any) => api.get('/faculty', { params }),
+  getInsights: (params?: any) => api.get('/faculty/insights', { params }),
   create: (data: any) => api.post('/faculty', data),
   update: (id: string, data: any) => api.put(`/faculty/${id}`, data),
   delete: (id: string) => api.delete(`/faculty/${id}`),

@@ -5,6 +5,12 @@ const Student = require('../models/Student');
 const ActivityLog = require('../models/ActivityLog');
 const { ROLE_PERMISSION_DEFAULTS, resolvePermissions } = require('../utils/permissions');
 const { hashToken, getCookieOptions, issueSessionTokens } = require('../utils/authTokens');
+const {
+  isLoginBlocked,
+  evaluateLoginAnomaly,
+  logFailedLogin,
+  logSuccessfulLogin,
+} = require('../services/loginSecurityService');
 
 const normalizeIdentifier = (value) => String(value || '').trim().slice(0, 254);
 
@@ -76,6 +82,15 @@ const login = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Email or register number and password are required' });
     }
 
+    const blockStatus = await isLoginBlocked({ identifier, ipAddress: req.ip });
+    if (blockStatus.blocked) {
+      res.set('Retry-After', String(Number(process.env.LOGIN_FAILURE_WINDOW_MINUTES || 15) * 60));
+      return res.status(429).json({
+        success: false,
+        error: 'Too many suspicious login attempts detected. Please wait before trying again.',
+      });
+    }
+
     let user = await User.findOne({ email: identifier.toLowerCase() });
 
     // Allow login by generated userId too
@@ -109,45 +124,78 @@ const login = async (req, res) => {
     }
 
     if (!user || !isValidPassword) {
+      await logFailedLogin({
+        identifier,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        user,
+        reason: 'Invalid credentials',
+      });
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
     if (user.approvalStatus === 'pending') {
+      await logFailedLogin({
+        identifier,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        user,
+        reason: 'Approval pending',
+      });
       return res.status(403).json({ success: false, error: 'Account approval is pending. Please wait for admin approval.' });
     }
 
     if (user.approvalStatus === 'rejected') {
+      await logFailedLogin({
+        identifier,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        user,
+        reason: 'Approval rejected',
+      });
       return res.status(403).json({ success: false, error: 'Your account request was rejected. Contact admin.' });
     }
 
     if (user.status === 'blocked') {
+      await logFailedLogin({
+        identifier,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        user,
+        reason: 'Account blocked',
+      });
       return res.status(403).json({ success: false, error: 'Account is blocked. Contact admin or faculty.' });
     }
 
-    const { accessToken } = await issueSessionTokens(user, req, res);
-
-    void ActivityLog.log({
-      userId: user._id,
-      userRole: user.role,
-      userName: user.name,
-      action: 'login',
-      targetType: 'system',
-      description: 'User logged in with password',
-      metadata: {
-        email: user.email,
-        identifier,
-        loginMethod: 'local'
-      },
+    const anomaly = await evaluateLoginAnomaly({
+      user,
+      identifier,
       ipAddress: req.ip,
       userAgent: req.get('user-agent'),
-      status: 'success'
+    });
+    const { accessToken } = await issueSessionTokens(user, req, res);
+    void logSuccessfulLogin({
+      user,
+      identifier,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      anomaly,
+      loginMethod: 'local',
+      description: 'User logged in with password',
     });
     
     res.json({
       success: true,
       message: 'Login successful',
       token: accessToken,
-      user: buildAuthPayload(user)
+      user: buildAuthPayload(user),
+      security: anomaly.detected ? {
+        anomalyDetected: true,
+        severity: anomaly.severity,
+        reasons: anomaly.reasons,
+      } : {
+        anomalyDetected: false,
+      },
     });
   } catch (error) {
     console.error('Login error:', error);

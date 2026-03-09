@@ -17,7 +17,7 @@ const activityLogSchema = new mongoose.Schema({
       'grade_updated', 'attendance_updated',
       'semester_completed', 'cgpa_calculated',
       'alert_generated', 'report_exported',
-      'login', 'logout',
+      'login', 'login_failed', 'login_anomaly', 'logout',
       'data_imported', 'bulk_update',
       'system_analysis', 'ai_prediction'
     ]
@@ -63,6 +63,8 @@ activityLogSchema.index({ userId: 1, timestamp: -1 });
 activityLogSchema.index({ targetId: 1, timestamp: -1 });
 activityLogSchema.index({ action: 1, timestamp: -1 });
 activityLogSchema.index({ action: 1, userRole: 1, timestamp: -1 });
+activityLogSchema.index({ action: 1, ipAddress: 1, timestamp: -1 });
+activityLogSchema.index({ action: 1, 'metadata.identifier': 1, timestamp: -1 });
 activityLogSchema.index({ userName: 1, timestamp: -1 });
 activityLogSchema.index({ timestamp: -1 });
 
