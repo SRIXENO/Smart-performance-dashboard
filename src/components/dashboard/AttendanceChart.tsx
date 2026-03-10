@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { getChartColor } from '@/lib/chartColors';
 
 ChartJS.register(
   CategoryScale,
@@ -36,8 +37,8 @@ export default function AttendanceChart({ data }: AttendanceChartProps) {
       {
         label: 'Attendance %',
         data: data.attendancePercentages,
-        borderColor: 'rgb(var(--chart-1))',
-        backgroundColor: 'rgba(var(--chart-1), 0.1)',
+        borderColor: getChartColor(1),
+        backgroundColor: getChartColor(1, 0.1),
         tension: 0.4,
       },
     ],

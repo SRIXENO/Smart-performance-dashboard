@@ -6,6 +6,7 @@ import { academicAPI, aiAnalyticsAPI, activityAPI, studentsAPI } from '@/lib/api
 import { AcademicRecord, AIAnalytics, ActivityLog, Student } from '@/types';
 import ChartCard, { GradientLineChart } from '@/components/dashboard/ChartCard';
 import { DashboardSkeleton } from '@/components/dashboard/SkeletonLoader';
+import { getChartColor } from '@/lib/chartColors';
 
 type TabKey = 'overview' | 'trends' | 'risk' | 'attendance' | 'notes';
 
@@ -70,8 +71,8 @@ export default function StudentAnalyticsPage() {
     datasets: [{
       label: 'SGPA',
       data: sgpaTrendData.map((d) => d.sgpa),
-      borderColor: 'rgb(var(--chart-1))',
-      backgroundColor: 'rgba(var(--chart-1), 0.12)',
+      borderColor: getChartColor(1),
+      backgroundColor: getChartColor(1, 0.12),
       fill: true,
       tension: 0.4
     }]
@@ -89,8 +90,8 @@ export default function StudentAnalyticsPage() {
     datasets: [{
       label: 'Attendance %',
       data: attendanceTrendData.map((d) => d.attendance),
-      borderColor: 'rgb(var(--chart-2))',
-      backgroundColor: 'rgba(var(--chart-2), 0.12)',
+      borderColor: getChartColor(2),
+      backgroundColor: getChartColor(2, 0.12),
       fill: true,
       tension: 0.4
     }]
@@ -113,8 +114,8 @@ export default function StudentAnalyticsPage() {
     datasets: [{
       label: 'Risk Score',
       data: riskTimelineData.map((d) => d.score),
-      borderColor: 'rgb(var(--chart-4))',
-      backgroundColor: 'rgba(var(--chart-4), 0.12)',
+      borderColor: getChartColor(4),
+      backgroundColor: getChartColor(4, 0.12),
       fill: true,
       tension: 0.4
     }]
@@ -477,7 +478,7 @@ export default function StudentAnalyticsPage() {
               datasets: [{
                 label: 'Attendance %',
                 data: attendanceTrendData.map((d) => d.attendance),
-                backgroundColor: 'rgba(var(--chart-2), 0.6)',
+                backgroundColor: getChartColor(2, 0.6),
                 borderRadius: 6
               }]
             }}

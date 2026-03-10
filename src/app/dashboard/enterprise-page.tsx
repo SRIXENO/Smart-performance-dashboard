@@ -8,6 +8,7 @@ import ChartCard, { MultiLineChart, StackedBarChart, GradientLineChart } from '@
 import SmartFilter from '@/components/dashboard/SmartFilter';
 import { DashboardSkeleton } from '@/components/dashboard/SkeletonLoader';
 import { DashboardSummary } from '@/types';
+import { getChartColor } from '@/lib/chartColors';
 
 export default function EnterpriseDashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -85,8 +86,8 @@ export default function EnterpriseDashboard() {
     datasets: [{
       label: 'Average Attendance %',
       data: attendanceData.attendancePercentages,
-      borderColor: 'rgb(var(--chart-1))',
-      backgroundColor: 'rgba(var(--chart-1), 0.1)',
+      borderColor: getChartColor(1),
+      backgroundColor: getChartColor(1, 0.1),
       fill: true,
       tension: 0.4
     }]
@@ -98,11 +99,11 @@ export default function EnterpriseDashboard() {
       label: 'Number of Students',
       data: [gradeData.A, gradeData.B, gradeData.C, gradeData.D, gradeData.F],
       backgroundColor: [
-        'rgba(var(--chart-2), 0.8)',
-        'rgba(var(--chart-1), 0.8)',
-        'rgba(var(--chart-5), 0.8)',
-        'rgba(var(--chart-5), 0.55)',
-        'rgba(var(--chart-4), 0.8)',
+        getChartColor(2, 0.8),
+        getChartColor(1, 0.8),
+        getChartColor(5, 0.8),
+        getChartColor(5, 0.55),
+        getChartColor(4, 0.8),
       ],
       borderWidth: 0
     }]
@@ -113,8 +114,8 @@ export default function EnterpriseDashboard() {
     datasets: [{
       label: 'Average CGPA',
       data: departmentComparison.map(d => d.avgCGPA.toFixed(2)),
-      backgroundColor: 'rgba(var(--chart-3), 0.8)',
-      borderColor: 'rgb(var(--chart-3))',
+      backgroundColor: getChartColor(3, 0.8),
+      borderColor: getChartColor(3),
       borderWidth: 2
     }]
   } : null;
@@ -124,8 +125,8 @@ export default function EnterpriseDashboard() {
     datasets: [{
       label: 'Number of Students',
       data: cgpaDistribution.map(d => d.count),
-      backgroundColor: 'rgba(var(--chart-2), 0.8)',
-      borderColor: 'rgb(var(--chart-2))',
+      backgroundColor: getChartColor(2, 0.8),
+      borderColor: getChartColor(2),
       borderWidth: 2
     }]
   } : null;
@@ -136,16 +137,16 @@ export default function EnterpriseDashboard() {
       {
         label: 'SGPA',
         data: performanceGrowth.map(p => p.sgpa),
-        borderColor: 'rgb(var(--chart-1))',
-        backgroundColor: 'rgba(var(--chart-1), 0.1)',
+        borderColor: getChartColor(1),
+        backgroundColor: getChartColor(1, 0.1),
         yAxisID: 'y',
         tension: 0.4
       },
       {
         label: 'Growth Rate %',
         data: performanceGrowth.map(p => p.growthRate),
-        borderColor: 'rgb(var(--chart-2))',
-        backgroundColor: 'rgba(var(--chart-2), 0.1)',
+        borderColor: getChartColor(2),
+        backgroundColor: getChartColor(2, 0.1),
         yAxisID: 'y1',
         tension: 0.4
       }
@@ -157,8 +158,8 @@ export default function EnterpriseDashboard() {
     datasets: [{
       label: 'Average Marks',
       data: attendanceCorrelation.map(c => c.avgMarks.toFixed(1)),
-      backgroundColor: 'rgba(var(--chart-4), 0.8)',
-      borderColor: 'rgb(var(--chart-4))',
+      backgroundColor: getChartColor(4, 0.8),
+      borderColor: getChartColor(4),
       borderWidth: 2
     }]
   } : null;

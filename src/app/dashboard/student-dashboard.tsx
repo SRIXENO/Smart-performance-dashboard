@@ -13,14 +13,16 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from 'chart.js';
 import { studentsAPI } from '@/lib/api';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import MotionReveal from '@/components/ui/MotionReveal';
 import TiltSurface from '@/components/ui/TiltSurface';
 import { logger } from '@/lib/logger';
+import { getChartColor, getChartGradient } from '@/lib/chartColors';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 type StudentRow = {
   _id: string;
@@ -45,7 +47,7 @@ type DeptChartType = 'bar' | 'line';
 type GenderMode = 'grouped' | 'stacked' | 'male' | 'female';
 type TimeRange = 'all' | '30d' | '90d' | '365d';
 const INITIAL_STUDENT_LIMIT = 250;
-const FULL_STUDENT_LIMIT = 2000;
+const FULL_STUDENT_LIMIT = 1000;
 
 export default function StudentDashboard() {
   const router = useRouter();
@@ -271,13 +273,11 @@ export default function StudentDashboard() {
           backgroundColor: (context: any) => {
             const chart = context.chart;
             const { ctx, chartArea } = chart;
-            if (!chartArea) return 'rgb(var(--chart-1))';
-            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, 'rgba(var(--chart-1), 0.9)');
-            gradient.addColorStop(1, 'rgba(var(--chart-1), 0.25)');
-            return deptChartType === 'line' ? 'rgba(var(--chart-1), 0.18)' : gradient;
+            if (!chartArea) return getChartColor(1);
+            const gradient = getChartGradient(ctx, chartArea, 1, 0.9, 0.25);
+            return deptChartType === 'line' ? getChartColor(1, 0.18) : gradient;
           },
-          borderColor: deptChartType === 'line' ? 'rgb(var(--chart-1))' : palette,
+          borderColor: deptChartType === 'line' ? getChartColor(1) : palette,
           borderWidth: deptChartType === 'line' ? 3 : 1,
           borderRadius: deptChartType === 'bar' ? 12 : 0,
           maxBarThickness: 48,
@@ -285,7 +285,7 @@ export default function StudentDashboard() {
           tension: 0.35,
           pointRadius: deptChartType === 'line' ? 4 : 0,
           pointHoverRadius: deptChartType === 'line' ? 8 : 0,
-          pointHoverBackgroundColor: 'rgb(var(--chart-1))',
+          pointHoverBackgroundColor: getChartColor(1),
         },
       ],
     };
@@ -300,11 +300,8 @@ export default function StudentDashboard() {
         backgroundColor: (context: any) => {
           const chart = context.chart;
           const { ctx, chartArea } = chart;
-          if (!chartArea) return 'rgb(var(--chart-1))';
-          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-          gradient.addColorStop(0, 'rgba(var(--chart-1), 0.95)');
-          gradient.addColorStop(1, 'rgba(var(--chart-1), 0.35)');
-          return gradient;
+          if (!chartArea) return getChartColor(1);
+          return getChartGradient(ctx, chartArea, 1, 0.95, 0.35);
         },
         borderRadius: 10,
         borderSkipped: false,
@@ -317,11 +314,8 @@ export default function StudentDashboard() {
         backgroundColor: (context: any) => {
           const chart = context.chart;
           const { ctx, chartArea } = chart;
-          if (!chartArea) return 'rgb(var(--chart-4))';
-          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-          gradient.addColorStop(0, 'rgba(var(--chart-4), 0.95)');
-          gradient.addColorStop(1, 'rgba(var(--chart-4), 0.35)');
-          return gradient;
+          if (!chartArea) return getChartColor(4);
+          return getChartGradient(ctx, chartArea, 4, 0.95, 0.35);
         },
         borderRadius: 10,
         borderSkipped: false,
@@ -338,8 +332,8 @@ export default function StudentDashboard() {
           label: 'Avg CGPA',
           yAxisID: 'yCgpa',
           data: yearLabels.map((year) => avg(filteredStudents.filter((s) => s.year === year).map((s) => Number(s.cgpa) || 0))),
-          borderColor: 'rgb(var(--chart-1))',
-          backgroundColor: 'rgba(var(--chart-1), 0.16)',
+          borderColor: getChartColor(1),
+          backgroundColor: getChartColor(1, 0.16),
           fill: true,
           tension: 0.4,
           pointRadius: 4,
@@ -349,8 +343,8 @@ export default function StudentDashboard() {
           label: 'Avg Attendance',
           yAxisID: 'yAttendance',
           data: yearLabels.map((year) => avg(filteredStudents.filter((s) => s.year === year).map((s) => Number(s.attendance) || 0))),
-          borderColor: 'rgb(var(--chart-3))',
-          backgroundColor: 'rgba(var(--chart-3), 0.14)',
+          borderColor: getChartColor(3),
+          backgroundColor: getChartColor(3, 0.14),
           fill: true,
           tension: 0.4,
           pointRadius: 4,

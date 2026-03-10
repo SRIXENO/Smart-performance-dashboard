@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Line, Bar } from 'react-chartjs-2';
 import { studentsAPI } from '@/lib/api';
+import { getChartColor } from '@/lib/chartColors';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,10 +14,11 @@ import {
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 } from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
 
 export default function IndividualStudentDashboard() {
   const params = useParams();
@@ -63,8 +65,8 @@ export default function IndividualStudentDashboard() {
     datasets: [{
       label: 'Credits Earned',
       data: creditsHistory.map(c => c.credits),
-      borderColor: 'rgb(var(--chart-1))',
-      backgroundColor: 'rgba(var(--chart-1), 0.1)',
+      borderColor: getChartColor(1),
+      backgroundColor: getChartColor(1, 0.1),
       tension: 0.4,
       fill: true
     }]
@@ -75,7 +77,7 @@ export default function IndividualStudentDashboard() {
     datasets: [{
       label: 'Cumulative Credits',
       data: creditsHistory.map(c => c.cumulative),
-      backgroundColor: 'rgb(var(--chart-2))',
+      backgroundColor: getChartColor(2),
       borderRadius: 4
     }]
   };

@@ -20,6 +20,7 @@ import SuccessToast from '@/components/SuccessToast';
 import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import { hasPermission } from '@/lib/permissions';
+import { getChartColor } from '@/lib/chartColors';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend);
 
@@ -287,8 +288,8 @@ export default function Performance() {
     return {
       labels: points.map(([d]) => new Date(d).toLocaleDateString()),
       datasets: [
-        { label: 'Avg Marks', data: points.map(([, v]) => Number((v.marks / v.count).toFixed(2))), borderColor: 'rgb(var(--chart-1))', backgroundColor: 'rgba(var(--chart-1), 0.2)', tension: 0.35 },
-        { label: 'Avg Attendance', data: points.map(([, v]) => Number((v.attendance / v.count).toFixed(2))), borderColor: 'rgb(var(--chart-2))', backgroundColor: 'rgba(var(--chart-2), 0.2)', tension: 0.35 }
+        { label: 'Avg Marks', data: points.map(([, v]) => Number((v.marks / v.count).toFixed(2))), borderColor: getChartColor(1), backgroundColor: getChartColor(1, 0.2), tension: 0.35 },
+        { label: 'Avg Attendance', data: points.map(([, v]) => Number((v.attendance / v.count).toFixed(2))), borderColor: getChartColor(2), backgroundColor: getChartColor(2, 0.2), tension: 0.35 }
       ]
     };
   }, [filteredRecords]);
@@ -305,7 +306,7 @@ export default function Performance() {
       .slice(0, 8);
     return {
       labels: top.map((i) => i.name),
-      datasets: [{ label: 'Avg Marks by Subject', data: top.map((i) => Number(i.avg.toFixed(2))), backgroundColor: 'rgba(var(--chart-5), 0.75)' }]
+      datasets: [{ label: 'Avg Marks by Subject', data: top.map((i) => Number(i.avg.toFixed(2))), backgroundColor: getChartColor(5, 0.75) }]
     };
   }, [filteredRecords]);
 

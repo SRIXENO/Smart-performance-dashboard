@@ -2,6 +2,7 @@
 
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { getChartColor } from '@/lib/chartColors';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -22,11 +23,11 @@ export default function GradeChart({ data }: GradeChartProps) {
       {
         data: [data.A, data.B, data.C, data.D, data.F],
         backgroundColor: [
-          'rgba(var(--chart-2), 0.9)',
-          'rgba(var(--chart-1), 0.9)',
-          'rgba(var(--chart-5), 0.9)',
-          'rgba(var(--chart-5), 0.6)',
-          'rgba(var(--chart-4), 0.9)',
+          getChartColor(2, 0.9),
+          getChartColor(1, 0.9),
+          getChartColor(5, 0.9),
+          getChartColor(5, 0.6),
+          getChartColor(4, 0.9),
         ],
         borderWidth: 2,
         borderColor: '#fff',
