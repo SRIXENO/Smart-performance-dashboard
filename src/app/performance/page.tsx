@@ -239,6 +239,8 @@ export default function Performance() {
   const totalPages = Math.max(1, serverPagination.totalPages || 1);
   const paginatedRecords = useMemo(() => records, [records]);
   const ghostRows = useMemo(() => Array.from({ length: 6 }, (_, idx) => idx), []);
+  const showEmptyState = sortedRecords.length === 0 && !loading;
+  const showSkeleton = sortedRecords.length === 0 && loading;
 
   const metrics = useMemo(() => {
     if (!filteredRecords.length) return { avgMarks: 0, avgAttendance: 0, atRiskPercent: 0, passRate: 0, topSubject: 'N/A', totalStudents: 0 };
@@ -1017,7 +1019,7 @@ export default function Performance() {
           </tbody>
         </table>
         </div>
-        {sortedRecords.length === 0 && (
+        {showEmptyState && (
           <div className="relative">
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
               <div className="w-full max-w-xl rounded-2xl border border-dashed border-slate-300 bg-white/95 p-6 text-center shadow-lg">
@@ -1039,19 +1041,22 @@ export default function Performance() {
                 </div>
               </div>
             </div>
-            <div className="px-6 py-10">
-              <div className="space-y-2">
-                {ghostRows.map((row) => (
-                  <div key={row} className="grid grid-cols-7 gap-4">
-                    <div className="shimmer-block h-4 rounded col-span-2"></div>
-                    <div className="shimmer-block h-4 rounded"></div>
-                    <div className="shimmer-block h-4 rounded"></div>
-                    <div className="shimmer-block h-4 rounded"></div>
-                    <div className="shimmer-block h-4 rounded"></div>
-                    <div className="shimmer-block h-4 rounded"></div>
-                  </div>
-                ))}
-              </div>
+            <div className="px-6 py-10"></div>
+          </div>
+        )}
+        {showSkeleton && (
+          <div className="px-6 py-10">
+            <div className="space-y-2">
+              {ghostRows.map((row) => (
+                <div key={row} className="grid grid-cols-7 gap-4">
+                  <div className="shimmer-block h-4 rounded col-span-2"></div>
+                  <div className="shimmer-block h-4 rounded"></div>
+                  <div className="shimmer-block h-4 rounded"></div>
+                  <div className="shimmer-block h-4 rounded"></div>
+                  <div className="shimmer-block h-4 rounded"></div>
+                  <div className="shimmer-block h-4 rounded"></div>
+                </div>
+              ))}
             </div>
           </div>
         )}
