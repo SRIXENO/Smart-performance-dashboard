@@ -85,8 +85,8 @@ export default function EnterpriseDashboard() {
     datasets: [{
       label: 'Average Attendance %',
       data: attendanceData.attendancePercentages,
-      borderColor: 'rgb(59, 130, 246)',
-      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      borderColor: 'rgb(var(--chart-1))',
+      backgroundColor: 'rgba(var(--chart-1), 0.1)',
       fill: true,
       tension: 0.4
     }]
@@ -98,11 +98,11 @@ export default function EnterpriseDashboard() {
       label: 'Number of Students',
       data: [gradeData.A, gradeData.B, gradeData.C, gradeData.D, gradeData.F],
       backgroundColor: [
-        'rgba(34, 197, 94, 0.8)',
-        'rgba(59, 130, 246, 0.8)',
-        'rgba(251, 191, 36, 0.8)',
-        'rgba(249, 115, 22, 0.8)',
-        'rgba(239, 68, 68, 0.8)',
+        'rgba(var(--chart-2), 0.8)',
+        'rgba(var(--chart-1), 0.8)',
+        'rgba(var(--chart-5), 0.8)',
+        'rgba(var(--chart-5), 0.55)',
+        'rgba(var(--chart-4), 0.8)',
       ],
       borderWidth: 0
     }]
@@ -113,8 +113,8 @@ export default function EnterpriseDashboard() {
     datasets: [{
       label: 'Average CGPA',
       data: departmentComparison.map(d => d.avgCGPA.toFixed(2)),
-      backgroundColor: 'rgba(139, 92, 246, 0.8)',
-      borderColor: 'rgb(139, 92, 246)',
+      backgroundColor: 'rgba(var(--chart-3), 0.8)',
+      borderColor: 'rgb(var(--chart-3))',
       borderWidth: 2
     }]
   } : null;
@@ -124,8 +124,8 @@ export default function EnterpriseDashboard() {
     datasets: [{
       label: 'Number of Students',
       data: cgpaDistribution.map(d => d.count),
-      backgroundColor: 'rgba(16, 185, 129, 0.8)',
-      borderColor: 'rgb(16, 185, 129)',
+      backgroundColor: 'rgba(var(--chart-2), 0.8)',
+      borderColor: 'rgb(var(--chart-2))',
       borderWidth: 2
     }]
   } : null;
@@ -136,16 +136,16 @@ export default function EnterpriseDashboard() {
       {
         label: 'SGPA',
         data: performanceGrowth.map(p => p.sgpa),
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        borderColor: 'rgb(var(--chart-1))',
+        backgroundColor: 'rgba(var(--chart-1), 0.1)',
         yAxisID: 'y',
         tension: 0.4
       },
       {
         label: 'Growth Rate %',
         data: performanceGrowth.map(p => p.growthRate),
-        borderColor: 'rgb(16, 185, 129)',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderColor: 'rgb(var(--chart-2))',
+        backgroundColor: 'rgba(var(--chart-2), 0.1)',
         yAxisID: 'y1',
         tension: 0.4
       }
@@ -157,8 +157,8 @@ export default function EnterpriseDashboard() {
     datasets: [{
       label: 'Average Marks',
       data: attendanceCorrelation.map(c => c.avgMarks.toFixed(1)),
-      backgroundColor: 'rgba(236, 72, 153, 0.8)',
-      borderColor: 'rgb(236, 72, 153)',
+      backgroundColor: 'rgba(var(--chart-4), 0.8)',
+      borderColor: 'rgb(var(--chart-4))',
       borderWidth: 2
     }]
   } : null;

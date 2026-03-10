@@ -8,6 +8,29 @@
   --input-border: #d1d5db;
   --input-placeholder: #9ca3af;
   --label-text: #374151;
+
+  --semantic-success-bg: #ecfdf3;
+  --semantic-success-text: #067647;
+  --semantic-success-border: #abefc6;
+  --semantic-warning-bg: #fff7ed;
+  --semantic-warning-text: #c2410c;
+  --semantic-warning-border: #fed7aa;
+  --semantic-danger-bg: #fef2f2;
+  --semantic-danger-text: #b91c1c;
+  --semantic-danger-border: #fecaca;
+  --semantic-info-bg: #eff6ff;
+  --semantic-info-text: #1d4ed8;
+  --semantic-info-border: #bfdbfe;
+  --semantic-neutral-bg: #f8fafc;
+  --semantic-neutral-text: #475569;
+  --semantic-neutral-border: #e2e8f0;
+
+  --chart-1: 14, 165, 233;
+  --chart-2: 16, 185, 129;
+  --chart-3: 139, 92, 246;
+  --chart-4: 244, 114, 182;
+  --chart-5: 245, 158, 11;
+  --chart-6: 100, 116, 139;
 }
 
 :root.light {
@@ -18,6 +41,29 @@
   --input-border: #d1d5db;
   --input-placeholder: #9ca3af;
   --label-text: #374151;
+
+  --semantic-success-bg: #ecfdf3;
+  --semantic-success-text: #067647;
+  --semantic-success-border: #abefc6;
+  --semantic-warning-bg: #fff7ed;
+  --semantic-warning-text: #c2410c;
+  --semantic-warning-border: #fed7aa;
+  --semantic-danger-bg: #fef2f2;
+  --semantic-danger-text: #b91c1c;
+  --semantic-danger-border: #fecaca;
+  --semantic-info-bg: #eff6ff;
+  --semantic-info-text: #1d4ed8;
+  --semantic-info-border: #bfdbfe;
+  --semantic-neutral-bg: #f8fafc;
+  --semantic-neutral-text: #475569;
+  --semantic-neutral-border: #e2e8f0;
+
+  --chart-1: 14, 165, 233;
+  --chart-2: 16, 185, 129;
+  --chart-3: 139, 92, 246;
+  --chart-4: 244, 114, 182;
+  --chart-5: 245, 158, 11;
+  --chart-6: 100, 116, 139;
 }
 
 :root.dark {
@@ -28,6 +74,29 @@
   --input-border: #334155;
   --input-placeholder: #94a3b8;
   --label-text: #cbd5e1;
+
+  --semantic-success-bg: #0f2f24;
+  --semantic-success-text: #6ee7b7;
+  --semantic-success-border: #1b5a3a;
+  --semantic-warning-bg: #2a1c0f;
+  --semantic-warning-text: #fdba74;
+  --semantic-warning-border: #5a3618;
+  --semantic-danger-bg: #2a1111;
+  --semantic-danger-text: #fca5a5;
+  --semantic-danger-border: #6b1d1d;
+  --semantic-info-bg: #0f1b33;
+  --semantic-info-text: #93c5fd;
+  --semantic-info-border: #1e3a8a;
+  --semantic-neutral-bg: #111827;
+  --semantic-neutral-text: #cbd5e1;
+  --semantic-neutral-border: #334155;
+
+  --chart-1: 56, 189, 248;
+  --chart-2: 52, 211, 153;
+  --chart-3: 196, 181, 253;
+  --chart-4: 244, 114, 182;
+  --chart-5: 251, 191, 36;
+  --chart-6: 148, 163, 184;
 }
 
 @theme inline {
@@ -41,6 +110,56 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
+}
+
+.dashboard-surface {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(14, 165, 233, 0.08), transparent 42%),
+    radial-gradient(circle at 85% 15%, rgba(139, 92, 246, 0.08), transparent 38%),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.95) 100%);
+}
+
+.dashboard-pattern {
+  background-image:
+    radial-gradient(rgba(15, 23, 42, 0.06) 0.6px, transparent 0.6px);
+  background-size: 24px 24px;
+  background-position: -8px -8px;
+}
+
+.semantic-success {
+  background-color: var(--semantic-success-bg);
+  color: var(--semantic-success-text);
+}
+.semantic-success-border {
+  border-color: var(--semantic-success-border);
+}
+.semantic-warning {
+  background-color: var(--semantic-warning-bg);
+  color: var(--semantic-warning-text);
+}
+.semantic-warning-border {
+  border-color: var(--semantic-warning-border);
+}
+.semantic-danger {
+  background-color: var(--semantic-danger-bg);
+  color: var(--semantic-danger-text);
+}
+.semantic-danger-border {
+  border-color: var(--semantic-danger-border);
+}
+.semantic-info {
+  background-color: var(--semantic-info-bg);
+  color: var(--semantic-info-text);
+}
+.semantic-info-border {
+  border-color: var(--semantic-info-border);
+}
+.semantic-neutral {
+  background-color: var(--semantic-neutral-bg);
+  color: var(--semantic-neutral-text);
+}
+.semantic-neutral-border {
+  border-color: var(--semantic-neutral-border);
 }
 
 .interactive-card {
@@ -66,19 +185,64 @@ body {
   transform: translateY(0);
 }
 
+.btn,
+.app-primary-btn,
+.bulk-primary-btn,
+.bulk-secondary-btn,
+.interactive-btn {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  line-height: 1;
+}
+
+.btn-primary {
+  background: #0f1b3d;
+  color: #ffffff;
+  border: 1px solid #0f1b3d;
+}
+.btn-primary:hover {
+  background: #12265a;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+.btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #334155;
+  border: 1px solid transparent;
+}
+.btn-ghost:hover {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
 .app-primary-btn {
   min-width: 132px;
-  height: 48px;
-  padding: 0 18px;
+  height: 40px;
+  padding: 0 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: #0f1b3d;
   color: #ffffff;
-  font-size: 1.75rem;
-  font-size: 1rem;
+  font-size: 0.875rem;
   line-height: 1;
   font-weight: 700;
   white-space: nowrap;
@@ -501,11 +665,11 @@ select:focus option:checked {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.9rem;
+  border-radius: 0.75rem;
   background: #0f172a;
-  padding: 0.75rem 1rem;
+  padding: 0 14px;
   color: #ffffff;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   font-weight: 600;
   transition: background-color 0.2s ease, opacity 0.2s ease;
 }
@@ -518,12 +682,12 @@ select:focus option:checked {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.9rem;
+  border-radius: 0.75rem;
   border: 1px solid #cbd5e1;
   background: #ffffff;
-  padding: 0.75rem 1rem;
+  padding: 0 14px;
   color: #334155;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   font-weight: 600;
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }

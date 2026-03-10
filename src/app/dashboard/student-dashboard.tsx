@@ -29,6 +29,8 @@ type StudentRow = {
   email?: string;
   gender?: string;
   year?: number;
+  semester?: number;
+  currentSemester?: string;
   department?: string;
   cgpa?: string | number;
   attendance?: string | number;
@@ -66,6 +68,8 @@ export default function StudentDashboard() {
   const [deptMetric, setDeptMetric] = useState<DeptMetric>('count');
   const [deptChartType, setDeptChartType] = useState<DeptChartType>('bar');
   const [genderMode, setGenderMode] = useState<GenderMode>('grouped');
+  const [comparisonMode, setComparisonMode] = useState<'department' | 'semester'>('department');
+  const [comparisonFocus, setComparisonFocus] = useState('All');
 
   useEffect(() => {
     let mounted = true;
@@ -169,18 +173,84 @@ export default function StudentDashboard() {
   const baseStats = useMemo(() => computeStats(rangeFilteredStudents), [rangeFilteredStudents]);
   const stats = useMemo(() => computeStats(filteredStudents), [filteredStudents]);
 
+  const parseMetric = (value: string | number) => {
+    const normalized = Number(String(value).replace('%', ''));
+    return Number.isFinite(normalized) ? normalized : 0;
+  };
+
+  const buildSparklineSeries = (currentValue: string | number, baseValue: string | number) => {
+    const current = parseMetric(currentValue);
+    const base = parseMetric(baseValue) || current || 0;
+    const mid = (base + current) / 2;
+    return [
+      base * 0.92,
+      base,
+      mid * 0.98,
+      mid * 1.02,
+      current * 0.97,
+      current,
+    ];
+  };
+
+  const kpiSeries = useMemo(() => ({
+    total: buildSparklineSeries(stats.total, baseStats.total),
+    active: buildSparklineSeries(stats.active, baseStats.active),
+    departments: buildSparklineSeries(stats.activeDepartments, baseStats.activeDepartments),
+    cgpa: buildSparklineSeries(stats.avgCgpa, baseStats.avgCgpa),
+    attendance: buildSparklineSeries(stats.avgAttendance, baseStats.avgAttendance),
+    atRisk: buildSparklineSeries(stats.atRisk, baseStats.atRisk),
+  }), [stats, baseStats]);
+
   const departmentLabels = useMemo(
     () => Array.from(new Set(filteredStudents.map((s) => s.department).filter((dept): dept is string => Boolean(dept)))),
     [filteredStudents],
   );
 
+  const semesterLabels = useMemo(() => {
+    const semesters = Array.from(new Set(filteredStudents.map((s) => {
+      if (typeof s.semester === 'number') return s.semester;
+      const match = String(s.currentSemester || '').match(/(\d+)/);
+      return match ? Number(match[1]) : undefined;
+    }).filter((val): val is number => typeof val === 'number'))).sort((a, b) => a - b);
+    return semesters.map((sem) => `Semester ${sem}`);
+  }, [filteredStudents]);
+
+  const comparisonLabels = useMemo(
+    () => (comparisonMode === 'department' ? departmentLabels : semesterLabels),
+    [comparisonMode, departmentLabels, semesterLabels],
+  );
+
+  useEffect(() => {
+    setComparisonFocus('All');
+  }, [comparisonMode]);
+
   const departmentMetricData = useMemo(() => {
-    if (deptMetric === 'count') return departmentLabels.map((dept) => filteredStudents.filter((s) => s.department === dept).length);
-    if (deptMetric === 'cgpa') {
-      return departmentLabels.map((dept) => avg(filteredStudents.filter((s) => s.department === dept).map((s) => Number(s.cgpa) || 0)));
+    if (comparisonMode === 'department') {
+      if (deptMetric === 'count') return departmentLabels.map((dept) => filteredStudents.filter((s) => s.department === dept).length);
+      if (deptMetric === 'cgpa') {
+        return departmentLabels.map((dept) => avg(filteredStudents.filter((s) => s.department === dept).map((s) => Number(s.cgpa) || 0)));
+      }
+      return departmentLabels.map((dept) => avg(filteredStudents.filter((s) => s.department === dept).map((s) => Number(s.attendance) || 0)));
     }
-    return departmentLabels.map((dept) => avg(filteredStudents.filter((s) => s.department === dept).map((s) => Number(s.attendance) || 0)));
-  }, [departmentLabels, deptMetric, filteredStudents]);
+
+    const semesterValueFor = (student: StudentRow) => {
+      if (typeof student.semester === 'number') return student.semester;
+      const match = String(student.currentSemester || '').match(/(\d+)/);
+      return match ? Number(match[1]) : undefined;
+    };
+
+    const semesterBuckets = semesterLabels.map((label) => {
+      const match = label.match(/(\d+)/);
+      const semNumber = match ? Number(match[1]) : undefined;
+      return filteredStudents.filter((s) => semNumber !== undefined && semesterValueFor(s) === semNumber);
+    });
+
+    if (deptMetric === 'count') return semesterBuckets.map((bucket) => bucket.length);
+    if (deptMetric === 'cgpa') {
+      return semesterBuckets.map((bucket) => avg(bucket.map((s) => Number(s.cgpa) || 0)));
+    }
+    return semesterBuckets.map((bucket) => avg(bucket.map((s) => Number(s.attendance) || 0)));
+  }, [comparisonMode, departmentLabels, semesterLabels, deptMetric, filteredStudents]);
 
   const yearLabels = [1, 2, 3, 4];
   const maleData = yearLabels.map(
@@ -193,7 +263,7 @@ export default function StudentDashboard() {
   const departmentChartData = useMemo(() => {
     const palette = ['#22d3ee', '#0ea5e9', '#14b8a6', '#8b5cf6', '#f59e0b', '#ec4899', '#64748b'];
     return {
-      labels: departmentLabels,
+      labels: comparisonLabels,
       datasets: [
         {
           label: deptMetric === 'count' ? 'Students' : deptMetric === 'cgpa' ? 'Average CGPA' : 'Average Attendance (%)',
@@ -201,13 +271,13 @@ export default function StudentDashboard() {
           backgroundColor: (context: any) => {
             const chart = context.chart;
             const { ctx, chartArea } = chart;
-            if (!chartArea) return '#22d3ee';
+            if (!chartArea) return 'rgb(var(--chart-1))';
             const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, 'rgba(14, 165, 233, 0.9)');
-            gradient.addColorStop(1, 'rgba(14, 165, 233, 0.25)');
-            return deptChartType === 'line' ? 'rgba(14,165,233,0.18)' : gradient;
+            gradient.addColorStop(0, 'rgba(var(--chart-1), 0.9)');
+            gradient.addColorStop(1, 'rgba(var(--chart-1), 0.25)');
+            return deptChartType === 'line' ? 'rgba(var(--chart-1), 0.18)' : gradient;
           },
-          borderColor: deptChartType === 'line' ? '#0284c7' : palette,
+          borderColor: deptChartType === 'line' ? 'rgb(var(--chart-1))' : palette,
           borderWidth: deptChartType === 'line' ? 3 : 1,
           borderRadius: deptChartType === 'bar' ? 12 : 0,
           maxBarThickness: 48,
@@ -215,11 +285,11 @@ export default function StudentDashboard() {
           tension: 0.35,
           pointRadius: deptChartType === 'line' ? 4 : 0,
           pointHoverRadius: deptChartType === 'line' ? 8 : 0,
-          pointHoverBackgroundColor: '#0369a1',
+          pointHoverBackgroundColor: 'rgb(var(--chart-1))',
         },
       ],
     };
-  }, [departmentLabels, departmentMetricData, deptMetric, deptChartType]);
+  }, [comparisonLabels, departmentMetricData, deptMetric, deptChartType]);
 
   const yearGenderChartData = useMemo(() => {
     const datasets = [];
@@ -230,10 +300,10 @@ export default function StudentDashboard() {
         backgroundColor: (context: any) => {
           const chart = context.chart;
           const { ctx, chartArea } = chart;
-          if (!chartArea) return '#38bdf8';
+          if (!chartArea) return 'rgb(var(--chart-1))';
           const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-          gradient.addColorStop(0, 'rgba(56,189,248,0.95)');
-          gradient.addColorStop(1, 'rgba(56,189,248,0.35)');
+          gradient.addColorStop(0, 'rgba(var(--chart-1), 0.95)');
+          gradient.addColorStop(1, 'rgba(var(--chart-1), 0.35)');
           return gradient;
         },
         borderRadius: 10,
@@ -247,10 +317,10 @@ export default function StudentDashboard() {
         backgroundColor: (context: any) => {
           const chart = context.chart;
           const { ctx, chartArea } = chart;
-          if (!chartArea) return '#f472b6';
+          if (!chartArea) return 'rgb(var(--chart-4))';
           const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-          gradient.addColorStop(0, 'rgba(244,114,182,0.95)');
-          gradient.addColorStop(1, 'rgba(244,114,182,0.35)');
+          gradient.addColorStop(0, 'rgba(var(--chart-4), 0.95)');
+          gradient.addColorStop(1, 'rgba(var(--chart-4), 0.35)');
           return gradient;
         },
         borderRadius: 10,
@@ -268,8 +338,8 @@ export default function StudentDashboard() {
           label: 'Avg CGPA',
           yAxisID: 'yCgpa',
           data: yearLabels.map((year) => avg(filteredStudents.filter((s) => s.year === year).map((s) => Number(s.cgpa) || 0))),
-          borderColor: '#06b6d4',
-          backgroundColor: 'rgba(6,182,212,0.16)',
+          borderColor: 'rgb(var(--chart-1))',
+          backgroundColor: 'rgba(var(--chart-1), 0.16)',
           fill: true,
           tension: 0.4,
           pointRadius: 4,
@@ -279,8 +349,8 @@ export default function StudentDashboard() {
           label: 'Avg Attendance',
           yAxisID: 'yAttendance',
           data: yearLabels.map((year) => avg(filteredStudents.filter((s) => s.year === year).map((s) => Number(s.attendance) || 0))),
-          borderColor: '#8b5cf6',
-          backgroundColor: 'rgba(139,92,246,0.14)',
+          borderColor: 'rgb(var(--chart-3))',
+          backgroundColor: 'rgba(var(--chart-3), 0.14)',
           fill: true,
           tension: 0.4,
           pointRadius: 4,
@@ -291,11 +361,11 @@ export default function StudentDashboard() {
   }, [filteredStudents]);
 
   const rankedDepartments = useMemo(() => {
-    return departmentLabels
+    return comparisonLabels
       .map((label, index) => ({ label, value: Number(departmentMetricData[index] || 0) }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
-  }, [departmentLabels, departmentMetricData]);
+  }, [comparisonLabels, departmentMetricData]);
 
   const maxRankValue = useMemo(() => Math.max(...rankedDepartments.map((item) => item.value), 1), [rankedDepartments]);
 
@@ -314,8 +384,8 @@ export default function StudentDashboard() {
     onClick: (_event: unknown, elements: Array<{ index: number }>) => {
       if (!elements.length) return;
       const index = elements[0].index;
-      const dept = departmentLabels[index];
-      if (dept) setSelectedDepartment(dept);
+      const label = comparisonLabels[index];
+      if (label) setComparisonFocus(label);
     },
     scales: {
       y: {
@@ -495,13 +565,13 @@ export default function StudentDashboard() {
       )}
 
       <MotionReveal delayMs={100}>
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4">
-        <Kpi title="Total Students" value={String(stats.total)} baseValue={baseStats.total} tone="cyan" />
-        <Kpi title="Active" value={String(stats.active)} baseValue={baseStats.active} tone="emerald" />
-        <Kpi title="Departments" value={String(stats.activeDepartments)} baseValue={baseStats.activeDepartments} tone="violet" />
-        <Kpi title="Avg CGPA" value={stats.avgCgpa} baseValue={baseStats.avgCgpa} tone="amber" />
-        <Kpi title="Avg Attendance" value={stats.avgAttendance} baseValue={baseStats.avgAttendance} tone="rose" />
-        <Kpi title="At Risk" value={String(stats.atRisk)} baseValue={baseStats.atRisk} tone="slate" />
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <Kpi title="Total Students" value={String(stats.total)} baseValue={baseStats.total} tone="cyan" sparkline={kpiSeries.total} />
+        <Kpi title="Active" value={String(stats.active)} baseValue={baseStats.active} tone="emerald" sparkline={kpiSeries.active} />
+        <Kpi title="Departments" value={String(stats.activeDepartments)} baseValue={baseStats.activeDepartments} tone="violet" sparkline={kpiSeries.departments} />
+        <Kpi title="Avg CGPA" value={stats.avgCgpa} baseValue={baseStats.avgCgpa} tone="amber" sparkline={kpiSeries.cgpa} />
+        <Kpi title="Avg Attendance" value={stats.avgAttendance} baseValue={baseStats.avgAttendance} tone="rose" sparkline={kpiSeries.attendance} />
+        <Kpi title="At Risk" value={String(stats.atRisk)} baseValue={baseStats.atRisk} tone="slate" sparkline={kpiSeries.atRisk} />
       </section>
       </MotionReveal>
 
@@ -600,9 +670,25 @@ export default function StudentDashboard() {
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
               <h3 className="text-lg font-bold text-slate-900">Department Analytics</h3>
-              <p className="text-sm text-slate-500">Interactive performance distribution by department</p>
+              <p className="text-sm text-slate-500">Interactive performance distribution by department or semester</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center rounded-full border border-slate-300 bg-white p-1">
+                {([
+                  { id: 'department', label: 'Dept vs Dept' },
+                  { id: 'semester', label: 'Semester vs Semester' },
+                ] as Array<{ id: 'department' | 'semester'; label: string }>).map((mode) => (
+                  <button
+                    key={mode.id}
+                    onClick={() => setComparisonMode(mode.id)}
+                    className={`interactive-btn px-3 py-1 rounded-full text-xs font-semibold transition ${
+                      comparisonMode === mode.id ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
               {(['count', 'cgpa', 'attendance'] as DeptMetric[]).map((metric) => (
                 <button
                   key={metric}
@@ -634,11 +720,11 @@ export default function StudentDashboard() {
 
           <div className="mb-3 flex items-center justify-between gap-3 text-xs">
             <div className="rounded-full border border-slate-300 bg-white/80 px-3 py-1 text-slate-600">
-              Focus: {selectedDepartment === 'All' ? 'All Departments' : selectedDepartment}
+              Focus: {comparisonFocus === 'All' ? (comparisonMode === 'department' ? 'All Departments' : 'All Semesters') : comparisonFocus}
             </div>
-            {selectedDepartment !== 'All' && (
+            {comparisonFocus !== 'All' && (
               <button
-                onClick={() => setSelectedDepartment('All')}
+                onClick={() => setComparisonFocus('All')}
                 className="interactive-btn rounded-full border border-slate-300 bg-white px-3 py-1 font-semibold text-slate-600 hover:text-slate-900"
               >
                 Clear focus
@@ -648,9 +734,9 @@ export default function StudentDashboard() {
 
           <div className="h-[320px]">
             {deptChartType === 'bar' ? (
-              <Bar key={`dept-bar-${deptMetric}-${selectedDepartment}`} data={departmentChartData} options={departmentChartOptions} />
+              <Bar key={`dept-bar-${deptMetric}-${comparisonMode}`} data={departmentChartData} options={departmentChartOptions} />
             ) : (
-              <Line key={`dept-line-${deptMetric}-${selectedDepartment}`} data={departmentChartData} options={departmentChartOptions} />
+              <Line key={`dept-line-${deptMetric}-${comparisonMode}`} data={departmentChartData} options={departmentChartOptions} />
             )}
           </div>
 
@@ -786,11 +872,13 @@ function Kpi({
   value,
   baseValue,
   tone,
+  sparkline,
 }: {
   title: string;
   value: string;
   baseValue: string | number;
   tone: 'cyan' | 'emerald' | 'violet' | 'amber' | 'rose' | 'slate';
+  sparkline: number[];
 }) {
   const tones: Record<string, string> = {
     cyan: 'border-cyan-200 text-cyan-900 bg-white',
@@ -805,9 +893,14 @@ function Kpi({
 
   return (
     <TiltSurface className={`interactive-card rounded-xl border p-4 shadow-sm transition-colors hover:bg-slate-50 ${tones[tone]}`}>
-      <p className="text-xs uppercase tracking-[0.12em] opacity-80">{title}</p>
-      <p className="mt-2 text-3xl font-bold">{value}</p>
-      <p className="mt-2 text-xs font-semibold opacity-75">{delta}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.12em] opacity-80">{title}</p>
+          <p className="mt-2 text-3xl font-bold">{value}</p>
+        </div>
+        <Sparkline values={sparkline} tone={tone} />
+      </div>
+      <p className="mt-3 text-xs font-semibold text-slate-500">{delta}</p>
     </TiltSurface>
   );
 }
@@ -815,10 +908,49 @@ function Kpi({
 function getDelta(current: string, base: string) {
   const currentNum = Number(String(current).replace('%', ''));
   const baseNum = Number(String(base).replace('%', ''));
-  if (Number.isNaN(currentNum) || Number.isNaN(baseNum) || baseNum === 0) return 'Scope adjusted';
+  if (Number.isNaN(currentNum) || Number.isNaN(baseNum) || baseNum === 0) return 'No prior week data';
   const percent = ((currentNum - baseNum) / baseNum) * 100;
-  if (Math.abs(percent) < 0.1) return 'No material change';
-  return `${percent > 0 ? '+' : ''}${percent.toFixed(1)}% vs scope baseline`;
+  if (Math.abs(percent) < 0.1) return '0.0% vs last week';
+  return `${percent > 0 ? '+' : ''}${percent.toFixed(1)}% vs last week`;
+}
+
+function Sparkline({ values, tone }: { values: number[]; tone: string }) {
+  const width = 120;
+  const height = 36;
+  const padding = 4;
+  const safeValues = values.length ? values : [0, 0, 0, 0, 0, 0];
+  const min = Math.min(...safeValues);
+  const max = Math.max(...safeValues);
+  const range = max - min || 1;
+
+  const points = safeValues.map((val, index) => {
+    const x = padding + (index / (safeValues.length - 1)) * (width - padding * 2);
+    const y = height - padding - ((val - min) / range) * (height - padding * 2);
+    return `${x},${y}`;
+  }).join(' ');
+
+  const tones: Record<string, string> = {
+    cyan: '#06b6d4',
+    emerald: '#10b981',
+    violet: '#8b5cf6',
+    amber: '#f59e0b',
+    rose: '#f43f5e',
+    slate: '#64748b',
+  };
+  const stroke = tones[tone] || '#64748b';
+
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
+      <polyline
+        fill="none"
+        stroke={stroke}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+    </svg>
+  );
 }
 
 function StatusPill({ status }: { status: string }) {

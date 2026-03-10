@@ -63,8 +63,8 @@ export default function IndividualStudentDashboard() {
     datasets: [{
       label: 'Credits Earned',
       data: creditsHistory.map(c => c.credits),
-      borderColor: '#3b82f6',
-      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      borderColor: 'rgb(var(--chart-1))',
+      backgroundColor: 'rgba(var(--chart-1), 0.1)',
       tension: 0.4,
       fill: true
     }]
@@ -75,7 +75,7 @@ export default function IndividualStudentDashboard() {
     datasets: [{
       label: 'Cumulative Credits',
       data: creditsHistory.map(c => c.cumulative),
-      backgroundColor: '#10b981',
+      backgroundColor: 'rgb(var(--chart-2))',
       borderRadius: 4
     }]
   };

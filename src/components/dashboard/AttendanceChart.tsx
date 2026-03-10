@@ -36,8 +36,8 @@ export default function AttendanceChart({ data }: AttendanceChartProps) {
       {
         label: 'Attendance %',
         data: data.attendancePercentages,
-        borderColor: '#3498db',
-        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+        borderColor: 'rgb(var(--chart-1))',
+        backgroundColor: 'rgba(var(--chart-1), 0.1)',
         tension: 0.4,
       },
     ],

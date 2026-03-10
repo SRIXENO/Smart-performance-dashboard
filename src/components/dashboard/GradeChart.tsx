@@ -22,11 +22,11 @@ export default function GradeChart({ data }: GradeChartProps) {
       {
         data: [data.A, data.B, data.C, data.D, data.F],
         backgroundColor: [
-          '#27ae60', // Green for A
-          '#3498db', // Blue for B
-          '#f39c12', // Yellow for C
-          '#e67e22', // Orange for D
-          '#e74c3c', // Red for F
+          'rgba(var(--chart-2), 0.9)',
+          'rgba(var(--chart-1), 0.9)',
+          'rgba(var(--chart-5), 0.9)',
+          'rgba(var(--chart-5), 0.6)',
+          'rgba(var(--chart-4), 0.9)',
         ],
         borderWidth: 2,
         borderColor: '#fff',

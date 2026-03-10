@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -42,6 +42,7 @@ export default function Performance() {
   const [successMessage, setSuccessMessage] = useState('');
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState({
     studentId: '',
@@ -237,6 +238,7 @@ export default function Performance() {
 
   const totalPages = Math.max(1, serverPagination.totalPages || 1);
   const paginatedRecords = useMemo(() => records, [records]);
+  const ghostRows = useMemo(() => Array.from({ length: 6 }, (_, idx) => idx), []);
 
   const metrics = useMemo(() => {
     if (!filteredRecords.length) return { avgMarks: 0, avgAttendance: 0, atRiskPercent: 0, passRate: 0, topSubject: 'N/A', totalStudents: 0 };
@@ -283,8 +285,8 @@ export default function Performance() {
     return {
       labels: points.map(([d]) => new Date(d).toLocaleDateString()),
       datasets: [
-        { label: 'Avg Marks', data: points.map(([, v]) => Number((v.marks / v.count).toFixed(2))), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.2)', tension: 0.35 },
-        { label: 'Avg Attendance', data: points.map(([, v]) => Number((v.attendance / v.count).toFixed(2))), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.2)', tension: 0.35 }
+        { label: 'Avg Marks', data: points.map(([, v]) => Number((v.marks / v.count).toFixed(2))), borderColor: 'rgb(var(--chart-1))', backgroundColor: 'rgba(var(--chart-1), 0.2)', tension: 0.35 },
+        { label: 'Avg Attendance', data: points.map(([, v]) => Number((v.attendance / v.count).toFixed(2))), borderColor: 'rgb(var(--chart-2))', backgroundColor: 'rgba(var(--chart-2), 0.2)', tension: 0.35 }
       ]
     };
   }, [filteredRecords]);
@@ -301,7 +303,7 @@ export default function Performance() {
       .slice(0, 8);
     return {
       labels: top.map((i) => i.name),
-      datasets: [{ label: 'Avg Marks by Subject', data: top.map((i) => Number(i.avg.toFixed(2))), backgroundColor: 'rgba(234,88,12,0.75)' }]
+      datasets: [{ label: 'Avg Marks by Subject', data: top.map((i) => Number(i.avg.toFixed(2))), backgroundColor: 'rgba(var(--chart-5), 0.75)' }]
     };
   }, [filteredRecords]);
 
@@ -324,6 +326,39 @@ export default function Performance() {
       if (prev && Number(prev.marks) - Number(latest.marks) >= 10) reasons.push(`Marks dropped by ${(Number(prev.marks) - Number(latest.marks)).toFixed(1)} points`);
       return { id, studentName: latest.studentName, studentCode: latest.studentCode, reasons, marks: Number(latest.marks), attendance: Number(latest.attendancePercentage) };
     }).filter((x) => x.reasons.length).sort((a, b) => b.reasons.length - a.reasons.length || a.marks - b.marks).slice(0, 6);
+  }, [records]);
+
+  const indicatorMap = useMemo(() => {
+    const toNumber = (value: any) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
+    const byKey = new Map<string, any[]>();
+    records.forEach((record) => {
+      const studentKey = String(record.studentObjectId || record.studentId?._id || record.studentId || 'unknown');
+      const subjectKey = String(record.subjectName || 'unknown');
+      const key = `${studentKey}::${subjectKey}`;
+      const list = byKey.get(key) || [];
+      list.push(record);
+      byKey.set(key, list);
+    });
+
+    const map = new Map<string, { risk: boolean; attendanceDrop: boolean; marksDrop: boolean }>();
+    byKey.forEach((list) => {
+      const ordered = [...list].sort((a, b) => new Date(b.lastUpdated || 0).getTime() - new Date(a.lastUpdated || 0).getTime());
+      ordered.forEach((record, index) => {
+        const prev = ordered[index + 1];
+        const attendance = toNumber(record.attendancePercentage);
+        const marks = toNumber(record.marks);
+        const prevAttendance = prev ? toNumber(prev.attendancePercentage) : null;
+        const prevMarks = prev ? toNumber(prev.marks) : null;
+        const attendanceDrop = prevAttendance !== null && prevAttendance - attendance >= 10;
+        const marksDrop = prevMarks !== null && prevMarks - marks >= 10;
+        const risk = attendance < 75 || marks < 60;
+        map.set(String(record._id), { risk, attendanceDrop, marksDrop });
+      });
+    });
+    return map;
   }, [records]);
 
   const studentsWithoutPerformance = useMemo(() => {
@@ -929,22 +964,30 @@ export default function Performance() {
         <table className="min-w-[880px] w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => { if (sortKey === 'studentName') setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortKey('studentName'); setSortDir('asc'); } }}>Student {sortKey === 'studentName' ? (sortDir === 'asc' ? '↑' : '↓') : ''}</button></th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => { if (sortKey === 'subjectName') setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortKey('subjectName'); setSortDir('asc'); } }}>Subject {sortKey === 'subjectName' ? (sortDir === 'asc' ? '↑' : '↓') : ''}</button></th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => { if (sortKey === 'attendancePercentage') setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortKey('attendancePercentage'); setSortDir('asc'); } }}>Attendance {sortKey === 'attendancePercentage' ? (sortDir === 'asc' ? '↑' : '↓') : ''}</button></th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => { if (sortKey === 'marks') setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortKey('marks'); setSortDir('asc'); } }}>Marks {sortKey === 'marks' ? (sortDir === 'asc' ? '↑' : '↓') : ''}</button></th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => { if (sortKey === 'grade') setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortKey('grade'); setSortDir('asc'); } }}>Grade {sortKey === 'grade' ? (sortDir === 'asc' ? '↑' : '↓') : ''}</button></th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => { if (sortKey === 'semester') setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortKey('semester'); setSortDir('asc'); } }}>Semester {sortKey === 'semester' ? (sortDir === 'asc' ? '↑' : '↓') : ''}</button></th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase sticky left-0 z-20 bg-gray-50 border-r border-gray-100"><button onClick={() => { if (sortKey === 'studentName') setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortKey('studentName'); setSortDir('asc'); } }}>Student {sortKey === 'studentName' ? (sortDir === 'asc' ? 'â†‘' : 'â†“') : ''}</button></th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => { if (sortKey === 'subjectName') setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortKey('subjectName'); setSortDir('asc'); } }}>Subject {sortKey === 'subjectName' ? (sortDir === 'asc' ? 'â†‘' : 'â†“') : ''}</button></th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => { if (sortKey === 'attendancePercentage') setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortKey('attendancePercentage'); setSortDir('asc'); } }}>Attendance {sortKey === 'attendancePercentage' ? (sortDir === 'asc' ? 'â†‘' : 'â†“') : ''}</button></th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => { if (sortKey === 'marks') setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortKey('marks'); setSortDir('asc'); } }}>Marks {sortKey === 'marks' ? (sortDir === 'asc' ? 'â†‘' : 'â†“') : ''}</button></th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => { if (sortKey === 'grade') setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortKey('grade'); setSortDir('asc'); } }}>Grade {sortKey === 'grade' ? (sortDir === 'asc' ? 'â†‘' : 'â†“') : ''}</button></th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => { if (sortKey === 'semester') setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortKey('semester'); setSortDir('asc'); } }}>Semester {sortKey === 'semester' ? (sortDir === 'asc' ? 'â†‘' : 'â†“') : ''}</button></th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedRecords.map((record) => (
-              <tr key={record._id} className="hover:bg-gray-50 cursor-pointer" onClick={() => router.push(`/students/${String(record.studentObjectId || record.studentId?._id || record.studentId)}`)}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {record.studentName}
-                  <br />
-                  <span className="text-xs text-gray-500">{record.studentCode}</span>
+              <tr key={record._id} className="group hover:bg-gray-50 cursor-pointer" onClick={() => router.push(`/students/${String(record.studentObjectId || record.studentId?._id || record.studentId)}`)}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 sticky left-0 z-10 bg-white border-r border-gray-100 group-hover:bg-gray-50">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div>{record.studentName}</div>
+                      <div className="text-xs text-gray-500">{record.studentCode}</div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {((indicatorMap.get(String(record._id)) || { risk: false, attendanceDrop: false, marksDrop: false }).risk) && <IndicatorBadge label="R" title="At risk (marks or attendance)" tone="danger" />}
+                      {((indicatorMap.get(String(record._id)) || { risk: false, attendanceDrop: false, marksDrop: false }).attendanceDrop) && <IndicatorBadge label="A-" title="Attendance drop >= 10" tone="warning" />}
+                      {((indicatorMap.get(String(record._id)) || { risk: false, attendanceDrop: false, marksDrop: false }).marksDrop) && <IndicatorBadge label="M-" title="Marks drop >= 10" tone="info" />}
+                    </div>
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.subjectName}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.attendancePercentage}%</td>
@@ -975,20 +1018,40 @@ export default function Performance() {
         </table>
         </div>
         {sortedRecords.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            <p>No records found for current filters.</p>
-            <div className="mt-4 flex justify-center gap-2 flex-wrap">
-              <Link href="/import" className="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-100">Import CSV</Link>
-              {canEditPerformance && (
-                <button onClick={generateSampleData} disabled={isGeneratingSamples || loading} className="bg-white text-gray-700 border border-gray-300 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-50 disabled:opacity-60">
-                  {isGeneratingSamples ? 'Adding...' : 'Add sample data'}
-                </button>
-              )}
-              {canEditPerformance && (
-                <button onClick={() => setShowForm(true)} className="app-primary-btn">
-                  Create first record
-                </button>
-              )}
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="w-full max-w-xl rounded-2xl border border-dashed border-slate-300 bg-white/95 p-6 text-center shadow-lg">
+                <h4 className="text-base font-semibold text-slate-900">No performance records yet</h4>
+                <p className="mt-2 text-sm text-slate-500">Start with an import, generate a sample dataset, or create the first record manually.</p>
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  <Link href="/import" className="pointer-events-auto rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100">Import CSV</Link>
+                  {canEditPerformance && (
+                    <button onClick={generateSampleData} disabled={isGeneratingSamples || loading} className="pointer-events-auto rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60">
+                      {isGeneratingSamples ? 'Generating...' : 'Generate sample'}
+                    </button>
+                  )}
+                  <button onClick={() => setShowHowItWorks(true)} className="pointer-events-auto rounded-md border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200">How it works</button>
+                  {canEditPerformance && (
+                    <button onClick={() => setShowForm(true)} className="pointer-events-auto app-primary-btn">
+                      Create first record
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-10">
+              <div className="space-y-2">
+                {ghostRows.map((row) => (
+                  <div key={row} className="grid grid-cols-7 gap-4">
+                    <div className="shimmer-block h-4 rounded col-span-2"></div>
+                    <div className="shimmer-block h-4 rounded"></div>
+                    <div className="shimmer-block h-4 rounded"></div>
+                    <div className="shimmer-block h-4 rounded"></div>
+                    <div className="shimmer-block h-4 rounded"></div>
+                    <div className="shimmer-block h-4 rounded"></div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -1040,6 +1103,78 @@ export default function Performance() {
           </div>
         </div>
       )}
+      {showHowItWorks && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">How performance data works</h3>
+                <p className="mt-1 text-sm text-slate-500">Three ways to populate the performance table.</p>
+              </div>
+              <button
+                onClick={() => setShowHowItWorks(false)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              >
+                Close
+              </button>
+            </div>
+            <div className="mt-4 space-y-4 text-sm text-slate-600">
+              <div>
+                <p className="font-semibold text-slate-800">1. Import CSV</p>
+                <p>Upload a CSV with student ID, subject code, marks, attendance, and semester. We validate rows before commit.</p>
+              </div>
+              <div>
+                <p className="font-semibold text-slate-800">2. Generate sample</p>
+                <p>Create demo records for testing dashboards and filters. You can delete them later.</p>
+              </div>
+              <div>
+                <p className="font-semibold text-slate-800">3. Create first record</p>
+                <p>Pick a student, select an assigned subject, and save marks/attendance to start analytics.</p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <Link href="/import" className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100">Import CSV</Link>
+              {canEditPerformance && (
+                <button onClick={generateSampleData} disabled={isGeneratingSamples || loading} className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60">
+                  {isGeneratingSamples ? 'Generating...' : 'Generate sample'}
+                </button>
+              )}
+              {canEditPerformance && (
+                <button onClick={() => { setShowHowItWorks(false); setShowForm(true); }} className="app-primary-btn">
+                  Create record
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+function IndicatorBadge({
+  label,
+  title,
+  tone,
+}: {
+  label: string;
+  title: string;
+  tone: 'danger' | 'warning' | 'info';
+}) {
+  const tones: Record<string, string> = {
+    danger: 'semantic-danger',
+    warning: 'semantic-warning',
+    info: 'semantic-info',
+  };
+
+  return (
+    <span
+      title={title}
+      className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${tones[tone]}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+

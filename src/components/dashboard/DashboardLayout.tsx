@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
@@ -14,7 +14,9 @@ export default function DashboardLayout({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const isFocusMode = String(searchParams?.get('focus') || '').toLowerCase() === '1';
 
   useEffect(() => {
     if (!loading && !user) {
@@ -50,8 +52,19 @@ export default function DashboardLayout({
     );
   }
 
+  if (isFocusMode) {
+    return (
+      <div className="dashboard-font relative min-h-screen dashboard-surface dashboard-pattern">
+        <ParallaxBackdrop />
+        <main className="relative min-h-screen overflow-x-auto overflow-y-auto p-4 sm:p-6 lg:p-8">
+          {children}
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div className="dashboard-font relative flex min-h-screen bg-slate-100">
+    <div className="dashboard-font relative flex min-h-screen dashboard-surface dashboard-pattern">
       <ParallaxBackdrop />
       <Sidebar isOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
       <div className="relative flex-1 flex flex-col min-w-0">
