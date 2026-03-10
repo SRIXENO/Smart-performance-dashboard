@@ -30,7 +30,7 @@
 - `GOOGLE_CALLBACK_URL=<optional>`
 
 ### Verify backend
-- Open `https://<render-service>.onrender.com/api/health`
+- Open `https://<render-service>.onrender.com/api/healthz`
 - Expect `{"success":true,...}`
 
 ## 4. Deploy Frontend (Vercel)
@@ -43,7 +43,7 @@
 
 ## 5. Final Integration
 1. Copy Vercel production URL.
-2. Set backend `FRONTEND_URL` to exact Vercel URL.
+2. Set backend `FRONTEND_URL` to the exact Vercel URL.
 3. Redeploy backend.
 4. Test login and protected pages.
 
@@ -78,16 +78,21 @@
 - Verify callback URL matches deployed backend auth callback
 - Verify client ID/secret on Render
 
-## 8. Go-Live Checklist
+## 8. Operational Notes
+- Use Render logs to verify port detection and health checks.
+- Keep `NODE_ENV=production` in backend to avoid verbose logging.
+- Avoid committing `node_modules` to prevent slow deploys.
+
+## 9. Go-Live Checklist
 - [ ] Frontend build succeeds on Vercel
-- [ ] Backend `/api/health` responds successfully
+- [ ] Backend `/api/healthz` responds successfully
 - [ ] `FRONTEND_URL` matches deployed Vercel domain exactly
 - [ ] Login works for admin account
 - [ ] Students and Faculty pages load without CORS errors
 - [ ] Approvals page works for admin
 - [ ] Student block/unblock and update flows work
 
-## 9. Quick Reference
+## 10. Quick Reference
 Backend (Render):
 - Root: `PROJECT 1/server`
 - Build: `npm install`
@@ -98,5 +103,5 @@ Frontend (Vercel):
 - `NEXT_PUBLIC_API_URL=https://<render-service>.onrender.com/api`
 
 ## Document Metadata
-- Last Updated: February 25, 2026
+- Last Updated: March 10, 2026
 - Status: Active

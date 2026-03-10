@@ -1,6 +1,6 @@
 # Features Catalog
 
-This document lists the functional capabilities currently implemented in SPID.
+This document lists the functional capabilities implemented in SPID.
 
 ## 1. Authentication and Access
 - Local login with email/userId/registerNumber support
@@ -11,62 +11,65 @@ This document lists the functional capabilities currently implemented in SPID.
 - Pending approval prevention for unapproved viewer accounts
 
 ## 2. Account Approval Workflow (Admin)
-- New signups (`register` or `Google`) are created as `viewer` + `pending`
-- Admin can open `New Approvals`
-- Admin can `Approve` or `Reject` each request
+- New signups are created as `viewer` + `pending`
+- Admin can open `New Approvals` and approve or reject
 - Approved users can proceed with normal login
 - Rejected users are denied login
 
 ## 3. Student Management
 - Student create/read/update/delete
-- Student search/filter by department/year/status
-- Student block/unblock actions (admin + faculty)
-- Student detail and edit pages with tabbed profile sections
-- Student login password reset from edit flow (admin + faculty)
+- Search and filter by department/year/status
+- Block/unblock actions (admin + faculty)
+- Student detail pages with tabs and analytics
+- Student password reset from edit flow (admin + faculty)
 
-## 4. Student Documents
-- Upload/replace student documents in edit/detail flows
-- Document status and file preview links
-- Supported by admin and faculty roles
+## 4. Student 360 Hub
+- Overview, Trends, Risk, Attendance, Advisor Notes tabs
+- Risk timeline chart and intervention checklist
+- Focus mode for student-only analytics
 
 ## 5. Faculty Management
 - Faculty list/create/update/delete (admin-only modifications)
 - Faculty profile metadata (designation, bio, expertise, photo)
 - Faculty status handling (`active`/`blocked`)
 - Faculty password change/update available only to admin
+- Faculty-level insights (fail rate, improvement, risk)
 
 ## 6. Subject Management
-- Subject assignment by department and year
+- Subject assignment by department, year, and semester
 - Subject group updates/deletions
 - Student subject mapping by department/year
 
 ## 7. Performance and Analytics
-- Student intelligence dashboard (filters, KPIs, charts)
-- Cohort and trend visualizations
-- Department-level comparative analytics
 - Performance record CRUD (admin-controlled writes)
+- Student intelligence dashboard (filters, KPIs, charts)
+- Department and cohort analytics
+- Risk indicators and “students without performance” queue
 
-## 8. Academic and AI Analytics
-- Academic record endpoints and semester updates
-- AI analytics endpoints for risk and insight workflows
-- Dashboard summary and trend endpoints
+## 8. Command Center Dashboard
+- Actionable cards for approvals and risk queues
+- Urgent queue ranked by risk trend score
+- Quick access to critical data gaps and follow-ups
 
 ## 9. Governance and Audit
 - Login history page (admin)
-- Activity log tracking for relevant auth actions
-- Admin governance pages in dashboard sidebar
+- Activity log tracking for auth and key admin actions
 
 ## 10. Reliability and Data Integrity
 - Cascade deletion for student and faculty cleanup
-- Transaction-based cleanup of linked records (student/faculty deletes)
+- Transaction-based cleanup of linked records
 - Backend validations for password and role-sensitive operations
 
 ## 11. UX and Accessibility
 - Responsive dashboard shell and pages
 - Custom dropdown with keyboard + ARIA behavior
-- Consistent confirmation modals for destructive/sensitive actions
-- Password show/hide toggles on login and student add/edit flows
+- Confirmation modals for destructive/sensitive actions
+- Consistent button system and semantic color palette
+
+## 12. Reporting and Export
+- CSV/PDF exports for performance and analytics tables
+- Filtered exports by department, semester, and date range
 
 ## Document Metadata
-- Last Updated: February 25, 2026
+- Last Updated: March 10, 2026
 - Status: Active

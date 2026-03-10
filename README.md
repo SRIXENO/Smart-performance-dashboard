@@ -1,29 +1,26 @@
 # Smart Performance Intelligence Dashboard (SPID)
 
-A production-ready full-stack academic intelligence platform for managing students, faculty, subjects, performance records, and admin governance workflows.
+A production-ready academic intelligence platform for managing students, faculty, subjects, performance records, and governance workflows at scale. SPID combines operational administration with real-time analytics so institutions can track outcomes, intervene early, and report reliably.
 
-## Why SPID
-SPID combines operational management and analytics in one system:
-- Centralized student and faculty lifecycle management
-- Role-based access control with strict backend enforcement
-- Interactive analytics dashboards for student intelligence
-- Admin-only governance features (login history, account approvals)
-- Deployment-ready architecture (Vercel + Render + MongoDB Atlas)
+## What This System Solves
+- Keeps student, subject, and performance data in sync across modules.
+- Reduces manual entry with linked entities and auto-population.
+- Provides role-aware dashboards for admins, faculty, and students.
+- Surfaces actionable risk signals instead of raw tables.
 
-## Current Highlights
-- New user onboarding approval flow (`viewer` -> admin approve/reject)
-- Admin and faculty student access controls (block/unblock)
-- Transaction-safe cascade deletion for students and faculty
-- Student credential reset from edit flow (admin/faculty)
-- Faculty account/password management restricted to admin
-- Accessible custom dropdown with keyboard and ARIA support
+## Platform Highlights
+- Student 360 profile with trends, risk timeline, and advisor notes.
+- Command Center with actionable cards and an urgent queue.
+- Performance analytics with filters, KPIs, and trend visuals.
+- Governance workflows: approvals, login history, and activity logs.
+- Role-aware access control with strict backend enforcement.
 
 ## Live URLs
 - Frontend (Vercel): `https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app`
-- Backend health (Render): `https://<your-render-service>.onrender.com/api/health`
+- Backend health (Render): `https://<your-render-service>.onrender.com/api/healthz`
 
 ## Technology Stack
-- Frontend: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Chart.js
+- Frontend: Next.js (App Router), React, TypeScript, Tailwind CSS, Chart.js
 - Backend: Node.js, Express, Mongoose, JWT, Passport Google OAuth
 - Database: MongoDB Atlas
 - Hosting: Vercel (frontend), Render (backend)
@@ -33,14 +30,14 @@ SPID combines operational management and analytics in one system:
 PROJECT 1/
   src/                       Next.js frontend
     app/                     Routes/pages
-    components/              Reusable UI (dashboard, forms, modal, dropdown)
+    components/              UI and dashboards
     context/                 Auth context
     lib/                     API client layer
   server/                    Express API
     src/
       config/                DB + passport
       controllers/           Business logic
-      middleware/            auth + role middleware
+      middleware/            Auth + role middleware
       models/                Mongo schemas
       routes/                API routes
   README.md
@@ -52,29 +49,23 @@ PROJECT 1/
 ## Role and Access Model
 | Role | Access |
 |---|---|
-| `admin` | Full management access, approvals, login history, faculty CRUD/password |
-| `faculty` | Student view/edit, student document upload, student block/unblock |
-| `student` | Student-scoped views and allowed modules |
-| `viewer` | Pending users created via register/google until admin approval |
+| `admin` | Full management access, approvals, governance, exports |
+| `faculty` | Student view/edit, performance input, student actions |
+| `student` | Student-scoped analytics and personal data |
+| `viewer` | Pending users awaiting admin approval |
 
-## Core Functional Modules
+## Core Modules
 - Authentication (`local + Google OAuth`)
-- Pending account approvals (admin)
-- Students (create/edit/delete, documents, status controls)
+- Students (CRUD, status controls, 360 profiles)
 - Faculty (admin-managed lifecycle)
-- Subjects (department/year assignment)
-- Performance + academic analytics
-- Activity and login history audit
+- Subjects (department/year/semester assignment)
+- Performance (records, trends, risk signals)
+- Analytics (dashboard metrics, faculty insights)
+- Governance (approvals, login history, activity audit)
 
 Detailed list: see [FEATURES.md](FEATURES.md).
 
-## Local Development
-### Prerequisites
-- Node.js 18+
-- npm 9+
-- MongoDB Atlas connection string
-
-### Quick Run
+## Local Development (Quick)
 ```powershell
 Copy-Item .env.example .env
 Copy-Item server/.env.example server/.env
@@ -82,7 +73,7 @@ Copy-Item server/.env.example server/.env
 .\start_project.bat
 ```
 
-### Manual Run
+Manual run:
 ```bash
 # terminal 1
 cd server
@@ -95,10 +86,10 @@ npm install
 npm run dev
 ```
 
-### Local URLs
+Local URLs:
 - Frontend: `http://localhost:3000`
 - Backend API: `http://localhost:5000/api`
-- Health: `http://localhost:5000/api/health`
+- Health: `http://localhost:5000/api/healthz`
 
 ## Environment Variables
 ### Frontend (`.env.local`)
@@ -117,17 +108,6 @@ npm run dev
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_CALLBACK_URL`
 
-## NPM Scripts
-### Root
-- `npm run dev` - start Next.js frontend
-- `npm run build` - production build
-- `npm run start` - start production frontend
-
-### Server (`server/`)
-- `npm run dev` - start API with nodemon
-- `npm run start` - start API
-- `npm run seed` - seed base data
-
 ## API Surface (High Level)
 - `/api/auth`
 - `/api/students`
@@ -139,31 +119,14 @@ npm run dev
 - `/api/ai-analytics`
 - `/api/activities`
 
-## Deployment
-- Full deployment + checklist + quick troubleshooting: [DEPLOYMENT.md](DEPLOYMENT.md)
-
-## Documentation Files (Reduced)
-- [README.md](README.md)
+## Documentation
 - [FEATURES.md](FEATURES.md)
 - [SETUP.md](SETUP.md)
 - [DEPLOYMENT.md](DEPLOYMENT.md)
-
-## Merged Documentation Note
-The previous markdown files were intentionally merged to reduce documentation noise.  
-Their content now lives in the core 4 files above.
-
-Merged mapping:
-- `ARCHITECTURE.md` -> merged into `README.md` + `FEATURES.md`
-- `QUICK_START.md` -> merged into `README.md` + `SETUP.md`
-- `DEPLOYMENT_CHECKLIST.md` -> merged into `DEPLOYMENT.md`
-- `DEPLOYMENT_QUICK_REFERENCE.md` -> merged into `DEPLOYMENT.md`
-- `DOCUMENTATION_INDEX.md` -> replaced by the reduced docs list in this README
-- `ENTERPRISE_TRANSFORMATION.md` -> important outcomes merged into `README.md` + `FEATURES.md`
-- `TRANSFORMATION_SUMMARY.md` -> summary points merged into `README.md`
 
 ## License
 Academic and portfolio usage.
 
 ## Document Metadata
-- Last Updated: February 25, 2026
+- Last Updated: March 10, 2026
 - Status: Active

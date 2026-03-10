@@ -1,5 +1,7 @@
 # Setup Guide
 
+This guide covers local development for both the Next.js frontend and the Express API.
+
 ## 1. Prerequisites
 - Node.js 18+
 - npm 9+
@@ -67,7 +69,7 @@ npm run dev
 ## 6. Verify Local Runtime
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:5000/api`
-- Health: `http://localhost:5000/api/health`
+- Health: `http://localhost:5000/api/healthz`
 
 ## 7. Validation Checklist
 - [ ] `npm run build` succeeds at root
@@ -80,8 +82,13 @@ npm run dev
 - Missing `/api` in `NEXT_PUBLIC_API_URL`
 - Wrong `FRONTEND_URL` format in backend env
 - Missing OAuth env values when Google auth is enabled
-- Using stale Atlas credentials/allowlist
+- Using stale Atlas credentials or allowlist
+
+## 9. Local Debugging Tips
+- If login hangs, verify backend health and CORS config.
+- If analytics show zeros, confirm sample data exists and performance records are linked.
+- If dropdowns are empty, confirm departments/subjects exist in DB.
 
 ## Document Metadata
-- Last Updated: February 25, 2026
+- Last Updated: March 10, 2026
 - Status: Active
