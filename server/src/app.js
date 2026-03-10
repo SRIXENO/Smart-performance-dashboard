@@ -65,6 +65,15 @@ const createApp = () => {
   app.use('/api/faculty', facultyRoutes);
   app.use('/api/import', importRoutes);
 
+  app.get('/', (_req, res) => {
+    res.json({
+      success: true,
+      service: 'spid-api',
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   app.get('/api/health', (_req, res) => {
     res.json({ success: true, message: 'Server is running' });
   });
