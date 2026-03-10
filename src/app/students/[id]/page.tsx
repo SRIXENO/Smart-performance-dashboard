@@ -7,6 +7,7 @@ import ConfirmModal from '@/components/ConfirmModal';
 import { useAuth } from '@/context/AuthContext';
 import { logger } from '@/lib/logger';
 import { hasPermission } from '@/lib/permissions';
+import { getApiErrorMessage } from '@/lib/apiError';
 
 export default function StudentDetail() {
   const params = useParams();
@@ -60,9 +61,9 @@ export default function StudentDetail() {
         try {
           await studentsAPI.delete(params.id as string);
           router.push('/students');
-        } catch (error) {
+        } catch (error: any) {
           logger.error('Failed to delete student:', error);
-          alert('Failed to delete student');
+          alert(getApiErrorMessage(error, 'Failed to delete student'));
           setIsDeleting(false);
         }
       }
@@ -106,9 +107,9 @@ export default function StudentDetail() {
           await studentsAPI.update(student._id, { status: nextStatus });
           setStudent((prev: any) => ({ ...prev, status: nextStatus }));
           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-        } catch (error) {
+        } catch (error: any) {
           logger.error('Failed to update student status:', error);
-          alert('Failed to update student status');
+          alert(getApiErrorMessage(error, 'Failed to update student status'));
         } finally {
           setIsUpdatingStatus(false);
         }
@@ -136,9 +137,9 @@ export default function StudentDetail() {
             [`${field}Name`]: file.name,
             [`${field}UploadedAt`]: new Date().toISOString(),
           }));
-        } catch (error) {
+        } catch (error: any) {
           logger.error('Failed to save uploaded document:', error);
-          alert('Failed to upload document');
+          alert(getApiErrorMessage(error, 'Failed to upload document'));
         } finally {
           setUploadingDoc('');
         }

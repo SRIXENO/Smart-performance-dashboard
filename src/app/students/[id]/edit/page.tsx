@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { studentsAPI, subjectsAPI } from '@/lib/api';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 
@@ -297,7 +298,7 @@ export default function EditStudent() {
     } catch (error: any) {
       console.error('Failed to update student:', error);
       console.error('Error response:', error.response?.data);
-      alert(`Failed to update student: ${error.response?.data?.error || error.message}`);
+      alert(`Failed to update student: ${getApiErrorMessage(error, error.message)}`);
     } finally {
       setSaving(false);
     }

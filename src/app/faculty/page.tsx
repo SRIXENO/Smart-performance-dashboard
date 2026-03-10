@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import ConfirmModal from '@/components/ConfirmModal';
 import { hasPermission } from '@/lib/permissions';
+import { getApiErrorMessage } from '@/lib/apiError';
 
 type FacultyMember = {
   _id: string;
@@ -192,7 +193,7 @@ export default function FacultyPage() {
       resetForm();
       await loadFaculty();
     } catch (error: any) {
-      alert(error?.response?.data?.error || 'Failed to save faculty');
+      alert(getApiErrorMessage(error, 'Failed to save faculty'));
     }
   };
 
@@ -214,7 +215,7 @@ export default function FacultyPage() {
           await loadFaculty();
           if (selected?._id === id) setSelected(null);
         } catch (error: any) {
-          alert(error?.response?.data?.error || 'Failed to delete faculty');
+          alert(getApiErrorMessage(error, 'Failed to delete faculty'));
         } finally {
           setIsDeleting(false);
         }

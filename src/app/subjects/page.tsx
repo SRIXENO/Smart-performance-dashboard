@@ -7,6 +7,7 @@ import SuccessToast from '@/components/SuccessToast';
 import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import { hasPermission } from '@/lib/permissions';
+import { getApiErrorMessage } from '@/lib/apiError';
 
 interface Subject {
   code: string;
@@ -121,7 +122,7 @@ export default function SubjectManagement() {
       fetchSubjectGroups();
     } catch (error: any) {
       console.error('Submit error:', error);
-      alert(error.response?.data?.message || 'Failed to save subjects');
+      alert(getApiErrorMessage(error, 'Failed to save subjects'));
     }
   };
 
@@ -148,8 +149,8 @@ export default function SubjectManagement() {
           await subjectsAPI.delete(id);
           setConfirmModal({ ...confirmModal, isOpen: false });
           fetchSubjectGroups();
-        } catch (error) {
-          alert('Failed to delete subject group');
+        } catch (error: any) {
+          alert(getApiErrorMessage(error, 'Failed to delete subject group'));
         } finally {
           setIsDeleting(false);
         }

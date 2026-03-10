@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import { logger } from '@/lib/logger';
 import { hasPermission } from '@/lib/permissions';
+import { getApiErrorMessage } from '@/lib/apiError';
 
 export default function Students() {
   const { user } = useAuth();
@@ -92,9 +93,9 @@ export default function Students() {
           await studentsAPI.delete(id);
           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
           fetchStudents(pagination.currentPage);
-        } catch (error) {
+        } catch (error: any) {
           logger.error('Failed to delete student:', error);
-          alert('Failed to delete student');
+          alert(getApiErrorMessage(error, 'Failed to delete student'));
         } finally {
           setIsDeleting(false);
         }
@@ -125,9 +126,9 @@ export default function Students() {
           await studentsAPI.update(student._id, { status: nextStatus });
           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
           fetchStudents(pagination.currentPage);
-        } catch (error) {
+        } catch (error: any) {
           logger.error('Failed to update student status:', error);
-          alert('Failed to update student status');
+          alert(getApiErrorMessage(error, 'Failed to update student status'));
         } finally {
           setIsUpdatingStatus(null);
         }
