@@ -180,7 +180,9 @@ export default function CommandCenterDashboard() {
         riskTrendScore: Number(row?.interventionScoring?.riskTrendScore || 0),
         riskLevel: row.riskLevel,
       }));
-      urgentRows.sort((a, b) => (b.riskTrendScore || b.riskScore || 0) - (a.riskTrendScore || a.riskScore || 0));
+      urgentRows.sort((a: UrgentQueueRow, b: UrgentQueueRow) =>
+        (b.riskTrendScore || b.riskScore || 0) - (a.riskTrendScore || a.riskScore || 0)
+      );
 
       setSummary(summaryRes.data?.data || null);
       setMissingSummary(missingRes.data?.data || null);
