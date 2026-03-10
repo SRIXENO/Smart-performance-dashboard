@@ -89,6 +89,14 @@ npm run dev
 - If analytics show zeros, confirm sample data exists and performance records are linked.
 - If dropdowns are empty, confirm departments/subjects exist in DB.
 
+## 10. Local Architecture Overview
+```mermaid
+flowchart LR
+  Browser --> NextJS
+  NextJS --> API
+  API --> MongoDB
+```
+
 ## Document Metadata
 - Last Updated: March 10, 2026
 - Status: Active

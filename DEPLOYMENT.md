@@ -83,7 +83,17 @@
 - Keep `NODE_ENV=production` in backend to avoid verbose logging.
 - Avoid committing `node_modules` to prevent slow deploys.
 
-## 9. Go-Live Checklist
+## 9. Deployment Workflow
+```mermaid
+flowchart LR
+  Dev[Local Dev] --> GitHub
+  GitHub --> Vercel
+  GitHub --> Render
+  Render --> MongoDB
+  Vercel --> Browser
+```
+
+## 10. Go-Live Checklist
 - [ ] Frontend build succeeds on Vercel
 - [ ] Backend `/api/healthz` responds successfully
 - [ ] `FRONTEND_URL` matches deployed Vercel domain exactly
@@ -92,7 +102,7 @@
 - [ ] Approvals page works for admin
 - [ ] Student block/unblock and update flows work
 
-## 10. Quick Reference
+## 11. Quick Reference
 Backend (Render):
 - Root: `PROJECT 1/server`
 - Build: `npm install`

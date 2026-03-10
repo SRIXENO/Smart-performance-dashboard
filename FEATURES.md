@@ -70,6 +70,38 @@ This document lists the functional capabilities implemented in SPID.
 - CSV/PDF exports for performance and analytics tables
 - Filtered exports by department, semester, and date range
 
+## 13. Workflows
+### Student Lifecycle
+```mermaid
+sequenceDiagram
+  participant Admin
+  participant UI
+  participant API
+  participant DB
+  Admin->>UI: Create/Update Student
+  UI->>API: POST /students
+  API->>DB: Save student + login
+  API-->>UI: Student created
+  UI-->>Admin: Confirmation
+```
+
+### Performance Entry
+```mermaid
+sequenceDiagram
+  participant Faculty
+  participant UI
+  participant API
+  participant DB
+  Faculty->>UI: Select student
+  UI->>API: GET /students/{id}/profile + /subjects
+  API->>DB: Load student + eligible subjects
+  API-->>UI: Prefill form
+  Faculty->>UI: Submit marks/attendance
+  UI->>API: POST /performance
+  API->>DB: Save record + update analytics
+  API-->>UI: Success response
+```
+
 ## Document Metadata
 - Last Updated: March 10, 2026
 - Status: Active

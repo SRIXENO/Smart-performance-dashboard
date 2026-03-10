@@ -1,12 +1,12 @@
 # Smart Performance Intelligence Dashboard (SPID)
 
-A production-ready academic intelligence platform for managing students, faculty, subjects, performance records, and governance workflows at scale. SPID combines operational administration with real-time analytics so institutions can track outcomes, intervene early, and report reliably.
+SPID is a production-ready academic intelligence platform for managing students, faculty, subjects, performance records, and governance workflows at scale. It combines operational administration with real-time analytics so institutions can track outcomes, intervene early, and report reliably.
 
 ## What This System Solves
-- Keeps student, subject, and performance data in sync across modules.
-- Reduces manual entry with linked entities and auto-population.
+- Keeps student, subject, and performance data synchronized across modules.
+- Reduces manual entry with linked entities and auto-populated fields.
 - Provides role-aware dashboards for admins, faculty, and students.
-- Surfaces actionable risk signals instead of raw tables.
+- Turns raw records into actionable risk signals and intervention checklists.
 
 ## Platform Highlights
 - Student 360 profile with trends, risk timeline, and advisor notes.
@@ -64,6 +64,27 @@ PROJECT 1/
 - Governance (approvals, login history, activity audit)
 
 Detailed list: see [FEATURES.md](FEATURES.md).
+
+## System Workflow
+```mermaid
+flowchart LR
+  U[User] --> FE[Next.js Frontend]
+  FE --> API[Express API]
+  API --> DB[(MongoDB Atlas)]
+  API --> AI[AI Analytics Services]
+  FE -->|JWT| API
+  API -->|Role Checks| DB
+  AI --> API
+```
+
+## Academic Data Flow
+```mermaid
+flowchart TB
+  S[Student Created] --> EN[Enrollments]
+  SUB[Subjects by Dept/Year/Sem] --> EN
+  EN --> PERF[Performance Records]
+  PERF --> DASH[Analytics + Dashboards]
+```
 
 ## Local Development (Quick)
 ```powershell
