@@ -57,7 +57,9 @@ export default function DashboardLayout({
       <div className="dashboard-font relative min-h-screen dashboard-surface dashboard-pattern">
         <ParallaxBackdrop />
         <main className="relative min-h-screen overflow-x-auto overflow-y-auto p-4 sm:p-6 lg:p-8">
-          {children}
+          <div className="w-full max-w-[1400px] mx-auto min-w-0">
+            {children}
+          </div>
         </main>
       </div>
     );
@@ -70,7 +72,9 @@ export default function DashboardLayout({
       <div className="relative flex-1 flex flex-col min-w-0">
         <Topbar onMenuToggle={() => setMobileSidebarOpen((prev) => !prev)} />
         <main className="flex-1 overflow-x-auto overflow-y-auto p-3 sm:p-4 lg:p-6">
-          {children}
+          <div className="w-full max-w-[1400px] mx-auto min-w-0">
+            {children}
+          </div>
         </main>
       </div>
     </div>

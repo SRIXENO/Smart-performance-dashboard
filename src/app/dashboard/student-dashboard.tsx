@@ -565,7 +565,7 @@ export default function StudentDashboard() {
       )}
 
       <MotionReveal delayMs={100}>
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-4">
         <Kpi title="Total Students" value={String(stats.total)} baseValue={baseStats.total} tone="cyan" sparkline={kpiSeries.total} />
         <Kpi title="Active" value={String(stats.active)} baseValue={baseStats.active} tone="emerald" sparkline={kpiSeries.active} />
         <Kpi title="Departments" value={String(stats.activeDepartments)} baseValue={baseStats.activeDepartments} tone="violet" sparkline={kpiSeries.departments} />
@@ -892,7 +892,7 @@ function Kpi({
   const delta = getDelta(value, String(baseValue));
 
   return (
-    <TiltSurface className={`interactive-card rounded-xl border p-4 shadow-sm transition-colors hover:bg-slate-50 ${tones[tone]}`}>
+    <TiltSurface className={`interactive-card rounded-xl border p-4 shadow-sm transition-colors hover:bg-slate-50 ${tones[tone]} h-full min-h-[150px] flex flex-col justify-between`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.12em] opacity-80">{title}</p>
