@@ -15,7 +15,19 @@ const getAcademicRecord = async (req, res) => {
       await record.save();
     }
     
-    res.json({ success: true, data: record });
+    const completedSemesters = (record.semesters || []).filter(
+      (sem) => sem.status === 'completed' && Array.isArray(sem.subjects) && sem.subjects.length > 0
+    );
+    const computedTotalCredits = completedSemesters.reduce((sum, sem) => sum + Number(sem.totalCredits || 0), 0);
+    const computedTotalCreditPoints = completedSemesters.reduce((sum, sem) => sum + Number(sem.totalCreditPoints || 0), 0);
+    const computedCgpa = computedTotalCredits > 0 ? (computedTotalCreditPoints / computedTotalCredits) : 0;
+
+    const recordPayload = typeof record.toObject === 'function' ? record.toObject() : record;
+    recordPayload.totalCreditsEarned = completedSemesters.length ? computedTotalCredits : 0;
+    recordPayload.totalCreditPointsEarned = completedSemesters.length ? computedTotalCreditPoints : 0;
+    recordPayload.cgpa = completedSemesters.length ? computedCgpa : 0;
+
+    res.json({ success: true, data: recordPayload });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

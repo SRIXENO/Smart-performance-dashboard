@@ -96,7 +96,9 @@ export default function StudentAnalyticsPage() {
 
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
           <div className="text-sm opacity-90 mb-2">Credits Earned</div>
-          <div className="text-4xl font-bold">{academicRecord?.totalCreditsEarned || 0}</div>
+          <div className="text-4xl font-bold">
+            {(academicRecord?.semesters?.some((sem) => sem.status === 'completed' && sem.subjects?.length) ? academicRecord?.totalCreditsEarned : 0) || 0}
+          </div>
           <div className="text-sm mt-2 opacity-75">Total credits</div>
         </div>
 

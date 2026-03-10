@@ -168,16 +168,20 @@ export default function FacultyPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const normalizeOptional = (value: string) => {
+        const trimmed = String(value || '').trim();
+        return trimmed ? trimmed : undefined;
+      };
       const payload = {
         name: form.name,
         email: form.email,
-        password: form.password,
-        registerNumber: form.registerNumber,
+        password: normalizeOptional(form.password),
+        registerNumber: normalizeOptional(form.registerNumber),
         status: form.status,
-        department: form.department,
-        designation: form.designation,
-        bio: form.bio,
-        profilePhoto: form.profilePhoto,
+        department: normalizeOptional(form.department),
+        designation: normalizeOptional(form.designation),
+        bio: normalizeOptional(form.bio),
+        profilePhoto: normalizeOptional(form.profilePhoto),
         expertise: form.expertiseText.split(',').map((x) => x.trim()).filter(Boolean),
       };
       if (editing) {
