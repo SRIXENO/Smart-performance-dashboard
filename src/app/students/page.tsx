@@ -12,7 +12,8 @@ import { hasPermission } from '@/lib/permissions';
 
 export default function Students() {
   const { user } = useAuth();
-  const isViewer = user?.role === 'viewer';
+  const isViewer = user?.role === 'viewer' || user?.role === 'student';
+  const isStudentRole = user?.role === 'student';
   const canManageStudents = hasPermission(user, 'students.manage');
   const canManageStudentAccess = canManageStudents;
   const canEditPerformance = hasPermission(user, 'performance.edit');
@@ -227,6 +228,11 @@ export default function Students() {
                       </th>
                     </>
                   )}
+                  {isStudentRole && (
+                    <th className="sticky right-0 z-10 bg-gray-50 shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.35)] px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -349,6 +355,20 @@ export default function Students() {
                           </div>
                         </td>
                       </>
+                    )}
+                    {isStudentRole && (
+                      <td className="sticky right-0 z-10 bg-white shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.35)] px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {student.isSelf ? (
+                          <Link
+                            href={`/students/${student._id}`}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            My Profile
+                          </Link>
+                        ) : (
+                          <span className="text-gray-400">Restricted</span>
+                        )}
+                      </td>
                     )}
                   </tr>
                 ))}

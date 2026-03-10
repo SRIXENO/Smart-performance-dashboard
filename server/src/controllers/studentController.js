@@ -41,7 +41,7 @@ const getYearSemesterDefaults = (year) => {
 const buildStudentQuery = (filters = {}, reqUser = null) => {
   const { search, department, year, semester, status } = filters;
   const query = {};
-  const isViewer = reqUser?.role === 'viewer';
+  const isViewer = reqUser?.role === 'viewer' || reqUser?.role === 'student';
 
   if (search) {
     const regex = new RegExp(search, 'i');
@@ -119,7 +119,8 @@ const getStudents = async (req, res) => {
     const sortOrder = String(sortDir).toLowerCase() === 'asc' ? 1 : -1;
 
     const query = buildStudentQuery({ search, department, year, semester, status }, req.user);
-    const isViewer = req.user?.role === 'viewer';
+    const isViewer = req.user?.role === 'viewer' || req.user?.role === 'student';
+    const isStudent = req.user?.role === 'student';
 
     const totalStudents = await Student.countDocuments(query);
     const totalPages = Math.ceil(totalStudents / limitNum);
@@ -130,7 +131,11 @@ const getStudents = async (req, res) => {
       .limit(limitNum);
 
     if (isViewer) {
-      studentsQuery.select('_id name department year semester currentSemester');
+      if (isStudent) {
+        studentsQuery.select('_id name department year semester currentSemester email rollNumber studentId');
+      } else {
+        studentsQuery.select('_id name department year semester currentSemester');
+      }
     } else {
       // Keep list responses lean; avoid sending heavy profile/document fields.
       studentsQuery.select('_id studentId name email gender year semester currentSemester department cgpa attendance status enrollmentDate');
@@ -149,10 +154,24 @@ const getStudents = async (req, res) => {
       };
     });
 
-    const withDerived = normalizedStudents.map((student) => ({
-      ...student,
-      currentSemester: student.currentSemester || `Semester ${inferSemesterNumber(student.year, student.semester, student.currentSemester)}`,
-    }));
+    const withDerived = normalizedStudents.map((student) => {
+      const base = {
+        ...student,
+        currentSemester: student.currentSemester || `Semester ${inferSemesterNumber(student.year, student.semester, student.currentSemester)}`,
+      };
+      if (!isStudent) return base;
+
+      const email = String(req.user?.email || '').toLowerCase();
+      const registerNumber = String(req.user?.registerNumber || '').trim();
+      const studentId = String(req.user?.studentId || '').trim();
+      const matchesStudent =
+        (email && String(student.email || '').toLowerCase() === email) ||
+        (registerNumber && (String(student.rollNumber || '') === registerNumber || String(student.studentId || '') === registerNumber)) ||
+        (studentId && String(student.studentId || '') === studentId);
+
+      const { email: _email, rollNumber: _rollNumber, studentId: _studentId, ...safe } = base;
+      return { ...safe, isSelf: matchesStudent };
+    });
 
     res.json({
       success: true,
@@ -182,6 +201,22 @@ const getStudents = async (req, res) => {
 
 const getStudentById = async (req, res) => {
   try {
+    if (req.user?.role === 'student') {
+      const student = await Student.findById(req.params.id);
+      if (!student) {
+        return res.status(404).json({ success: false, error: 'Student not found' });
+      }
+      const email = String(req.user?.email || '').toLowerCase();
+      const registerNumber = String(req.user?.registerNumber || '').trim();
+      const matchesStudent =
+        (email && String(student.email || '').toLowerCase() === email) ||
+        (registerNumber && (String(student.rollNumber || '') === registerNumber || String(student.studentId || '') === registerNumber)) ||
+        (req.user?.studentId && String(student.studentId || '') === String(req.user.studentId));
+      if (!matchesStudent) {
+        return res.status(403).json({ success: false, error: 'Forbidden' });
+      }
+    }
+
     const student = await Student.findById(req.params.id);
     if (!student) {
       return res.status(404).json({ success: false, error: 'Student not found' });
@@ -622,6 +657,24 @@ const exportStudents = async (req, res) => {
 
 const getStudentProfile = async (req, res) => {
   try {
+    if (req.user?.role === 'student') {
+      const email = String(req.user?.email || '').toLowerCase();
+      const registerNumber = String(req.user?.registerNumber || '').trim();
+      const student = await Student.findById(req.params.id).lean();
+      if (!student) {
+        return res.status(404).json({ success: false, error: 'Student not found' });
+      }
+      const matchesStudent =
+        (email && String(student.email || '').toLowerCase() === email) ||
+        (registerNumber && (String(student.rollNumber || '') === registerNumber || String(student.studentId || '') === registerNumber)) ||
+        (req.user?.studentId && String(student.studentId || '') === String(req.user.studentId));
+      if (!matchesStudent) {
+        return res.status(403).json({ success: false, error: 'Forbidden' });
+      }
+      const profile = await getStudentConnectedProfile(student);
+      return res.json({ success: true, data: profile });
+    }
+
     const student = await Student.findById(req.params.id).lean();
     if (!student) {
       return res.status(404).json({ success: false, error: 'Student not found' });
@@ -635,6 +688,31 @@ const getStudentProfile = async (req, res) => {
 
 const getStudentSubjects = async (req, res) => {
   try {
+    if (req.user?.role === 'student') {
+      const email = String(req.user?.email || '').toLowerCase();
+      const registerNumber = String(req.user?.registerNumber || '').trim();
+      const student = await Student.findById(req.params.id).lean();
+      if (!student) {
+        return res.status(404).json({ success: false, error: 'Student not found' });
+      }
+      const matchesStudent =
+        (email && String(student.email || '').toLowerCase() === email) ||
+        (registerNumber && (String(student.rollNumber || '') === registerNumber || String(student.studentId || '') === registerNumber)) ||
+        (req.user?.studentId && String(student.studentId || '') === String(req.user.studentId));
+      if (!matchesStudent) {
+        return res.status(403).json({ success: false, error: 'Forbidden' });
+      }
+      const profile = await getStudentConnectedProfile(student);
+      return res.json({
+        success: true,
+        data: {
+          student: profile.student,
+          semester: profile.semester,
+          subjects: profile.eligibleSubjects
+        }
+      });
+    }
+
     const student = await Student.findById(req.params.id).lean();
     if (!student) {
       return res.status(404).json({ success: false, error: 'Student not found' });
@@ -655,6 +733,42 @@ const getStudentSubjects = async (req, res) => {
 
 const getStudentAnalytics = async (req, res) => {
   try {
+    if (req.user?.role === 'student') {
+      const email = String(req.user?.email || '').toLowerCase();
+      const registerNumber = String(req.user?.registerNumber || '').trim();
+      const student = await Student.findById(req.params.id).select('_id studentId name department year semester currentSemester status email rollNumber').lean();
+      if (!student) {
+        return res.status(404).json({ success: false, error: 'Student not found' });
+      }
+      const matchesStudent =
+        (email && String(student.email || '').toLowerCase() === email) ||
+        (registerNumber && (String(student.rollNumber || '') === registerNumber || String(student.studentId || '') === registerNumber)) ||
+        (req.user?.studentId && String(student.studentId || '') === String(req.user.studentId));
+      if (!matchesStudent) {
+        return res.status(403).json({ success: false, error: 'Forbidden' });
+      }
+
+      const cached = await getCacheIfFresh({ scope: 'student', studentId: student._id, maxAgeSeconds: 90 });
+      const metrics = cached || await upsertStudentCache(student._id);
+
+      return res.json({
+        success: true,
+        data: {
+          student: {
+            _id: student._id,
+            studentId: student.studentId,
+            name: student.name,
+            department: student.department,
+            year: student.year,
+            semester: student.semester,
+            currentSemester: student.currentSemester,
+            status: student.status,
+          },
+          metrics,
+        },
+      });
+    }
+
     const student = await Student.findById(req.params.id).select('_id studentId name department year semester currentSemester status').lean();
     if (!student) {
       return res.status(404).json({ success: false, error: 'Student not found' });

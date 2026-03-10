@@ -44,7 +44,7 @@ const ROLE_PERMISSION_DEFAULTS = {
     activitiesView: false,
   },
   student: {
-    studentsView: false,
+    studentsView: true,
     studentsManage: false,
     performanceView: false,
     performanceEdit: false,

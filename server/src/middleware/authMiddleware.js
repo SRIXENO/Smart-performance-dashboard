@@ -21,7 +21,7 @@ const authMiddleware = async (req, res, next) => {
     if (decoded.type && decoded.type !== 'access') {
       return res.status(401).json({ success: false, error: 'Invalid token type' });
     }
-    const user = await User.findById(decoded.userId).select('userId name email role status approvalStatus permissions');
+    const user = await User.findById(decoded.userId).select('userId name email registerNumber role status approvalStatus permissions');
 
     if (!user) {
       return res.status(401).json({ success: false, error: 'User not found' });
@@ -41,6 +41,7 @@ const authMiddleware = async (req, res, next) => {
       publicUserId: user.userId,
       name: user.name,
       email: user.email,
+      registerNumber: user.registerNumber,
       role: user.role,
       permissions: resolvePermissions(user),
     };

@@ -30,6 +30,7 @@ export interface Student {
   year: number;
   semester?: number;
   currentSemester?: string;
+  isSelf?: boolean;
   phone?: string;
   dateOfBirth: string;
   enrollmentDate: string;
