@@ -976,7 +976,60 @@ export default function Performance() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {paginatedRecords.map((record) => (
+            {showSkeleton && (
+              <>
+                {ghostRows.map((row) => (
+                  <tr key={row}>
+                    <td className="px-6 py-4">
+                      <div className="shimmer-block h-4 rounded w-40"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="shimmer-block h-4 rounded w-28"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="shimmer-block h-4 rounded w-16"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="shimmer-block h-4 rounded w-16"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="shimmer-block h-4 rounded w-12"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="shimmer-block h-4 rounded w-16"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="shimmer-block h-4 rounded w-20"></div>
+                    </td>
+                  </tr>
+                ))}
+              </>
+            )}
+            {showEmptyState && (
+              <tr>
+                <td colSpan={7} className="px-6 py-10">
+                  <div className="w-full rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
+                    <h4 className="text-base font-semibold text-slate-900">No performance records yet</h4>
+                    <p className="mt-2 text-sm text-slate-500">Start with an import, generate a sample dataset, or create the first record manually.</p>
+                    <div className="mt-4 flex flex-wrap justify-center gap-2">
+                      <Link href="/import" className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100">Import CSV</Link>
+                      {canEditPerformance && (
+                        <button onClick={generateSampleData} disabled={isGeneratingSamples || loading} className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60">
+                          {isGeneratingSamples ? 'Generating...' : 'Generate sample'}
+                        </button>
+                      )}
+                      <button onClick={() => setShowHowItWorks(true)} className="rounded-md border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200">How it works</button>
+                      {canEditPerformance && (
+                        <button onClick={() => setShowForm(true)} className="app-primary-btn">
+                          Create first record
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            )}
+            {!showSkeleton && !showEmptyState && paginatedRecords.map((record) => (
               <tr key={record._id} className="group hover:bg-gray-50 cursor-pointer" onClick={() => router.push(`/students/${String(record.studentObjectId || record.studentId?._id || record.studentId)}`)}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 sticky left-0 z-10 bg-white border-r border-gray-100 group-hover:bg-gray-50">
                   <div className="flex items-center justify-between gap-3">
@@ -1019,47 +1072,6 @@ export default function Performance() {
           </tbody>
         </table>
         </div>
-        {showEmptyState && (
-          <div className="relative">
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="w-full max-w-xl rounded-2xl border border-dashed border-slate-300 bg-white/95 p-6 text-center shadow-lg">
-                <h4 className="text-base font-semibold text-slate-900">No performance records yet</h4>
-                <p className="mt-2 text-sm text-slate-500">Start with an import, generate a sample dataset, or create the first record manually.</p>
-                <div className="mt-4 flex flex-wrap justify-center gap-2">
-                  <Link href="/import" className="pointer-events-auto rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100">Import CSV</Link>
-                  {canEditPerformance && (
-                    <button onClick={generateSampleData} disabled={isGeneratingSamples || loading} className="pointer-events-auto rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60">
-                      {isGeneratingSamples ? 'Generating...' : 'Generate sample'}
-                    </button>
-                  )}
-                  <button onClick={() => setShowHowItWorks(true)} className="pointer-events-auto rounded-md border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200">How it works</button>
-                  {canEditPerformance && (
-                    <button onClick={() => setShowForm(true)} className="pointer-events-auto app-primary-btn">
-                      Create first record
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="px-6 py-10"></div>
-          </div>
-        )}
-        {showSkeleton && (
-          <div className="px-6 py-10">
-            <div className="space-y-2">
-              {ghostRows.map((row) => (
-                <div key={row} className="grid grid-cols-7 gap-4">
-                  <div className="shimmer-block h-4 rounded col-span-2"></div>
-                  <div className="shimmer-block h-4 rounded"></div>
-                  <div className="shimmer-block h-4 rounded"></div>
-                  <div className="shimmer-block h-4 rounded"></div>
-                  <div className="shimmer-block h-4 rounded"></div>
-                  <div className="shimmer-block h-4 rounded"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
         {sortedRecords.length > 0 && (
           <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between text-sm">
             <p className="text-gray-600">
