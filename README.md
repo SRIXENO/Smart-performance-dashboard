@@ -71,10 +71,11 @@ flowchart LR
   U[User] --> FE[Next.js Frontend]
   FE --> API[Express API]
   API --> DB[(MongoDB Atlas)]
-  API --> AI[AI Analytics Services]
+  API --> ANALYTICS[Analytics + Risk Engine]
   FE -->|JWT| API
   API -->|Role Checks| DB
-  AI --> API
+  DB --> ANALYTICS
+  ANALYTICS --> API
 ```
 
 ## Academic Data Flow
