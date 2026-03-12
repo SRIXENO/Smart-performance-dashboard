@@ -2,6 +2,8 @@
 
 This document lists the functional capabilities implemented in SPID.
 
+![Features Overview](docs/images/features.png)
+
 ## 1. Authentication and Access
 - Local login with email/userId/registerNumber support
 - Google OAuth login flow
@@ -44,7 +46,7 @@ This document lists the functional capabilities implemented in SPID.
 - Performance record CRUD (admin-controlled writes)
 - Student intelligence dashboard (filters, KPIs, charts)
 - Department and cohort analytics
-- Risk indicators and ìstudents without performanceî queue
+- Risk indicators and ‚Äústudents without performance‚Äù queue
 
 ## 8. Command Center Dashboard
 - Actionable cards for approvals and risk queues
@@ -103,5 +105,5 @@ sequenceDiagram
 ```
 
 ## Document Metadata
-- Last Updated: March 10, 2026
+- Last Updated: March 12, 2026
 - Status: Active

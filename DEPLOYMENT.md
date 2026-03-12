@@ -1,5 +1,7 @@
 # Deployment Guide (Vercel + Render + Atlas)
 
+![Deployment Pipeline](docs/images/deployment.png)
+
 ## 1. Target Topology
 - Frontend: Vercel (`PROJECT 1`)
 - Backend: Render Web Service (`PROJECT 1/server`)
@@ -113,5 +115,5 @@ Frontend (Vercel):
 - `NEXT_PUBLIC_API_URL=https://<render-service>.onrender.com/api`
 
 ## Document Metadata
-- Last Updated: March 10, 2026
+- Last Updated: March 12, 2026
 - Status: Active

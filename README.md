@@ -1,6 +1,8 @@
 # Smart Performance Intelligence Dashboard (SPID)
 
-SPID is a production-ready academic intelligence platform for managing students, faculty, subjects, performance records, and governance workflows at scale. It combines operational administration with real-time analytics so institutions can track outcomes, intervene early, and report reliably.
+SPID is a production-ready academic intelligence platform for managing students, faculty, subjects, performance records, and governance workflows at scale. It combines operational administration with analytics so institutions can track outcomes, intervene early, and report reliably.
+
+![SPID Overview](docs/images/overview.png)
 
 ## What This System Solves
 - Keeps student, subject, and performance data synchronized across modules.
@@ -63,7 +65,7 @@ PROJECT 1/
 - Analytics (dashboard metrics, faculty insights)
 - Governance (approvals, login history, activity audit)
 
-Detailed list: see [FEATURES.md](FEATURES.md).
+Detailed list: see `FEATURES.md`.
 
 ## System Workflow
 ```mermaid
@@ -86,6 +88,11 @@ flowchart TB
   EN --> PERF[Performance Records]
   PERF --> DASH[Analytics + Dashboards]
 ```
+
+## Screens and Visuals
+![Command Center](docs/images/command-center.png)
+![Performance Dashboard](docs/images/performance.png)
+![Student 360](docs/images/student-360.png)
 
 ## Local Development (Quick)
 ```powershell
@@ -142,13 +149,13 @@ Local URLs:
 - `/api/activities`
 
 ## Documentation
-- [FEATURES.md](FEATURES.md)
-- [SETUP.md](SETUP.md)
-- [DEPLOYMENT.md](DEPLOYMENT.md)
+- `FEATURES.md`
+- `SETUP.md`
+- `DEPLOYMENT.md`
 
 ## License
 Academic and portfolio usage.
 
 ## Document Metadata
-- Last Updated: March 10, 2026
+- Last Updated: March 12, 2026
 - Status: Active
