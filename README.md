@@ -2,8 +2,6 @@
 
 SPID is a production-ready academic intelligence platform for managing students, faculty, subjects, performance records, and governance workflows at scale. It combines operational administration with analytics so institutions can track outcomes, intervene early, and report reliably.
 
-![SPID Overview](docs/images/overview.png)
-
 ## What This System Solves
 - Keeps student, subject, and performance data synchronized across modules.
 - Reduces manual entry with linked entities and auto-populated fields.
@@ -88,11 +86,6 @@ flowchart TB
   EN --> PERF[Performance Records]
   PERF --> DASH[Analytics + Dashboards]
 ```
-
-## Screens and Visuals
-![Command Center](docs/images/command-center.png)
-![Performance Dashboard](docs/images/performance.png)
-![Student 360](docs/images/student-360.png)
 
 ## Local Development (Quick)
 ```powershell

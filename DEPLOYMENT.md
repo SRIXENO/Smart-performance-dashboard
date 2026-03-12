@@ -1,7 +1,5 @@
 # Deployment Guide (Vercel + Render + Atlas)
 
-![Deployment Pipeline](docs/images/deployment.png)
-
 ## 1. Target Topology
 - Frontend: Vercel (`PROJECT 1`)
 - Backend: Render Web Service (`PROJECT 1/server`)

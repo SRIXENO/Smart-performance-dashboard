@@ -2,8 +2,6 @@
 
 This guide covers local development for both the Next.js frontend and the Express API.
 
-![Local Setup](docs/images/setup.png)
-
 ## 1. Prerequisites
 - Node.js 18+
 - npm 9+

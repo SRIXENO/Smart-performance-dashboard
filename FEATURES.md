@@ -2,8 +2,6 @@
 
 This document lists the functional capabilities implemented in SPID.
 
-![Features Overview](docs/images/features.png)
-
 ## 1. Authentication and Access
 - Local login with email/userId/registerNumber support
 - Google OAuth login flow
