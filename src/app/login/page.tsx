@@ -36,12 +36,33 @@ function LoginContent() {
           ? 'Account is blocked. Contact admin or faculty.'
           : '';
 
+  const ensureBackendReady = async () => {
+    try {
+      await systemAPI.getStatus();
+      return { ok: true as const };
+    } catch (err: any) {
+      const status = Number(err?.response?.status || 0);
+      if (status === 404) {
+        return { ok: false as const, message: 'Backend URL not reachable. Please verify NEXT_PUBLIC_API_URL.' };
+      }
+      if (status === 502 || status === 504) {
+        return { ok: false as const, message: 'Backend is unavailable right now. Please try again in 30-60 seconds.' };
+      }
+      return { ok: false as const, message: 'Backend is not responding yet. Please try again in 30-60 seconds.' };
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
+      const warmup = await ensureBackendReady();
+      if (!warmup.ok) {
+        setError(warmup.message);
+        return;
+      }
       await login(email, password);
       router.push('/dashboard');
     } catch (error: any) {
@@ -54,7 +75,7 @@ function LoginContent() {
       const isTimeout =
         error?.code === 'ECONNABORTED' || String(error?.message || '').toLowerCase().includes('timeout');
       const errorMessage = isServerWaking || isTimeout
-        ? 'Backend is waking up on free hosting. Please wait 10-20 seconds and try Sign In again.'
+        ? 'Backend is still starting or slow to respond. Please wait 30-60 seconds and try again.'
         : backendMessage || error.message || 'Login failed';
       setError(errorMessage);
     } finally {
