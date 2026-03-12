@@ -13,10 +13,14 @@ function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [warmupState, setWarmupState] = useState<'idle' | 'warming' | 'ready' | 'failed'>('idle');
+  const [warmupUntil, setWarmupUntil] = useState<number | null>(null);
+  const [warmupRemaining, setWarmupRemaining] = useState(0);
   const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const authError = searchParams.get('error');
+  const WARMUP_COOLDOWN_MS = 6 * 60 * 1000;
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -26,6 +30,23 @@ function LoginContent() {
     document.body.classList.add('light');
     systemAPI.warmup().catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!warmupUntil) {
+      setWarmupRemaining(0);
+      return;
+    }
+    const updateRemaining = () => {
+      const remaining = Math.max(0, warmupUntil - Date.now());
+      setWarmupRemaining(remaining);
+      if (remaining === 0) {
+        setWarmupUntil(null);
+      }
+    };
+    updateRemaining();
+    const timer = setInterval(updateRemaining, 1000);
+    return () => clearInterval(timer);
+  }, [warmupUntil]);
 
   const googleErrorMessage =
     authError === 'approval_pending'
@@ -49,6 +70,30 @@ function LoginContent() {
         return { ok: false as const, message: 'Backend is unavailable right now. Please try again in 30-60 seconds.' };
       }
       return { ok: false as const, message: 'Backend is not responding yet. Please try again in 30-60 seconds.' };
+    }
+  };
+
+  const formatCooldown = (ms: number) => {
+    const totalSeconds = Math.ceil(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  const handleWarmup = async () => {
+    if (warmupRemaining > 0) return;
+    setError('');
+    setWarmupState('warming');
+    try {
+      const result = await ensureBackendReady();
+      if (result.ok) {
+        setWarmupState('ready');
+      } else {
+        setWarmupState('failed');
+        setError(result.message);
+      }
+    } finally {
+      setWarmupUntil(Date.now() + WARMUP_COOLDOWN_MS);
     }
   };
 
@@ -148,11 +193,29 @@ function LoginContent() {
             <span className={styles.span}>Forgot password?</span>
           </div>
 
-          {(error || googleErrorMessage) && <div className={styles.errorBox}>{error || googleErrorMessage}</div>}
+      {(error || googleErrorMessage) && <div className={styles.errorBox}>{error || googleErrorMessage}</div>}
 
-          <button type="submit" className={styles.buttonSubmit} disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
+      <div className={styles.warmupRow}>
+        <button
+          type="button"
+          className={styles.warmupButton}
+          onClick={handleWarmup}
+          disabled={loading || warmupState === 'warming' || warmupRemaining > 0}
+        >
+          {warmupState === 'warming'
+            ? 'Warming backend...'
+            : warmupRemaining > 0
+              ? `Warmup available in ${formatCooldown(warmupRemaining)}`
+              : 'Warmup backend'}
+        </button>
+        <p className={styles.warmupHint}>
+          Uses a lightweight health check. Cooldown is 6 minutes.
+        </p>
+      </div>
+
+      <button type="submit" className={styles.buttonSubmit} disabled={loading}>
+        {loading ? 'Signing in...' : 'Sign In'}
+      </button>
           {loading && (
             <p className={styles.loadingHint}>If this is the first request, the backend may take 10-20 seconds to wake up.</p>
           )}

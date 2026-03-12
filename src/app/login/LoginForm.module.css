@@ -186,6 +186,43 @@
   font-size: 14px;
 }
 
+.warmupRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.warmupButton {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 10px;
+  height: 42px;
+  width: 100%;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+.warmupButton:hover {
+  border-color: #2d79f3;
+  color: #1d4ed8;
+}
+
+.warmupButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.warmupHint {
+  margin: 0;
+  color: #667085;
+  font-size: 12px;
+  text-align: center;
+}
+
 .icon {
   flex-shrink: 0;
 }
