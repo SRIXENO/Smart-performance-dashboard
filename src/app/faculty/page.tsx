@@ -89,6 +89,7 @@ export default function FacultyPage() {
   const [faculty, setFaculty] = useState<FacultyMember[]>([]);
   const [insights, setInsights] = useState<FacultyInsightsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<FacultyMember | null>(null);
@@ -118,6 +119,7 @@ export default function FacultyPage() {
 
   const loadFaculty = async () => {
     setLoading(true);
+    setError('');
     try {
       const [facultyResponse, insightsResponse] = await Promise.all([
         facultyAPI.getAll({ department: departmentFilter || undefined, search: search || undefined }),
@@ -133,6 +135,9 @@ export default function FacultyPage() {
       }
     } catch (error) {
       console.error('Failed to load faculty:', error);
+      setFaculty([]);
+      setInsights(null);
+      setError(getApiErrorMessage(error, 'Unable to load faculty records.'));
     } finally {
       setLoading(false);
     }
@@ -308,7 +313,22 @@ export default function FacultyPage() {
         </div>
       </section>
 
-      {insights && (
+      {error && (
+        <section className="rounded-2xl border border-rose-200 bg-rose-50 p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-rose-700">Load error</p>
+              <h2 className="mt-2 text-lg font-semibold text-slate-900">Faculty intelligence is temporarily unavailable</h2>
+              <p className="mt-2 text-sm text-slate-600">{error}</p>
+            </div>
+            <button onClick={loadFaculty} className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
+              Retry
+            </button>
+          </div>
+        </section>
+      )}
+
+      {insights && !error && (
         <>
           <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <InsightLeaderCard
@@ -411,7 +431,32 @@ export default function FacultyPage() {
       )}
 
       {loading ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500">Loading faculty...</div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+          <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="space-y-4">
+              {[...Array(3)].map((_, index) => (
+                <div key={index} className="rounded-2xl border border-slate-100 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-16 w-16 rounded-xl bg-slate-100" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-40 rounded bg-slate-100" />
+                      <div className="h-3 w-28 rounded bg-slate-100" />
+                      <div className="h-3 w-48 rounded bg-slate-100" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-2xl border border-slate-100 p-5">
+              <div className="h-6 w-48 rounded bg-slate-100" />
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
+                {[...Array(6)].map((_, index) => (
+                  <div key={index} className="h-24 rounded-xl bg-slate-100" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       ) : (
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-4">
@@ -447,7 +492,15 @@ export default function FacultyPage() {
                 )}
               </article>
             ))}
-            {faculty.length === 0 && <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-slate-500">No faculty found.</div>}
+            {faculty.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-sky-700">No faculty records</p>
+                <h2 className="mt-3 text-xl font-semibold text-slate-900">This workspace needs faculty profiles before ownership insights can appear.</h2>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  Seed demo data or create faculty members here to unlock subject coverage and faculty analytics.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="lg:col-span-2">
@@ -516,7 +569,7 @@ export default function FacultyPage() {
                                 <div>
                                   <p className="font-semibold text-slate-900">{subject.subjectName}</p>
                                   <p className="text-sm text-slate-500">
-                                    {[subject.subjectCode, subject.year, subject.semester].filter(Boolean).join(' • ') || 'Subject metadata unavailable'}
+                                    {[subject.subjectCode, subject.year, subject.semester].filter(Boolean).join(' - ') || 'Subject metadata unavailable'}
                                   </p>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
@@ -651,7 +704,7 @@ function SubjectLeaderRow({
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p>
           <p className="mt-1 font-semibold text-slate-900">{item?.subjectName || 'No data'}</p>
           <p className="text-sm text-slate-500">
-            {item ? [item.subjectCode, item.department, item.year, item.semester].filter(Boolean).join(' • ') : 'Waiting for performance data'}
+            {item ? [item.subjectCode, item.department, item.year, item.semester].filter(Boolean).join(' - ') : 'Waiting for performance data'}
           </p>
         </div>
         <p className="text-sm font-medium text-slate-700">{item ? meta(item) : '-'}</p>

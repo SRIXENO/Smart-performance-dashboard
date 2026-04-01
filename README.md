@@ -214,6 +214,19 @@ Notes:
 - `start_project.bat` forces the frontend to use the local backend URL to avoid stale hosted API configuration.
 - If PowerShell blocks `npm`, use the provided batch scripts or `npm.cmd`.
 
+## Demo Accounts
+
+Use the seed script for a ready-to-review dataset:
+
+```bash
+npm --prefix server run seed
+```
+
+- Admin: `admin@spid.com / admin123`
+- Faculty: `faculty@spid.com / faculty123`
+- Student: `aarya.sharma@spid.com / student123`
+- Viewer approval queue: `viewer@spid.com / viewer123`
+
 ## Verification
 
 ```bash

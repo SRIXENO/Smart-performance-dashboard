@@ -20,6 +20,7 @@ export default function Students() {
   const canEditPerformance = hasPermission(user, 'performance.edit');
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [department, setDepartment] = useState('');
   const [year, setYear] = useState('');
@@ -54,6 +55,7 @@ export default function Students() {
 
   const fetchStudents = async (page = 1) => {
     setLoading(true);
+    setError('');
     try {
       const params: any = { page, limit: 20 };
       if (search) params.search = search;
@@ -66,6 +68,8 @@ export default function Students() {
       setPagination(response.data.data.pagination);
     } catch (error) {
       logger.error('Failed to fetch students:', error);
+      setStudents([]);
+      setError(getApiErrorMessage(error, 'Unable to load students right now.'));
     } finally {
       setLoading(false);
     }
@@ -203,7 +207,34 @@ export default function Students() {
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {loading ? (
-          <div className="p-6 text-center">Loading...</div>
+          <div className="space-y-4 p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <div className="h-4 w-36 rounded bg-slate-200" />
+                <div className="h-3 w-56 rounded bg-slate-100" />
+              </div>
+              <div className="h-9 w-24 rounded bg-slate-100" />
+            </div>
+            {[...Array(5)].map((_, index) => (
+              <div key={index} className="grid grid-cols-3 gap-4 rounded-xl border border-slate-100 p-4 md:grid-cols-5">
+                <div className="h-4 rounded bg-slate-100 md:col-span-2" />
+                <div className="h-4 rounded bg-slate-100" />
+                <div className="h-4 rounded bg-slate-100" />
+                <div className="hidden h-4 rounded bg-slate-100 md:block" />
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="px-6 py-14 text-center">
+            <div className="mx-auto max-w-xl rounded-2xl border border-rose-200 bg-rose-50 px-6 py-8">
+              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-rose-700">Load error</p>
+              <h2 className="mt-3 text-xl font-semibold text-slate-900">Student records could not be loaded</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{error}</p>
+              <button onClick={() => fetchStudents(pagination.currentPage)} className="mt-5 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
+                Retry
+              </button>
+            </div>
+          </div>
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -378,12 +409,18 @@ export default function Students() {
             </div>
 
             {students.length === 0 && (
-              <div className="text-center py-12">
-                <div className="text-gray-500 mb-4">No students found</div>
+              <div className="px-6 py-14 text-center">
+                <div className="mx-auto max-w-xl rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10">
+                  <p className="text-sm font-semibold uppercase tracking-[0.25em] text-sky-700">No matching students</p>
+                  <h2 className="mt-3 text-xl font-semibold text-slate-900">The current filters did not return any student records.</h2>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    Try a broader search, switch departments, or add a new student record to prepare the demo workspace.
+                  </p>
+                </div>
                 {canManageStudents && (
                   <Link
                     href="/students/add"
-                    className="app-primary-btn"
+                    className="app-primary-btn mt-5 inline-flex"
                   >
                     Add Student
                   </Link>

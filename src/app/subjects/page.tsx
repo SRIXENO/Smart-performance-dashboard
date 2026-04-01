@@ -19,6 +19,7 @@ export default function SubjectManagement() {
   const canAssignSubjects = hasPermission(user, 'subjects.assign');
   const [subjectGroups, setSubjectGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -66,11 +67,14 @@ export default function SubjectManagement() {
   }, []);
 
   const fetchSubjectGroups = async () => {
+    setLoadError('');
     try {
       const response = await subjectsAPI.getAll();
       setSubjectGroups(response.data.data.subjectGroups);
     } catch (error) {
       console.error('Failed to fetch subject groups:', error);
+      setSubjectGroups([]);
+      setLoadError(getApiErrorMessage(error, 'Unable to load subject groups.'));
     } finally {
       setLoading(false);
     }
@@ -180,8 +184,26 @@ export default function SubjectManagement() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <div className="h-5 w-40 rounded bg-slate-200" />
+              <div className="h-3 w-72 rounded bg-slate-100" />
+            </div>
+            <div className="h-10 w-32 rounded bg-slate-100" />
+          </div>
+          {[...Array(4)].map((_, index) => (
+            <div key={index} className="rounded-2xl border border-slate-100 p-5">
+              <div className="flex flex-wrap gap-3">
+                <div className="h-8 w-48 rounded bg-slate-100" />
+                <div className="h-8 w-24 rounded bg-slate-100" />
+                <div className="h-8 w-28 rounded bg-slate-100" />
+              </div>
+              <div className="mt-4 h-4 w-56 rounded bg-slate-100" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -198,11 +220,26 @@ export default function SubjectManagement() {
             onClick={() => setShowForm(true)}
             className="app-primary-btn"
           >
-            <span>➕</span>
+            <span>+</span>
             <span>Assign Subjects</span>
           </button>
         )}
       </div>
+
+      {loadError && (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-rose-700">Load error</p>
+              <h2 className="mt-2 text-lg font-semibold text-slate-900">Subject groups could not be loaded</h2>
+              <p className="mt-2 text-sm text-slate-600">{loadError}</p>
+            </div>
+            <button onClick={fetchSubjectGroups} className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <div className="bg-white rounded-lg shadow-sm p-6">
@@ -310,7 +347,7 @@ export default function SubjectManagement() {
                             className="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
                             title="Remove subject"
                           >
-                            ✕
+                            x
                           </button>
                         </div>
                       </div>
@@ -345,8 +382,14 @@ export default function SubjectManagement() {
         </div>
         
         {subjectGroups.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            No subject groups assigned yet. Click "Assign Subjects" to create one.
+          <div className="px-6 py-14 text-center">
+            <div className="mx-auto max-w-xl rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10">
+              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-sky-700">No subject groups</p>
+              <h2 className="mt-3 text-xl font-semibold text-slate-900">The curriculum map has not been configured yet.</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Create department, year, and semester subject groups so students and faculty see a realistic academic structure.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
@@ -371,7 +414,7 @@ export default function SubjectManagement() {
                       onClick={() => toggleExpand(group._id)}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium mb-3"
                     >
-                      {expandedGroups.has(group._id) ? '▼ Hide Subjects' : '▶ Show Subjects'}
+                      {expandedGroups.has(group._id) ? 'Hide Subjects' : 'Show Subjects'}
                     </button>
 
                     {expandedGroups.has(group._id) && (
