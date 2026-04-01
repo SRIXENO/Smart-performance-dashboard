@@ -70,11 +70,11 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[linear-gradient(180deg,_#f8fbff_0%,_#edf4ff_100%)]">
-        <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6">
-          <div className="w-full max-w-xl rounded-[28px] border border-white/80 bg-white/85 p-10 text-center shadow-[0_24px_80px_rgba(15,23,42,0.10)] backdrop-blur">
+      <div className="brand-app-surface min-h-screen">
+        <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-4 py-12 sm:px-6">
+          <div className="w-full max-w-xl rounded-[28px] border border-white/80 bg-white/90 p-8 text-center shadow-[0_24px_80px_rgba(15,23,42,0.10)] backdrop-blur sm:p-10">
             <div className="mx-auto h-14 w-14 animate-pulse rounded-2xl bg-gradient-to-br from-sky-500 to-blue-700" />
-            <h1 className="mt-6 text-2xl font-semibold text-slate-900">Preparing your workspace</h1>
+            <h1 className="mt-6 text-2xl font-semibold text-slate-900 sm:text-[1.75rem]">Preparing your workspace</h1>
             <p className="mt-3 text-sm text-slate-600">
               Checking authentication and loading the Smart Performance Intelligence Dashboard experience.
             </p>
@@ -87,13 +87,14 @@ export default function Home() {
   return (
     <main className="brand-app-surface min-h-screen text-slate-900">
       <section className="relative overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-[980px] bg-[linear-gradient(180deg,_rgba(8,18,38,0.98)_0%,_rgba(15,35,84,0.97)_76%,_rgba(15,35,84,0.90)_88%,_rgba(15,35,84,0)_100%)] sm:h-[940px] lg:h-[900px] xl:h-[860px]" />
         <div className="absolute inset-0">
           <div className="absolute left-[-10%] top-[-8%] h-72 w-72 rounded-full bg-sky-400/25 blur-3xl" />
           <div className="absolute right-[-6%] top-[8%] h-80 w-80 rounded-full bg-blue-500/25 blur-3xl" />
           <div className="absolute bottom-[-16%] left-[28%] h-72 w-72 rounded-full bg-violet-400/15 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-6 pb-18 pt-8 lg:px-8 lg:pb-24">
+        <div className="relative mx-auto max-w-7xl px-6 pb-24 pt-8 lg:px-8 lg:pb-28">
           <header className="flex flex-col gap-4 rounded-[28px] border border-white/10 bg-white/6 px-5 py-5 text-white shadow-[0_18px_60px_rgba(2,6,23,0.22)] backdrop-blur md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.38em] text-sky-100">Smart Performance Intelligence Dashboard</p>
@@ -115,15 +116,15 @@ export default function Home() {
             </div>
           </header>
 
-          <div className="mt-10 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+          <div className="mt-10 grid gap-8 xl:grid-cols-[1.02fr_0.98fr] xl:items-center">
             <div className="text-white">
               <p className="inline-flex rounded-full border border-sky-200/15 bg-white/8 px-4 py-2 text-xs font-semibold uppercase tracking-[0.26em] text-sky-100">
                 Submission-ready academic platform
               </p>
-              <h1 className="mt-6 max-w-4xl text-4xl font-bold leading-[1.02] tracking-[-0.04em] text-white sm:text-5xl lg:text-7xl">
+              <h1 className="mt-6 max-w-4xl text-4xl font-bold leading-[1.02] tracking-[-0.04em] text-white drop-shadow-[0_12px_24px_rgba(2,6,23,0.28)] sm:text-5xl lg:text-6xl xl:text-[4.5rem]">
                 Academic performance, faculty oversight, and student operations in one polished system.
               </h1>
-              <p className="mt-6 max-w-2xl text-base leading-8 text-slate-200/92 sm:text-lg">
+              <p className="mt-6 max-w-2xl text-base leading-8 text-slate-100/95 drop-shadow-[0_8px_18px_rgba(2,6,23,0.18)] sm:text-lg">
                 SPID turns scattered academic records into a clear operating layer for institutions. It combines approvals,
                 subject planning, performance tracking, and risk visibility into one experience that feels cohesive in a demo.
               </p>
@@ -147,13 +148,13 @@ export default function Home() {
                 {trustStats.map((item) => (
                   <div key={item.label} className="rounded-3xl border border-white/10 bg-white/7 p-5 shadow-[0_10px_40px_rgba(2,6,23,0.14)] backdrop-blur">
                     <p className="text-3xl font-bold text-white">{item.value}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-200/82">{item.label}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-100/92">{item.label}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-[32px] border border-white/12 bg-slate-950/55 p-4 shadow-[0_30px_100px_rgba(2,6,23,0.35)] backdrop-blur">
+            <div className="rounded-[32px] border border-white/12 bg-slate-950/55 p-4 shadow-[0_30px_100px_rgba(2,6,23,0.35)] backdrop-blur xl:mt-6">
               <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,_rgba(10,15,35,0.98)_0%,_rgba(10,19,43,0.96)_100%)] p-5 text-white">
                 <div className="flex items-start justify-between gap-3">
                   <div>
