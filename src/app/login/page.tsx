@@ -77,9 +77,9 @@ function LoginContent() {
         };
       }
       if (status === 502 || status === 504) {
-        return { ok: false as const, message: 'Backend is unavailable right now. Please try again in 30-60 seconds.' };
+        return { ok: false as const, message: 'Server is waking up. Please wait 10-30 seconds and try again.' };
       }
-      return { ok: false as const, message: 'Backend is not responding yet. Please try again in 30-60 seconds.' };
+      return { ok: false as const, message: 'Server is waking up. Please wait 10-30 seconds and try again.' };
     }
   };
 
@@ -132,7 +132,7 @@ function LoginContent() {
       const errorMessage = isLocalApi
         ? 'Local backend is not available. Start it on http://localhost:5000 and try again.'
         : isServerWaking || isTimeout
-          ? 'Backend is still starting or slow to respond. Please wait 30-60 seconds and try again.'
+          ? 'Server is waking up. Please wait 10-30 seconds and try again.'
           : backendMessage || error.message || 'Login failed';
       setError(errorMessage);
     } finally {
@@ -215,17 +215,17 @@ function LoginContent() {
           disabled={loading || warmupState === 'warming' || warmupRemaining > 0}
         >
           {warmupState === 'warming'
-            ? isLocalApi ? 'Checking backend...' : 'Warming backend...'
+            ? isLocalApi ? 'Checking backend...' : 'Checking server status...'
             : warmupRemaining > 0
               ? isLocalApi
                 ? `Check available in ${formatCooldown(warmupRemaining)}`
-                : `Warmup available in ${formatCooldown(warmupRemaining)}`
-              : isLocalApi ? 'Check backend' : 'Warmup backend'}
+                : `Retry available in ${formatCooldown(warmupRemaining)}`
+              : isLocalApi ? 'Check backend' : 'Check server status'}
         </button>
         <p className={styles.warmupHint}>
           {isLocalApi
             ? 'Uses a local health check. Start the backend with .\\start_project.bat or server npm run dev.'
-            : 'Uses a lightweight health check. Cooldown is 6 minutes.'}
+            : 'Checks whether the hosted API is ready. Free hosting may need a short wake-up delay.'}
         </p>
       </div>
 
