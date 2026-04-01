@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "check": "npm run lint && npm run test:server && npm run build",
     "test:server": "npm --prefix server test",
     "test:prepush": "npm --prefix server test && npm run build",
     "prepare": "node scripts/setup-git-hooks.js"
@@ -30,6 +31,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "baseline-browser-mapping": "^2.10.13",
     "eslint": "^9",
     "eslint-config-next": "16.1.0",
     "tailwindcss": "^4",

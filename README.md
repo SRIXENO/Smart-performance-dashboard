@@ -89,11 +89,15 @@ flowchart TB
 
 ## Local Development (Quick)
 ```powershell
-Copy-Item .env.example .env
+Copy-Item .env.example .env.local
 Copy-Item server/.env.example server/.env
 .\install_all.bat
 .\start_project.bat
 ```
+
+Notes:
+- `start_project.bat` forces the frontend to use the local backend at `http://localhost:5000/api`.
+- If PowerShell blocks `npm` scripts on your machine, use the provided `.bat` scripts or run `npm.cmd`.
 
 Manual run:
 ```bash
@@ -115,7 +119,7 @@ Local URLs:
 
 ## Environment Variables
 ### Frontend (`.env.local`)
-- `NEXT_PUBLIC_API_URL` (example: `https://<render-service>.onrender.com/api`)
+- `NEXT_PUBLIC_API_URL` (local example: `http://localhost:5000/api`, deploy example: `https://<render-service>.onrender.com/api`)
 - `NEXT_PUBLIC_APP_NAME`
 
 ### Backend (`server/.env`)
@@ -145,6 +149,12 @@ Local URLs:
 - `FEATURES.md`
 - `SETUP.md`
 - `DEPLOYMENT.md`
+
+## Submission Checklist
+- Run `npm run check` from the project root.
+- Start locally with `.\start_project.bat`.
+- Confirm login, dashboard, students, subjects, faculty, and performance screens load.
+- Verify backend health at `http://localhost:5000/api/healthz`.
 
 ## License
 Academic and portfolio usage.

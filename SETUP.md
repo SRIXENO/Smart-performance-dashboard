@@ -11,7 +11,7 @@ This guide covers local development for both the Next.js frontend and the Expres
 From project root:
 
 ```powershell
-Copy-Item .env.example .env
+Copy-Item .env.example .env.local
 Copy-Item server/.env.example server/.env
 ```
 
@@ -56,6 +56,8 @@ npm run seed
 .\start_project.bat
 ```
 
+This script starts both services and forces the frontend to use the local backend URL, which avoids accidental calls to an old hosted API during development.
+
 ### Option B: Manual
 ```bash
 # terminal 1
@@ -72,7 +74,9 @@ npm run dev
 - Health: `http://localhost:5000/api/healthz`
 
 ## 7. Validation Checklist
+- [ ] `npm run lint` succeeds at root
 - [ ] `npm run build` succeeds at root
+- [ ] `npm run test:server` succeeds
 - [ ] Login works for known account
 - [ ] Students and Faculty pages load
 - [ ] Role restrictions behave as expected
@@ -86,6 +90,7 @@ npm run dev
 
 ## 9. Local Debugging Tips
 - If login hangs, verify backend health and CORS config.
+- If the browser shows backend warmup messages while running locally, confirm the frontend is using `http://localhost:5000/api`.
 - If analytics show zeros, confirm sample data exists and performance records are linked.
 - If dropdowns are empty, confirm departments/subjects exist in DB.
 
