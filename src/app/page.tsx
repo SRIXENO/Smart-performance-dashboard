@@ -87,7 +87,7 @@ export default function Home() {
   return (
     <main className="brand-app-surface min-h-screen text-slate-900">
       <section className="relative overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-[980px] bg-[linear-gradient(180deg,_rgba(8,18,38,0.98)_0%,_rgba(15,35,84,0.97)_76%,_rgba(15,35,84,0.90)_88%,_rgba(15,35,84,0)_100%)] sm:h-[940px] lg:h-[900px] xl:h-[860px]" />
+        <div className="absolute inset-x-0 top-0 h-[1120px] bg-[linear-gradient(180deg,_rgba(8,18,38,0.98)_0%,_rgba(15,35,84,0.97)_72%,_rgba(15,35,84,0.94)_88%,_rgba(15,35,84,0.82)_100%)] sm:h-[1060px] lg:h-[980px] xl:h-[900px]" />
         <div className="absolute inset-0">
           <div className="absolute left-[-10%] top-[-8%] h-72 w-72 rounded-full bg-sky-400/25 blur-3xl" />
           <div className="absolute right-[-6%] top-[8%] h-80 w-80 rounded-full bg-blue-500/25 blur-3xl" />
@@ -116,7 +116,7 @@ export default function Home() {
             </div>
           </header>
 
-          <div className="mt-10 grid gap-8 xl:grid-cols-[1.02fr_0.98fr] xl:items-center">
+          <div className="mt-10 grid gap-8 xl:grid-cols-[1.02fr_0.98fr] xl:items-start">
             <div className="text-white">
               <p className="inline-flex rounded-full border border-sky-200/15 bg-white/8 px-4 py-2 text-xs font-semibold uppercase tracking-[0.26em] text-sky-100">
                 Submission-ready academic platform
@@ -129,7 +129,7 @@ export default function Home() {
                 subject planning, performance tracking, and risk visibility into one experience that feels cohesive in a demo.
               </p>
 
-              <div className="mt-8 flex flex-wrap gap-4">
+              <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
                 <Link
                   href="/login"
                   className="rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-slate-950 shadow-[0_18px_40px_rgba(255,255,255,0.15)] transition hover:-translate-y-0.5 hover:bg-slate-100"
@@ -138,23 +138,26 @@ export default function Home() {
                 </Link>
                 <a
                   href="#product-preview"
-                  className="rounded-2xl border border-white/18 bg-white/6 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                  className="rounded-2xl border border-white/20 bg-slate-900/30 px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(2,6,23,0.18)] transition hover:bg-slate-900/40"
                 >
                   View interface preview
                 </a>
               </div>
 
-              <div className="mt-10 grid gap-4 sm:grid-cols-3">
+              <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {trustStats.map((item) => (
-                  <div key={item.label} className="rounded-3xl border border-white/10 bg-white/7 p-5 shadow-[0_10px_40px_rgba(2,6,23,0.14)] backdrop-blur">
+                  <div
+                    key={item.label}
+                    className="rounded-3xl border border-white/12 bg-slate-950/38 p-5 shadow-[0_12px_40px_rgba(2,6,23,0.18)] backdrop-blur"
+                  >
                     <p className="text-3xl font-bold text-white">{item.value}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-100/92">{item.label}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-100">{item.label}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-[32px] border border-white/12 bg-slate-950/55 p-4 shadow-[0_30px_100px_rgba(2,6,23,0.35)] backdrop-blur xl:mt-6">
+            <div className="rounded-[32px] border border-white/12 bg-slate-950/55 p-4 shadow-[0_30px_100px_rgba(2,6,23,0.35)] backdrop-blur xl:mt-6 xl:sticky xl:top-10">
               <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,_rgba(10,15,35,0.98)_0%,_rgba(10,19,43,0.96)_100%)] p-5 text-white">
                 <div className="flex items-start justify-between gap-3">
                   <div>
