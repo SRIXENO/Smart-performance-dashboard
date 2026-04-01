@@ -678,7 +678,7 @@ export default function CommandCenterDashboard() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold text-slate-900">{student.name}</p>
-                      <p className="text-sm text-slate-500">{student.studentId} â€¢ {student.department || 'No department'} â€¢ Year {student.year || 'N/A'}</p>
+                      <p className="text-sm text-slate-500">{student.studentId} | {student.department || 'No department'} | Year {student.year || 'N/A'}</p>
                     </div>
                     <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
                       {student.eligibleSubjectCount || 0} subjects
@@ -741,7 +741,7 @@ export default function CommandCenterDashboard() {
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-slate-500">
-                    {item.userName || 'System'} â€¢ attempted {item.metadata?.attemptedRows || 0} â€¢ valid {item.metadata?.validRows || 0}
+                    {item.userName || 'System'} | attempted {item.metadata?.attemptedRows || 0} | valid {item.metadata?.validRows || 0}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">{item.timestamp ? new Date(item.timestamp).toLocaleString() : 'Timestamp unavailable'}</p>
                 </div>
@@ -803,7 +803,7 @@ export default function CommandCenterDashboard() {
                       </span>
                     </div>
                     <p className="mt-2 text-sm text-slate-600">{(item.anomalyReasons || []).join(', ') || 'Suspicious login pattern detected'}</p>
-                    <p className="mt-1 text-xs text-slate-500">{new Date(item.date).toLocaleString()} â€¢ {item.role}</p>
+                    <p className="mt-1 text-xs text-slate-500">{new Date(item.date).toLocaleString()} | {item.role}</p>
                   </div>
                 ))}
               </div>
@@ -855,7 +855,7 @@ export default function CommandCenterDashboard() {
             </div>
             {baselineResult && (
               <p className="mt-3 text-sm text-slate-600">
-                Candidates: {baselineResult.candidates || 0} â€¢ Records: {baselineResult.recordsToCreate ?? baselineResult.recordsCreated ?? 0}
+                Candidates: {baselineResult.candidates || 0} | Records: {baselineResult.recordsToCreate ?? baselineResult.recordsCreated ?? 0}
               </p>
             )}
           </BulkCard>
@@ -896,7 +896,7 @@ export default function CommandCenterDashboard() {
             </button>
             {promotionResult && (
               <p className="mt-3 text-sm text-slate-600">
-                Matched: {promotionResult.matchedStudents || 0} â€¢ Promoted: {promotionResult.promoted || 0} â€¢ Graduated: {promotionResult.graduated || 0}
+                Matched: {promotionResult.matchedStudents || 0} | Promoted: {promotionResult.promoted || 0} | Graduated: {promotionResult.graduated || 0}
               </p>
             )}
           </BulkCard>
@@ -977,7 +977,7 @@ export default function CommandCenterDashboard() {
             </button>
             {statusResult && (
               <p className="mt-3 text-sm text-slate-600">
-                Matched: {statusResult.matchedStudents || 0} â€¢ Students updated: {statusResult.modifiedStudents || 0} â€¢ Login accounts updated: {statusResult.modifiedUsers || 0}
+                Matched: {statusResult.matchedStudents || 0} | Students updated: {statusResult.modifiedStudents || 0} | Login accounts updated: {statusResult.modifiedUsers || 0}
               </p>
             )}
           </BulkCard>

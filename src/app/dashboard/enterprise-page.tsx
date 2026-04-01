@@ -1,10 +1,9 @@
 'use client';
 
-import React from 'react';
 import { useEffect, useState } from 'react';
 import { dashboardAPI, aiAnalyticsAPI } from '@/lib/api';
 import EnhancedKPICard from '@/components/dashboard/EnhancedKPICard';
-import ChartCard, { MultiLineChart, StackedBarChart, GradientLineChart } from '@/components/dashboard/ChartCard';
+import ChartCard, { MultiLineChart, GradientLineChart } from '@/components/dashboard/ChartCard';
 import SmartFilter from '@/components/dashboard/SmartFilter';
 import { DashboardSkeleton } from '@/components/dashboard/SkeletonLoader';
 import { DashboardSummary } from '@/types';
@@ -168,7 +167,7 @@ export default function EnterpriseDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-lg p-6 text-white">
-        <h1 className="text-3xl font-bold mb-2">📊 Enterprise Analytics Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-2">Enterprise Analytics Dashboard</h1>
         <p className="text-blue-100">Comprehensive student performance insights powered by AI</p>
       </div>
 
@@ -186,7 +185,7 @@ export default function EnterpriseDashboard() {
         <EnhancedKPICard
           label="Total Students"
           value={summary?.totalStudents || 0}
-          icon="👥"
+          icon="TS"
           color="blue"
           subtitle="Enrolled students"
           miniChart={[45, 52, 48, 60, 58, 65]}
@@ -194,7 +193,7 @@ export default function EnterpriseDashboard() {
         <EnhancedKPICard
           label="Active Students"
           value={summary?.activeStudents || 0}
-          icon="✅"
+          icon="AC"
           color="green"
           subtitle="Currently active"
           trend="up"
@@ -202,7 +201,7 @@ export default function EnterpriseDashboard() {
         <EnhancedKPICard
           label="Average CGPA"
           value={summary?.avgCGPA?.toFixed(2) || '0.00'}
-          icon="🎓"
+          icon="CG"
           color="purple"
           subtitle="Overall performance"
           miniChart={[6.5, 6.8, 7.0, 7.2, 7.3, 7.4]}
@@ -211,7 +210,7 @@ export default function EnterpriseDashboard() {
           label="Average Attendance"
           value={`${summary?.avgAttendance || 0}%`}
           change={summary?.avgAttendanceChange}
-          icon="📊"
+          icon="AT"
           color="indigo"
           subtitle="Last 6 months"
         />
@@ -222,21 +221,21 @@ export default function EnterpriseDashboard() {
         <EnhancedKPICard
           label="Pass Percentage"
           value={`${summary?.passPercentage || 0}%`}
-          icon="✨"
+          icon="PP"
           color="green"
           trend="up"
         />
         <EnhancedKPICard
           label="Excellent Students"
           value={summary?.excellentStudents || 0}
-          icon="🏆"
+          icon="EX"
           color="yellow"
-          subtitle="CGPA ≥ 9.0"
+          subtitle="CGPA >= 9.0"
         />
         <EnhancedKPICard
           label="At-Risk Students"
           value={summary?.criticalRiskStudents || 0}
-          icon="⚠️"
+          icon="RS"
           color="red"
           alert
           subtitle="Critical risk level"
@@ -244,7 +243,7 @@ export default function EnterpriseDashboard() {
         <EnhancedKPICard
           label="Improving Students"
           value={summary?.improvingStudents || 0}
-          icon="📈"
+          icon="UP"
           color="green"
           subtitle="Positive trend"
           trend="up"
@@ -255,7 +254,7 @@ export default function EnterpriseDashboard() {
       {aiInsights && (
         <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl shadow-lg p-6 text-white">
           <div className="flex items-center space-x-3 mb-4">
-            <span className="text-3xl">🤖</span>
+            <span className="text-3xl">AI</span>
             <div>
               <h2 className="text-xl font-bold">AI-Powered Insights</h2>
               <p className="text-sm text-purple-100">Real-time intelligent analysis</p>
@@ -347,7 +346,7 @@ export default function EnterpriseDashboard() {
         {/* At-Risk Students */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">⚠️ At-Risk Students</h3>
+            <h3 className="text-lg font-semibold text-gray-900">At-Risk Students</h3>
             <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
               {atRiskStudents.length}
             </span>
@@ -368,7 +367,7 @@ export default function EnterpriseDashboard() {
             ))}
             {atRiskStudents.length === 0 && (
               <div className="text-center text-gray-500 py-8">
-                ✅ No at-risk students found
+                No at-risk students found
               </div>
             )}
           </div>
@@ -377,7 +376,7 @@ export default function EnterpriseDashboard() {
         {/* Difficult Subjects */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">📚 Most Difficult Subjects</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Most Difficult Subjects</h3>
           </div>
           <div className="space-y-3">
             {difficultSubjects.map((subject, index) => (
@@ -405,7 +404,7 @@ export default function EnterpriseDashboard() {
 
       {/* Recently Added Students */}
       <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">🆕 Recently Added Students</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recently Added Students</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {recentStudents.map((student, index) => (
             <div key={index} className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 hover:shadow-md transition-shadow">
