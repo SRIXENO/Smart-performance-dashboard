@@ -141,7 +141,7 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="brand-auth-surface min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className={styles.formShell}>
         <h2 className={styles.title}>Login to your Account</h2>
         <p className={styles.subtitle}>
@@ -273,7 +273,7 @@ export default function Login() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="brand-auth-surface min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className={styles.formShell}>
             <h2 className={styles.title}>Login to your Account</h2>
             <p className={styles.subtitle}>Loading sign-in page...</p>

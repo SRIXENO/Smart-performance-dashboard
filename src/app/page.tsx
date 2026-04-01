@@ -85,7 +85,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,_#081226_0%,_#0f2354_22%,_#edf4fb_22%,_#f8fbff_100%)] text-slate-900">
+    <main className="brand-app-surface min-h-screen text-slate-900">
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute left-[-10%] top-[-8%] h-72 w-72 rounded-full bg-sky-400/25 blur-3xl" />

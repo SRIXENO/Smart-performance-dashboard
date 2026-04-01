@@ -26,7 +26,7 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="brand-dashboard-surface min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>
       </div>
     );
@@ -38,7 +38,7 @@ export default function DashboardLayout({
 
   if (user.role === 'viewer' && user.approvalStatus !== 'approved') {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="brand-dashboard-surface min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-lg bg-white rounded-xl shadow border border-slate-200 p-6 sm:p-8">
           <h1 className="text-2xl font-bold text-slate-900">Approval Pending</h1>
           <p className="mt-3 text-slate-600">
@@ -54,7 +54,7 @@ export default function DashboardLayout({
 
   if (isFocusMode) {
     return (
-      <div className="dashboard-font relative min-h-screen dashboard-surface dashboard-pattern">
+      <div className="dashboard-font relative min-h-screen brand-dashboard-surface dashboard-pattern">
         <ParallaxBackdrop />
         <main className="relative min-h-screen overflow-x-auto overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="w-full max-w-[1400px] mx-auto min-w-0">
@@ -66,7 +66,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="dashboard-font relative flex min-h-screen dashboard-surface dashboard-pattern">
+    <div className="dashboard-font relative flex min-h-screen brand-dashboard-surface dashboard-pattern">
       <ParallaxBackdrop />
       <Sidebar isOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
       <div className="relative flex-1 flex flex-col min-w-0">
