@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -20,6 +20,8 @@ function LoginContent() {
   const [warmupState, setWarmupState] = useState<'idle' | 'warming' | 'ready' | 'failed'>('idle');
   const [warmupUntil, setWarmupUntil] = useState<number | null>(null);
   const [warmupRemaining, setWarmupRemaining] = useState(0);
+  const [pendingAutoLogin, setPendingAutoLogin] = useState<{ email: string; password: string } | null>(null);
+  const autoRetryInFlight = useRef(false);
   const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -51,6 +53,32 @@ function LoginContent() {
     const timer = setInterval(updateRemaining, 1000);
     return () => clearInterval(timer);
   }, [warmupUntil]);
+
+  useEffect(() => {
+    if (isLocalApi || !pendingAutoLogin || warmupState !== 'warming') return;
+
+    const pollServer = async () => {
+      if (autoRetryInFlight.current) return;
+      autoRetryInFlight.current = true;
+
+      try {
+        await systemAPI.getStatus();
+        setWarmupState('ready');
+        setError('Server is ready. Signing you in now...');
+        await login(pendingAutoLogin.email, pendingAutoLogin.password);
+        setPendingAutoLogin(null);
+        router.push('/dashboard');
+      } catch {
+        setError('Server is still waking up. We will retry automatically.');
+      } finally {
+        autoRetryInFlight.current = false;
+      }
+    };
+
+    const timer = setInterval(pollServer, 4000);
+    void pollServer();
+    return () => clearInterval(timer);
+  }, [isLocalApi, login, pendingAutoLogin, router, warmupState]);
 
   const googleErrorMessage =
     authError === 'approval_pending'
@@ -91,34 +119,46 @@ function LoginContent() {
   };
 
   const handleWarmup = async () => {
-    if (warmupRemaining > 0) return;
+    if (warmupRemaining > 0 || autoRetryInFlight.current) return;
     setError('');
     setWarmupState('warming');
     try {
       const result = await ensureBackendReady();
       if (result.ok) {
         setWarmupState('ready');
+        if (!isLocalApi) {
+          setError('Server is ready. You can sign in now.');
+        }
       } else {
         setWarmupState('failed');
-        setError(result.message);
+        setError(isLocalApi ? result.message : 'Server is still waking up. We will keep checking automatically.');
       }
     } finally {
-      setWarmupUntil(Date.now() + WARMUP_COOLDOWN_MS);
+      if (isLocalApi) {
+        setWarmupUntil(Date.now() + WARMUP_COOLDOWN_MS);
+      }
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitLogin = async (nextEmail: string, nextPassword: string, options?: { autoRetry?: boolean }) => {
     setError('');
     setLoading(true);
 
     try {
       const warmup = await ensureBackendReady();
       if (!warmup.ok) {
+        if (!isLocalApi && options?.autoRetry !== false) {
+          setPendingAutoLogin({ email: nextEmail, password: nextPassword });
+          setWarmupState('warming');
+          setError('Server is waking up. We will retry automatically when it is ready.');
+          return;
+        }
         setError(warmup.message);
         return;
       }
-      await login(email, password);
+      setPendingAutoLogin(null);
+      setWarmupState('ready');
+      await login(nextEmail, nextPassword);
       router.push('/dashboard');
     } catch (error: any) {
       const backendMessage = String(error?.response?.data?.error || '');
@@ -132,12 +172,23 @@ function LoginContent() {
       const errorMessage = isLocalApi
         ? 'Local backend is not available. Start it on http://localhost:5000 and try again.'
         : isServerWaking || isTimeout
-          ? 'Server is waking up. Please wait 10-30 seconds and try again.'
+          ? options?.autoRetry !== false
+            ? 'Server is waking up. We will retry automatically when it is ready.'
+            : 'Server is waking up. Please wait 10-30 seconds and try again.'
           : backendMessage || error.message || 'Login failed';
+      if (!isLocalApi && (isServerWaking || isTimeout) && options?.autoRetry !== false) {
+        setPendingAutoLogin({ email: nextEmail, password: nextPassword });
+        setWarmupState('warming');
+      }
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitLogin(email, password, { autoRetry: true });
   };
 
   return (
@@ -212,10 +263,10 @@ function LoginContent() {
           type="button"
           className={styles.warmupButton}
           onClick={handleWarmup}
-          disabled={loading || warmupState === 'warming' || warmupRemaining > 0}
+          disabled={loading || autoRetryInFlight.current || (isLocalApi && (warmupState === 'warming' || warmupRemaining > 0))}
         >
           {warmupState === 'warming'
-            ? isLocalApi ? 'Checking backend...' : 'Checking server status...'
+            ? isLocalApi ? 'Checking backend...' : 'Monitoring server status...'
             : warmupRemaining > 0
               ? isLocalApi
                 ? `Check available in ${formatCooldown(warmupRemaining)}`
@@ -225,7 +276,9 @@ function LoginContent() {
         <p className={styles.warmupHint}>
           {isLocalApi
             ? 'Uses a local health check. Start the backend with .\\start_project.bat or server npm run dev.'
-            : 'Checks whether the hosted API is ready. Free hosting may need a short wake-up delay.'}
+            : pendingAutoLogin
+              ? 'Checks whether the hosted API is ready and will retry sign-in automatically when the service wakes up.'
+              : 'Checks whether the hosted API is ready. Free hosting may need a short wake-up delay.'}
         </p>
       </div>
 
