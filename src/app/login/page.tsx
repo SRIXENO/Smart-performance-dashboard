@@ -4,8 +4,12 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { GOOGLE_AUTH_URL, systemAPI } from '@/lib/api';
+import { API_BASE_URL, GOOGLE_AUTH_URL, systemAPI } from '@/lib/api';
 import styles from './LoginForm.module.css';
+
+const isLocalApi =
+  API_BASE_URL.includes('localhost') ||
+  API_BASE_URL.includes('127.0.0.1');
 
 function LoginContent() {
   const [email, setEmail] = useState('');
@@ -66,6 +70,12 @@ function LoginContent() {
       if (status === 404) {
         return { ok: false as const, message: 'Backend URL not reachable. Please verify NEXT_PUBLIC_API_URL.' };
       }
+      if (isLocalApi) {
+        return {
+          ok: false as const,
+          message: 'Local backend is not running on http://localhost:5000. Start the backend and try again.',
+        };
+      }
       if (status === 502 || status === 504) {
         return { ok: false as const, message: 'Backend is unavailable right now. Please try again in 30-60 seconds.' };
       }
@@ -119,9 +129,11 @@ function LoginContent() {
         backendMessageLower.includes('waking up');
       const isTimeout =
         error?.code === 'ECONNABORTED' || String(error?.message || '').toLowerCase().includes('timeout');
-      const errorMessage = isServerWaking || isTimeout
-        ? 'Backend is still starting or slow to respond. Please wait 30-60 seconds and try again.'
-        : backendMessage || error.message || 'Login failed';
+      const errorMessage = isLocalApi
+        ? 'Local backend is not available. Start it on http://localhost:5000 and try again.'
+        : isServerWaking || isTimeout
+          ? 'Backend is still starting or slow to respond. Please wait 30-60 seconds and try again.'
+          : backendMessage || error.message || 'Login failed';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -203,13 +215,17 @@ function LoginContent() {
           disabled={loading || warmupState === 'warming' || warmupRemaining > 0}
         >
           {warmupState === 'warming'
-            ? 'Warming backend...'
+            ? isLocalApi ? 'Checking backend...' : 'Warming backend...'
             : warmupRemaining > 0
-              ? `Warmup available in ${formatCooldown(warmupRemaining)}`
-              : 'Warmup backend'}
+              ? isLocalApi
+                ? `Check available in ${formatCooldown(warmupRemaining)}`
+                : `Warmup available in ${formatCooldown(warmupRemaining)}`
+              : isLocalApi ? 'Check backend' : 'Warmup backend'}
         </button>
         <p className={styles.warmupHint}>
-          Uses a lightweight health check. Cooldown is 6 minutes.
+          {isLocalApi
+            ? 'Uses a local health check. Start the backend with .\\start_project.bat or server npm run dev.'
+            : 'Uses a lightweight health check. Cooldown is 6 minutes.'}
         </p>
       </div>
 
