@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const capabilityCards = [
   {
@@ -52,6 +52,33 @@ const previewCards = [
   },
 ];
 
+const storySteps = [
+  {
+    eyebrow: 'Signal intake',
+    title: 'Capture governance and academic movement in one feed',
+    description:
+      'Approvals, student changes, faculty ownership, subject planning, and risk signals move through one operational stream instead of disconnected screens.',
+    metric: '12 live signals',
+    detail: 'Approvals, imports, health, performance drift',
+  },
+  {
+    eyebrow: 'Context layering',
+    title: 'Surface the next action with spatial context',
+    description:
+      'Each layer adds operational meaning: who owns the issue, what changed, which student groups are affected, and where the team should intervene next.',
+    metric: '3 context layers',
+    detail: 'Operations, analytics, intervention',
+  },
+  {
+    eyebrow: 'Collaborative review',
+    title: 'Make cross-team decisions feel coordinated',
+    description:
+      'Admins, faculty, and reviewers align around the same signals with motion that suggests handoff, validation, and shared visibility rather than decorative effects.',
+    metric: '4 role lanes',
+    detail: 'Admin, faculty, student, reviewer',
+  },
+];
+
 const trustStats = [
   { value: '4', label: 'role types supported' },
   { value: '10+', label: 'academic workflows covered' },
@@ -61,12 +88,49 @@ const trustStats = [
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [activeStoryStep, setActiveStoryStep] = useState(0);
+  const [heroOffset, setHeroOffset] = useState(0);
 
   useEffect(() => {
     if (!loading && user) {
       router.replace('/dashboard');
     }
   }, [loading, router, user]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setHeroOffset(Math.min(window.scrollY * 0.08, 28));
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const steps = Array.from(document.querySelectorAll<HTMLElement>('[data-story-step]'));
+    if (!steps.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!visible) return;
+
+        const target = visible.target as HTMLElement;
+        const nextStep = Number(target.dataset.storyStep || 0);
+        setActiveStoryStep(nextStep);
+      },
+      {
+        threshold: [0.35, 0.55, 0.75],
+        rootMargin: '-15% 0px -20% 0px',
+      }
+    );
+
+    steps.forEach((step) => observer.observe(step));
+    return () => observer.disconnect();
+  }, []);
 
   if (loading) {
     return (
@@ -88,7 +152,10 @@ export default function Home() {
     <main className="brand-app-surface min-h-screen text-slate-900">
       <section className="relative overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-[1120px] bg-[linear-gradient(180deg,_rgba(8,18,38,0.98)_0%,_rgba(15,35,84,0.97)_72%,_rgba(15,35,84,0.94)_88%,_rgba(15,35,84,0.82)_100%)] sm:h-[1060px] lg:h-[980px] xl:h-[900px]" />
-        <div className="absolute inset-0">
+        <div
+          className="absolute inset-0 will-change-transform"
+          style={{ transform: `translateY(${heroOffset}px)` }}
+        >
           <div className="absolute left-[-10%] top-[-8%] h-72 w-72 rounded-full bg-sky-400/25 blur-3xl" />
           <div className="absolute right-[-6%] top-[8%] h-80 w-80 rounded-full bg-blue-500/25 blur-3xl" />
           <div className="absolute bottom-[-16%] left-[28%] h-72 w-72 rounded-full bg-violet-400/15 blur-3xl" />
@@ -220,6 +287,129 @@ export default function Home() {
               <p className="mt-4 text-base leading-8 text-slate-600">{card.description}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8 lg:py-12">
+        <div className="rounded-[28px] border border-slate-200/90 bg-[linear-gradient(180deg,_rgba(255,255,255,0.92)_0%,_rgba(240,247,255,0.95)_100%)] p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700 sm:text-xs sm:tracking-[0.3em]">
+                Scrollytelling system
+              </p>
+              <h2 className="mt-3 text-2xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">
+                A narrative layer that feels like enterprise software
+              </h2>
+              <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
+                This section uses motion as product communication: progressive context, spatial layering, and collaborative signals that
+                make the platform feel sophisticated without feeling theatrical.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-sky-100 bg-white/90 px-4 py-3 text-sm text-slate-600 shadow-sm">
+              Motion style: restrained, data-first, reviewer-safe
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+            <div className="lg:sticky lg:top-8">
+              <div className="story-visual-shell rounded-[30px] border border-slate-900/10 bg-[linear-gradient(180deg,_#071124_0%,_#0c1b3b_54%,_#14295b_100%)] p-5 text-white shadow-[0_28px_80px_rgba(15,23,42,0.24)] sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-sky-200">Interactive scene</p>
+                    <h3 className="mt-3 text-2xl font-semibold leading-tight sm:text-3xl">
+                      {storySteps[activeStoryStep].title}
+                    </h3>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/8 px-4 py-3 text-right">
+                    <p className="text-xs text-slate-300">Active metric</p>
+                    <p className="mt-1 text-base font-semibold text-white">{storySteps[activeStoryStep].metric}</p>
+                  </div>
+                </div>
+
+                <div className="story-visual-stage mt-8 rounded-[26px] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.16),_transparent_34%),linear-gradient(180deg,_rgba(255,255,255,0.04)_0%,_rgba(255,255,255,0.02)_100%)] p-4 sm:p-5">
+                  <div className="story-grid">
+                    <div className={`story-node ${activeStoryStep === 0 ? 'story-node-active' : ''}`}>
+                      <span>Signals</span>
+                    </div>
+                    <div className={`story-node ${activeStoryStep === 1 ? 'story-node-active' : ''}`}>
+                      <span>Context</span>
+                    </div>
+                    <div className={`story-node ${activeStoryStep === 2 ? 'story-node-active' : ''}`}>
+                      <span>Review</span>
+                    </div>
+                    <div className="story-node story-node-secondary">
+                      <span>Faculty</span>
+                    </div>
+                    <div className="story-node story-node-secondary">
+                      <span>Ops</span>
+                    </div>
+                    <div className="story-node story-node-secondary">
+                      <span>Risk</span>
+                    </div>
+                  </div>
+
+                  <div className="story-beam story-beam-one" />
+                  <div className="story-beam story-beam-two" />
+                  <div className="story-beam story-beam-three" />
+
+                  <div className="story-holo mt-6 rounded-[24px] border border-sky-200/10 bg-slate-950/35 p-4 backdrop-blur sm:p-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.26em] text-sky-200">{storySteps[activeStoryStep].eyebrow}</p>
+                        <p className="mt-2 text-lg font-semibold text-white">{storySteps[activeStoryStep].detail}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="story-pill">Admin lane</span>
+                        <span className="story-pill">Faculty lane</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-white/8 bg-white/6 p-4">
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-300">Latency</p>
+                        <p className="mt-2 text-2xl font-semibold text-white">Live</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/8 bg-white/6 p-4">
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-300">Coordination</p>
+                        <p className="mt-2 text-2xl font-semibold text-white">Shared</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/8 bg-white/6 p-4">
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-300">Motion</p>
+                        <p className="mt-2 text-2xl font-semibold text-white">Spatial</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {storySteps.map((step, index) => (
+                <article
+                  key={step.title}
+                  data-story-step={index}
+                  className={`rounded-[28px] border p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition duration-300 sm:p-7 ${
+                    activeStoryStep === index
+                      ? 'border-sky-200 bg-white shadow-[0_22px_60px_rgba(37,99,235,0.10)]'
+                      : 'border-slate-200 bg-white/85'
+                  }`}
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-700 sm:text-xs sm:tracking-[0.3em]">
+                        {step.eyebrow}
+                      </p>
+                      <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-slate-950">{step.title}</h3>
+                      <p className="mt-4 text-base leading-8 text-slate-600">{step.description}</p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                      {step.metric}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
