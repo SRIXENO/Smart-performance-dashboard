@@ -94,22 +94,26 @@ export default function Home() {
           <div className="absolute bottom-[-16%] left-[28%] h-72 w-72 rounded-full bg-violet-400/15 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-6 pb-24 pt-8 lg:px-8 lg:pb-28">
-          <header className="flex flex-col gap-4 rounded-[28px] border border-white/10 bg-white/6 px-5 py-5 text-white shadow-[0_18px_60px_rgba(2,6,23,0.22)] backdrop-blur md:flex-row md:items-center md:justify-between">
+        <div className="relative mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 sm:pb-24 sm:pt-8 lg:px-8 lg:pb-28">
+          <header className="flex flex-col gap-4 rounded-[24px] border border-white/10 bg-white/6 px-4 py-4 text-white shadow-[0_18px_60px_rgba(2,6,23,0.22)] backdrop-blur sm:rounded-[28px] sm:px-5 sm:py-5 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.38em] text-sky-100">Smart Performance Intelligence Dashboard</p>
-              <p className="mt-2 text-sm text-slate-200/90">Academic operations, governance, and analytics in one product.</p>
+              <p className="max-w-[16rem] text-[11px] font-semibold uppercase leading-5 tracking-[0.28em] text-sky-100 sm:max-w-none sm:text-xs sm:tracking-[0.38em]">
+                Smart Performance Intelligence Dashboard
+              </p>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-200/90 sm:text-[1.05rem]">
+                Academic operations, governance, and analytics in one product.
+              </p>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
                 href="/login"
-                className="rounded-full border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/10"
+                className="rounded-full border border-white/20 bg-white/5 px-5 py-3 text-center text-sm font-medium text-white transition hover:bg-white/10 sm:px-6 sm:py-2.5"
               >
                 Sign in
               </Link>
               <Link
                 href="/register"
-                className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+                className="rounded-full bg-white px-5 py-3 text-center text-sm font-semibold text-slate-950 transition hover:bg-slate-100 sm:px-6 sm:py-2.5"
               >
                 Request access
               </Link>
@@ -118,13 +122,13 @@ export default function Home() {
 
           <div className="mt-10 grid gap-8 xl:grid-cols-[1.02fr_0.98fr] xl:items-start">
             <div className="text-white">
-              <p className="inline-flex rounded-full border border-sky-200/15 bg-white/8 px-4 py-2 text-xs font-semibold uppercase tracking-[0.26em] text-sky-100">
+              <p className="inline-flex max-w-full rounded-full border border-sky-200/15 bg-white/8 px-4 py-2 text-[11px] font-semibold uppercase leading-5 tracking-[0.22em] text-sky-100 sm:text-xs sm:tracking-[0.26em]">
                 Submission-ready academic platform
               </p>
-              <h1 className="mt-6 max-w-4xl text-4xl font-bold leading-[1.02] tracking-[-0.04em] text-white drop-shadow-[0_12px_24px_rgba(2,6,23,0.28)] sm:text-5xl lg:text-6xl xl:text-[4.5rem]">
+              <h1 className="mt-6 max-w-4xl text-[2.45rem] font-bold leading-[0.98] tracking-[-0.05em] text-white drop-shadow-[0_12px_24px_rgba(2,6,23,0.28)] sm:text-5xl lg:text-6xl xl:text-[4.5rem]">
                 Academic performance, faculty oversight, and student operations in one polished system.
               </h1>
-              <p className="mt-6 max-w-2xl text-base leading-8 text-slate-100/95 drop-shadow-[0_8px_18px_rgba(2,6,23,0.18)] sm:text-lg">
+              <p className="mt-6 max-w-2xl text-base leading-8 text-slate-100/95 drop-shadow-[0_8px_18px_rgba(2,6,23,0.18)] sm:text-lg sm:leading-8">
                 SPID turns scattered academic records into a clear operating layer for institutions. It combines approvals,
                 subject planning, performance tracking, and risk visibility into one experience that feels cohesive in a demo.
               </p>
@@ -132,13 +136,13 @@ export default function Home() {
               <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
                 <Link
                   href="/login"
-                  className="rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-slate-950 shadow-[0_18px_40px_rgba(255,255,255,0.15)] transition hover:-translate-y-0.5 hover:bg-slate-100"
+                  className="rounded-2xl bg-white px-6 py-3 text-center text-sm font-semibold text-slate-950 shadow-[0_18px_40px_rgba(255,255,255,0.15)] transition hover:-translate-y-0.5 hover:bg-slate-100 sm:min-w-[12rem]"
                 >
                   Explore the product
                 </Link>
                 <a
                   href="#product-preview"
-                  className="rounded-2xl border border-white/20 bg-slate-900/30 px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(2,6,23,0.18)] transition hover:bg-slate-900/40"
+                  className="rounded-2xl border border-white/20 bg-slate-900/30 px-6 py-3 text-center text-sm font-semibold text-white shadow-[0_18px_40px_rgba(2,6,23,0.18)] transition hover:bg-slate-900/40 sm:min-w-[12rem]"
                 >
                   View interface preview
                 </a>
@@ -157,14 +161,14 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="rounded-[32px] border border-white/12 bg-slate-950/55 p-4 shadow-[0_30px_100px_rgba(2,6,23,0.35)] backdrop-blur xl:mt-6 xl:sticky xl:top-10">
-              <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,_rgba(10,15,35,0.98)_0%,_rgba(10,19,43,0.96)_100%)] p-5 text-white">
-                <div className="flex items-start justify-between gap-3">
+            <div className="rounded-[28px] border border-white/12 bg-slate-950/55 p-3 shadow-[0_30px_100px_rgba(2,6,23,0.35)] backdrop-blur sm:rounded-[32px] sm:p-4 xl:mt-6 xl:sticky xl:top-10">
+              <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,_rgba(10,15,35,0.98)_0%,_rgba(10,19,43,0.96)_100%)] p-4 text-white sm:rounded-[28px] sm:p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.32em] text-sky-200">Platform snapshot</p>
-                    <h2 className="mt-3 text-3xl font-semibold leading-tight">Built for review, demo, and discussion</h2>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-200 sm:text-xs sm:tracking-[0.32em]">Platform snapshot</p>
+                    <h2 className="mt-3 text-2xl font-semibold leading-tight sm:text-3xl">Built for review, demo, and discussion</h2>
                   </div>
-                  <div className="rounded-2xl border border-white/8 bg-white/8 px-4 py-3 text-right">
+                  <div className="w-fit rounded-2xl border border-white/8 bg-white/8 px-4 py-3 text-left sm:text-right">
                     <p className="text-xs text-slate-300">Focus</p>
                     <p className="mt-1 text-base font-semibold">Operations + analytics</p>
                   </div>
@@ -192,11 +196,11 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-20">
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
         <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-700">Core capabilities</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">What makes the product feel complete</h2>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700 sm:text-xs sm:tracking-[0.3em]">Core capabilities</p>
+            <h2 className="mt-3 text-2xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">What makes the product feel complete</h2>
           </div>
           <p className="max-w-2xl text-sm leading-7 text-slate-600">
             The landing page now leads with product value, then backs it up with clear workflows, seeded data, and interface evidence.
@@ -219,11 +223,11 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="product-preview" className="mx-auto max-w-7xl px-6 pb-20 lg:px-8 lg:pb-24">
+      <section id="product-preview" className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 sm:pb-20 lg:px-8 lg:pb-24">
         <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-700">Interface preview</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">A stronger first impression for reviewers</h2>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700 sm:text-xs sm:tracking-[0.3em]">Interface preview</p>
+            <h2 className="mt-3 text-2xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">A stronger first impression for reviewers</h2>
             <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
               Reviewers should immediately see a presentable product story, seeded operational data, and screens that look ready for discussion.
             </p>
