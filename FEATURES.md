@@ -1,91 +1,181 @@
 # Features Catalog
 
-This document lists the functional capabilities implemented in SPID.
+This document describes the functional and product-facing capability set of SPID in a way that is useful for reviewers, recruiters, and engineering collaborators.
 
-## 1. Authentication and Access
-- Local login with email/userId/registerNumber support
-- Google OAuth login flow
-- JWT-based auth with cookie support
-- Role-based route enforcement via middleware
-- Blocked account prevention at login
-- Pending approval prevention for unapproved viewer accounts
+## Capability Map
 
-## 2. Account Approval Workflow (Admin)
-- New signups are created as `viewer` + `pending`
-- Admin can open `New Approvals` and approve or reject
-- Approved users can proceed with normal login
-- Rejected users are denied login
+```mermaid
+mindmap
+  root((SPID))
+    Authentication
+      Local Login
+      Google OAuth
+      Role-Based Access
+    Operations
+      Students
+      Faculty
+      Subjects
+      Performance
+    Intelligence
+      KPI Dashboards
+      Risk Signals
+      Trends
+      Comparisons
+    Governance
+      Approvals
+      Login History
+      Activity Logs
+    Reporting
+      Imports
+      Exports
+```
 
-## 3. Student Management
-- Student create/read/update/delete
-- Search and filter by department/year/status
-- Block/unblock actions (admin + faculty)
-- Student detail pages with tabs and analytics
-- Student password reset from edit flow (admin + faculty)
+## Functional Overview By Domain
 
-## 4. Student 360 Hub
-- Overview, Trends, Risk, Attendance, Advisor Notes tabs
-- Risk timeline chart and intervention checklist
-- Focus mode for student-only analytics
+### 1. Authentication and Access Control
 
-## 5. Faculty Management
-- Faculty list/create/update/delete (admin-only modifications)
-- Faculty profile metadata (designation, bio, expertise, photo)
-- Faculty status handling (`active`/`blocked`)
-- Faculty password change/update available only to admin
-- Faculty-level insights (fail rate, improvement, risk)
+- Local login with email, user ID, and register-number oriented handling
+- Google OAuth integration
+- JWT-based auth with refresh/session handling
+- Role-based permissions enforced in backend middleware
+- Account blocking and pending-approval restrictions
 
-## 6. Subject Management
-- Subject assignment by department, year, and semester
-- Subject group updates/deletions
-- Student subject mapping by department/year
+### 2. Admin Approval Workflow
 
-## 7. Performance and Analytics
-- Performance record CRUD (admin-controlled writes)
-- Student intelligence dashboard (filters, KPIs, charts)
-- Department and cohort analytics
-- Risk indicators and “students without performance” queue
+- New viewers enter the system in a pending state
+- Admin can review pending access requests
+- Admin can approve or reject requests
+- Unapproved users are prevented from gaining operational access
 
-## 8. Command Center Dashboard
-- Actionable cards for approvals and risk queues
-- Urgent queue ranked by risk trend score
-- Quick access to critical data gaps and follow-ups
+### 3. Student Management
 
-## 9. Governance and Audit
-- Login history page (admin)
-- Activity log tracking for auth and key admin actions
+- Create, view, edit, and delete student records
+- Filter by department, year, semester, and status
+- Navigate from student list to profile and analytics views
+- Manage lifecycle state transitions such as active/inactive/suspended
 
-## 10. Reliability and Data Integrity
-- Cascade deletion for student and faculty cleanup
-- Transaction-based cleanup of linked records
-- Backend validations for password and role-sensitive operations
+### 4. Student Intelligence Views
 
-## 11. UX and Accessibility
-- Responsive dashboard shell and pages
-- Custom dropdown with keyboard + ARIA behavior
-- Confirmation modals for destructive/sensitive actions
-- Consistent button system and semantic color palette
+- Student profile overview
+- Analytics and trend views
+- Attendance and academic summaries
+- Risk-focused context for intervention workflows
 
-## 12. Reporting and Export
-- CSV/PDF exports for performance and analytics tables
-- Filtered exports by department, semester, and date range
+### 5. Faculty Management
 
-## 13. Workflows
-### Student Lifecycle
+- Faculty list and lifecycle management
+- Designation, bio, expertise, and profile metadata
+- Faculty-level operational insights
+- Admin-controlled create/update/delete flow
+
+### 6. Subject Management
+
+- Subject definitions and grouped assignment models
+- Department/year/semester-based subject mapping
+- Student-subject linking through operational workflows
+
+### 7. Performance Management
+
+- Performance record creation and updates
+- Marks, grade, attendance, and semester handling
+- Missing-performance views and remediation workflows
+- Dashboard consumption of performance aggregates
+
+### 8. Dashboard and Analytics
+
+- KPI cards for operational metrics
+- Performance trends and distribution charts
+- Department comparisons
+- Attendance/performance correlation views
+- Student and institution-level analytics screens
+
+### 9. Command Center
+
+- Pending approvals queue
+- Weak-department visibility
+- Missing performance visibility
+- Import issue alerts
+- Recent anomalies and urgent action queues
+
+### 10. Governance and Audit
+
+- Login history screen
+- Activity timeline
+- Administrative action traceability
+- Security-relevant operational visibility
+
+### 11. Data Import and Export
+
+- Import-preview workflows
+- Commit flows for data updates
+- Export support for filtered reporting use cases
+
+## User Journey Summary
+
+### Admin Journey
+
+```mermaid
+journey
+  title Admin Operations Flow
+  section Access
+    Login: 5: Admin
+    Review Dashboard Alerts: 5: Admin
+  section Governance
+    Approve Accounts: 5: Admin
+    Review Login History: 4: Admin
+  section Operations
+    Manage Students: 5: Admin
+    Review Performance Gaps: 5: Admin
+    Export Reports: 4: Admin
+```
+
+### Faculty Journey
+
+```mermaid
+journey
+  title Faculty Academic Workflow
+  section Access
+    Login: 5: Faculty
+  section Work
+    View Students: 5: Faculty
+    Check Subject Mapping: 4: Faculty
+    Enter Performance: 5: Faculty
+    Review Analytics: 4: Faculty
+```
+
+### Student Journey
+
+```mermaid
+journey
+  title Student Insight Workflow
+  section Access
+    Login: 5: Student
+  section Visibility
+    View Dashboard: 4: Student
+    Review Performance Trends: 4: Student
+    Track Academic Progress: 5: Student
+```
+
+## Operational Flow Examples
+
+### Student Creation
+
 ```mermaid
 sequenceDiagram
   participant Admin
   participant UI
   participant API
   participant DB
-  Admin->>UI: Create/Update Student
-  UI->>API: POST /students
-  API->>DB: Save student + login
-  API-->>UI: Student created
+  Admin->>UI: Submit student form
+  UI->>API: POST /api/students
+  API->>DB: Create student + linked user record
+  DB-->>API: Persisted entity
+  API-->>UI: Success payload
   UI-->>Admin: Confirmation
 ```
 
 ### Performance Entry
+
 ```mermaid
 sequenceDiagram
   participant Faculty
@@ -93,15 +183,46 @@ sequenceDiagram
   participant API
   participant DB
   Faculty->>UI: Select student
-  UI->>API: GET /students/{id}/profile + /subjects
-  API->>DB: Load student + eligible subjects
-  API-->>UI: Prefill form
-  Faculty->>UI: Submit marks/attendance
-  UI->>API: POST /performance
-  API->>DB: Save record + update analytics
-  API-->>UI: Success response
+  UI->>API: Fetch student and subjects
+  API->>DB: Read linked records
+  API-->>UI: Prefill eligible inputs
+  Faculty->>UI: Submit marks + attendance
+  UI->>API: POST /api/performance
+  API->>DB: Save performance record
+  API-->>UI: Response with saved data
 ```
 
+## API Domain Map
+
+| Domain | Route Base | Purpose |
+|---|---|---|
+| Auth | `/api/auth` | login, register, refresh, approvals |
+| Students | `/api/students` | student lifecycle and profiles |
+| Faculty | `/api/faculty` | faculty lifecycle and insights |
+| Subjects | `/api/subjects` | subject assignment and mapping |
+| Performance | `/api/performance` | marks, attendance, records |
+| Dashboard | `/api/dashboard` | KPIs, charts, summaries |
+| Academic | `/api/academic` | SGPA/CGPA and academic records |
+| AI Analytics | `/api/ai-analytics` | risk and insight endpoints |
+| Activities | `/api/activities` | logs, timelines, login history |
+| Import | `/api/import` | data preview and commit workflows |
+
+## Non-Functional Strengths
+
+- Consistent route segmentation by domain
+- Local startup scripts for quick onboarding
+- Centralized API client usage on frontend
+- Audit and governance features uncommon in student projects
+- Test/build/lint workflow already integrated
+
+## Reviewer Talking Points
+
+- This is a multi-role system, not a single-role dashboard
+- The project includes both operational control and analytical insight
+- Governance features make it feel closer to a real internal enterprise tool
+- The documentation, diagrams, and validation workflow indicate project maturity
+
 ## Document Metadata
-- Last Updated: March 12, 2026
+
+- Last Updated: April 1, 2026
 - Status: Active

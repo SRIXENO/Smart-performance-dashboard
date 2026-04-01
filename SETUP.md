@@ -1,107 +1,208 @@
 # Setup Guide
 
-This guide covers local development for both the Next.js frontend and the Express API.
+This guide is the fastest way to get SPID running locally with a clean, repeatable workflow.
+
+## Local Development Architecture
+
+```mermaid
+flowchart LR
+  Browser --> Frontend[Next.js on :3000]
+  Frontend --> Backend[Express API on :5000/api]
+  Backend --> Mongo[(MongoDB Atlas)]
+```
 
 ## 1. Prerequisites
+
 - Node.js 18+
 - npm 9+
-- MongoDB Atlas cluster and connection string
+- MongoDB Atlas connection string
+- Windows environment for `.bat` workflow, or terminal access for manual run
 
-## 2. Environment Files
-From project root:
+## 2. Environment Setup
+
+Create local environment files:
 
 ```powershell
 Copy-Item .env.example .env.local
 Copy-Item server/.env.example server/.env
 ```
 
-### Frontend variables (`.env.local`)
-- `NEXT_PUBLIC_API_URL`
-- `NEXT_PUBLIC_APP_NAME`
+### Frontend Variables
 
-### Backend variables (`server/.env`)
-- `PORT`
-- `NODE_ENV`
-- `MONGODB_URI`
-- `JWT_SECRET`
-- `JWT_EXPIRE`
-- `COOKIE_EXPIRE`
-- `FRONTEND_URL`
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `GOOGLE_CALLBACK_URL`
+| Variable | Purpose | Example |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | backend base URL | `http://localhost:5000/api` |
+| `NEXT_PUBLIC_APP_NAME` | app label | `Smart Performance Intelligence Dashboard` |
+
+### Backend Variables
+
+| Variable | Purpose |
+|---|---|
+| `PORT` | backend port |
+| `NODE_ENV` | runtime environment |
+| `MONGODB_URI` | database connection string |
+| `JWT_SECRET` | auth signing secret |
+| `JWT_EXPIRE` | token expiry window |
+| `COOKIE_EXPIRE` | cookie expiry |
+| `FRONTEND_URL` | trusted frontend origin |
+| `GOOGLE_CLIENT_ID` | optional OAuth |
+| `GOOGLE_CLIENT_SECRET` | optional OAuth |
+| `GOOGLE_CALLBACK_URL` | optional OAuth callback |
 
 ## 3. Install Dependencies
-### Option A: Helper script
+
+### Recommended
+
 ```powershell
 .\install_all.bat
 ```
 
-### Option B: Manual
-```bash
-npm install
-cd server
-npm install
-```
+This script:
 
-## 4. Seed Data (optional but recommended)
+- installs frontend dependencies
+- installs backend dependencies
+- seeds the backend database
+
+### Manual Alternative
+
 ```bash
+npm install
 cd server
+npm install
 npm run seed
 ```
 
-## 5. Run Development
-### Option A: Helper script
+## 4. Start The Application
+
+### Recommended
+
 ```powershell
 .\start_project.bat
 ```
 
-This script starts both services and forces the frontend to use the local backend URL, which avoids accidental calls to an old hosted API during development.
+Why this is preferred:
 
-### Option B: Manual
+- starts backend and frontend in separate windows
+- forces frontend traffic to the local backend
+- avoids accidental calls to stale hosted API endpoints
+
+### Manual Startup
+
+Backend:
+
 ```bash
-# terminal 1
 cd server
 npm run dev
+```
 
-# terminal 2
+Frontend:
+
+```bash
 npm run dev
 ```
 
-## 6. Verify Local Runtime
+## 5. Verify Local Runtime
+
 - Frontend: `http://localhost:3000`
-- Backend: `http://localhost:5000/api`
+- Backend API: `http://localhost:5000/api`
 - Health: `http://localhost:5000/api/healthz`
 
-## 7. Validation Checklist
-- [ ] `npm run lint` succeeds at root
-- [ ] `npm run build` succeeds at root
-- [ ] `npm run test:server` succeeds
-- [ ] Login works for known account
-- [ ] Students and Faculty pages load
-- [ ] Role restrictions behave as expected
-- [ ] Approvals page loads for admin
+Quick health check:
 
-## 8. Common Setup Errors
-- Missing `/api` in `NEXT_PUBLIC_API_URL`
-- Wrong `FRONTEND_URL` format in backend env
-- Missing OAuth env values when Google auth is enabled
-- Using stale Atlas credentials or allowlist
-
-## 9. Local Debugging Tips
-- If login hangs, verify backend health and CORS config.
-- If the browser shows backend warmup messages while running locally, confirm the frontend is using `http://localhost:5000/api`.
-- If analytics show zeros, confirm sample data exists and performance records are linked.
-- If dropdowns are empty, confirm departments/subjects exist in DB.
-
-## 10. Local Architecture Overview
-```mermaid
-flowchart LR
-  Browser --> NextJS
-  NextJS --> API
-  API --> MongoDB
+```powershell
+Invoke-WebRequest http://localhost:5000/api/healthz
 ```
 
+## 6. Local Validation Checklist
+
+- [ ] `npm run lint` succeeds
+- [ ] `npm run test:server` succeeds
+- [ ] `npm run build` succeeds
+- [ ] login works
+- [ ] dashboard loads
+- [ ] students page loads
+- [ ] subjects page loads
+- [ ] faculty page loads
+- [ ] performance page loads
+- [ ] admin approvals page loads for admin account
+
+Or run the all-in-one command:
+
+```bash
+npm run check
+```
+
+## 7. Known Good Local Flow
+
+```mermaid
+sequenceDiagram
+  participant Dev
+  participant FE as Frontend
+  participant BE as Backend
+  participant DB as MongoDB
+  Dev->>FE: Open http://localhost:3000
+  FE->>BE: Call /api/healthz
+  BE->>DB: Verify DB connection
+  DB-->>BE: Connected
+  BE-->>FE: Health response
+  FE-->>Dev: App ready
+```
+
+## 8. Common Setup Problems
+
+### Warmup or backend unavailable message during local run
+
+Cause:
+
+- frontend is pointing to an old hosted backend instead of local backend
+
+Fix:
+
+- use `.\start_project.bat`
+- confirm `NEXT_PUBLIC_API_URL=http://localhost:5000/api`
+
+### Backend does not start
+
+Check:
+
+- `server/.env` exists
+- `MONGODB_URI` is valid
+- port `5000` is free
+
+### Frontend starts but API calls fail
+
+Check:
+
+- backend health endpoint responds
+- `NEXT_PUBLIC_API_URL` includes `/api`
+- browser console has no CORS mismatch
+
+### Seed fails
+
+Check:
+
+- DB credentials
+- Atlas allowlist/network settings
+- run `npm run seed` in `server/` manually for direct error output
+
+## 9. Demo Accounts
+
+If seeded locally, the backend seed script creates example accounts such as:
+
+- `admin@spid.com / admin123`
+- `faculty@spid.com / faculty123`
+
+## 10. Recommended Demo Order
+
+1. Login
+2. Dashboard
+3. Students
+4. Subjects
+5. Faculty
+6. Performance
+7. Admin approvals / login history
+
 ## Document Metadata
-- Last Updated: March 12, 2026
+
+- Last Updated: April 1, 2026
 - Status: Active

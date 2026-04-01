@@ -1,93 +1,201 @@
-# Smart Performance Intelligence Dashboard (SPID)
+# Smart Performance Intelligence Dashboard
 
-SPID is a production-ready academic intelligence platform for managing students, faculty, subjects, performance records, and governance workflows at scale. It combines operational administration with analytics so institutions can track outcomes, intervene early, and report reliably.
+Smart Performance Intelligence Dashboard (SPID) is a full-stack academic operations and analytics platform built to help institutions manage student records, faculty workflows, subjects, performance data, approvals, audit history, and insight-driven decision making from a single system.
 
-## What This System Solves
-- Keeps student, subject, and performance data synchronized across modules.
-- Reduces manual entry with linked entities and auto-populated fields.
-- Provides role-aware dashboards for admins, faculty, and students.
-- Turns raw records into actionable risk signals and intervention checklists.
+It is designed as a portfolio-grade product: not just CRUD screens, but an operational platform with role-aware access, analytics dashboards, administrative controls, and a scalable domain structure across frontend and backend layers.
 
-## Platform Highlights
-- Student 360 profile with trends, risk timeline, and advisor notes.
-- Command Center with actionable cards and an urgent queue.
-- Performance analytics with filters, KPIs, and trend visuals.
-- Governance workflows: approvals, login history, and activity logs.
-- Role-aware access control with strict backend enforcement.
+## Why This Project Stands Out
 
-## Live URLs
-- Frontend (Vercel): `https://smart-performance-dashboard-git-main-srixenos-projects.vercel.app`
-- Backend health (Render): `https://<your-render-service>.onrender.com/api/healthz`
+- Solves a real operational problem instead of a toy problem
+- Combines administration, analytics, governance, and reporting
+- Uses a modern full-stack architecture with clean domain separation
+- Includes authentication, auditability, approvals, and dashboard intelligence
+- Ships with local startup scripts, test coverage, and deployment documentation
+
+## Product Snapshot
+
+| Area | What It Delivers |
+|---|---|
+| Student Operations | Create, update, track, and analyze student records |
+| Performance Intelligence | Monitor marks, attendance, risk, and progression |
+| Governance | Admin approvals, login history, and activity logging |
+| Reporting | Dashboard KPIs, distributions, comparisons, and exports |
+| Security | Role-based access, JWT auth, middleware enforcement |
+
+## Visual Preview
+
+### Dashboard Preview
+![Dashboard Preview](public/docs/preview-dashboard.svg)
+
+### Performance Module Preview
+![Performance Preview](public/docs/preview-performance.svg)
+
+### Students Module Preview
+![Students Preview](public/docs/preview-students.svg)
+
+## Business Problem
+
+Academic institutions often manage student performance through disconnected spreadsheets, isolated portals, or manual reporting. This creates recurring issues:
+
+- student and subject data drift out of sync
+- identifying at-risk students becomes reactive instead of proactive
+- approvals and account governance are hard to audit
+- dashboards depend on manual reconciliation
+- role boundaries are inconsistently enforced
+
+SPID addresses these gaps by centralizing the operational workflow and analytics layer in one application.
+
+## Core Capabilities
+
+- Role-based authentication with local login and Google OAuth support
+- Student lifecycle management with search, filters, detail pages, and analytics
+- Faculty, subject, and performance workflows for academic operations
+- Dashboard metrics, trend charts, and institution-level comparisons
+- Command center for approvals, anomalies, weak departments, and missing data
+- Login history, activity tracking, and approval governance
+- Import/export support for operational reporting
+
+For full capability details, see [FEATURES.md](FEATURES.md).
+
+## Architecture Overview
+
+```mermaid
+flowchart LR
+  User[Admin / Faculty / Student] --> FE[Next.js Frontend]
+  FE --> API[Express API]
+  API --> AUTH[Auth + Permissions Middleware]
+  AUTH --> DB[(MongoDB Atlas)]
+  API --> ANALYTICS[Dashboard / Academic / AI Services]
+  ANALYTICS --> DB
+  API --> AUDIT[Activity + Login History]
+  AUDIT --> DB
+```
+
+## Entity Relationship Diagram
+
+```mermaid
+erDiagram
+  USER ||--o{ ACTIVITY_LOG : creates
+  USER ||--o{ AI_ANALYTICS : reviews
+  USER ||--o{ STUDENT : manages
+  STUDENT ||--o{ PERFORMANCE : has
+  STUDENT ||--|| ACADEMIC_RECORD : owns
+  STUDENT }o--o{ SUBJECT : enrolls_in
+  SUBJECT_GROUP ||--o{ SUBJECT : contains
+  STUDENT }o--|| SUBJECT_GROUP : mapped_to
+  USER {
+    string userId
+    string name
+    string email
+    string role
+    string status
+  }
+  STUDENT {
+    string studentId
+    string name
+    string department
+    int year
+    int semester
+    string status
+  }
+  SUBJECT {
+    string subjectId
+    string subjectCode
+    string subjectName
+    int credits
+  }
+  SUBJECT_GROUP {
+    string department
+    int year
+    int semester
+  }
+  PERFORMANCE {
+    string grade
+    float marks
+    float attendancePercentage
+  }
+  ACADEMIC_RECORD {
+    float sgpa
+    float cgpa
+  }
+  AI_ANALYTICS {
+    float riskScore
+    string riskLevel
+  }
+  ACTIVITY_LOG {
+    string action
+    string description
+    date timestamp
+  }
+```
 
 ## Technology Stack
-- Frontend: Next.js (App Router), React, TypeScript, Tailwind CSS, Chart.js
-- Backend: Node.js, Express, Mongoose, JWT, Passport Google OAuth
-- Database: MongoDB Atlas
-- Hosting: Vercel (frontend), Render (backend)
+
+### Frontend
+- Next.js App Router
+- React 19
+- TypeScript
+- Tailwind CSS
+- Chart.js / react-chartjs-2
+
+### Backend
+- Node.js
+- Express.js
+- Mongoose
+- JWT + cookie-based auth
+- Passport Google OAuth
+
+### Data and Hosting
+- MongoDB Atlas
+- Vercel for frontend
+- Render for backend
 
 ## Monorepo Structure
+
 ```text
 PROJECT 1/
-  src/                       Next.js frontend
-    app/                     Routes/pages
-    components/              UI and dashboards
-    context/                 Auth context
-    lib/                     API client layer
-  server/                    Express API
+  src/
+    app/                  App Router pages
+    components/           UI and dashboard components
+    context/              Auth context
+    lib/                  API client, permissions, helpers
+    data/                 Mock and utility data
+    types/                Shared TypeScript types
+  server/
     src/
-      config/                DB + passport
-      controllers/           Business logic
-      middleware/            Auth + role middleware
-      models/                Mongo schemas
-      routes/                API routes
+      config/             DB and passport config
+      controllers/        Domain logic
+      middleware/         Auth, validation, security
+      models/             Mongoose schemas
+      routes/             REST API routes
+      services/           Analytics and business services
+      utils/              Helper utilities
+  public/docs/            Preview assets for documentation
   README.md
   FEATURES.md
   SETUP.md
   DEPLOYMENT.md
 ```
 
-## Role and Access Model
-| Role | Access |
+## User Roles
+
+| Role | Primary Access |
 |---|---|
-| `admin` | Full management access, approvals, governance, exports |
-| `faculty` | Student view/edit, performance input, student actions |
-| `student` | Student-scoped analytics and personal data |
-| `viewer` | Pending users awaiting admin approval |
+| `admin` | Full operational control, approvals, governance, reporting |
+| `faculty` | Student access, subject handling, performance workflows |
+| `student` | Personal dashboard and student-scoped visibility |
+| `viewer` | Awaiting admin approval before activation |
 
-## Core Modules
-- Authentication (`local + Google OAuth`)
-- Students (CRUD, status controls, 360 profiles)
-- Faculty (admin-managed lifecycle)
-- Subjects (department/year/semester assignment)
-- Performance (records, trends, risk signals)
-- Analytics (dashboard metrics, faculty insights)
-- Governance (approvals, login history, activity audit)
+## Recruiter / Reviewer Highlights
 
-Detailed list: see `FEATURES.md`.
+- Demonstrates end-to-end ownership of a real product workflow
+- Shows frontend, backend, database, auth, analytics, and documentation maturity
+- Includes quality gates: lint, tests, production build, audit cleanup
+- Uses structured docs, diagrams, and deployment guidance
+- Suitable for discussion across product thinking, engineering design, and implementation depth
 
-## System Workflow
-```mermaid
-flowchart LR
-  U[User] --> FE[Next.js Frontend]
-  FE --> API[Express API]
-  API --> DB[(MongoDB Atlas)]
-  API --> ANALYTICS[Analytics + Risk Engine]
-  FE -->|JWT| API
-  API -->|Role Checks| DB
-  DB --> ANALYTICS
-  ANALYTICS --> API
-```
+## Local Setup
 
-## Academic Data Flow
-```mermaid
-flowchart TB
-  S[Student Created] --> EN[Enrollments]
-  SUB[Subjects by Dept/Year/Sem] --> EN
-  EN --> PERF[Performance Records]
-  PERF --> DASH[Analytics + Dashboards]
-```
-
-## Local Development (Quick)
 ```powershell
 Copy-Item .env.example .env.local
 Copy-Item server/.env.example server/.env
@@ -95,70 +203,60 @@ Copy-Item server/.env.example server/.env
 .\start_project.bat
 ```
 
-Notes:
-- `start_project.bat` forces the frontend to use the local backend at `http://localhost:5000/api`.
-- If PowerShell blocks `npm` scripts on your machine, use the provided `.bat` scripts or run `npm.cmd`.
-
-Manual run:
-```bash
-# terminal 1
-cd server
-npm install
-npm run seed
-npm run dev
-
-# terminal 2 (project root)
-npm install
-npm run dev
-```
-
 Local URLs:
+
 - Frontend: `http://localhost:3000`
 - Backend API: `http://localhost:5000/api`
 - Health: `http://localhost:5000/api/healthz`
 
-## Environment Variables
-### Frontend (`.env.local`)
-- `NEXT_PUBLIC_API_URL` (local example: `http://localhost:5000/api`, deploy example: `https://<render-service>.onrender.com/api`)
-- `NEXT_PUBLIC_APP_NAME`
+Notes:
 
-### Backend (`server/.env`)
-- `PORT`
-- `NODE_ENV`
-- `MONGODB_URI`
-- `JWT_SECRET`
-- `JWT_EXPIRE`
-- `COOKIE_EXPIRE`
-- `FRONTEND_URL`
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `GOOGLE_CALLBACK_URL`
+- `start_project.bat` forces the frontend to use the local backend URL to avoid stale hosted API configuration.
+- If PowerShell blocks `npm`, use the provided batch scripts or `npm.cmd`.
 
-## API Surface (High Level)
-- `/api/auth`
-- `/api/students`
-- `/api/faculty`
-- `/api/subjects`
-- `/api/performance`
-- `/api/dashboard`
-- `/api/academic`
-- `/api/ai-analytics`
-- `/api/activities`
+## Verification
 
-## Documentation
-- `FEATURES.md`
-- `SETUP.md`
-- `DEPLOYMENT.md`
+```bash
+npm run check
+```
 
-## Submission Checklist
-- Run `npm run check` from the project root.
-- Start locally with `.\start_project.bat`.
-- Confirm login, dashboard, students, subjects, faculty, and performance screens load.
-- Verify backend health at `http://localhost:5000/api/healthz`.
+This runs:
+
+- lint
+- backend test suite
+- production build
+
+## Deployment
+
+Production deployment is documented in [DEPLOYMENT.md](DEPLOYMENT.md).
+
+Recommended topology:
+
+- Frontend on Vercel
+- Backend on Render
+- Database on MongoDB Atlas
+
+## Documentation Guide
+
+- [FEATURES.md](FEATURES.md) for product capability breakdown
+- [SETUP.md](SETUP.md) for developer onboarding
+- [DEPLOYMENT.md](DEPLOYMENT.md) for production rollout
+- [Smart-performance-dashboard/DOCUMENTATION_INDEX.md](Smart-performance-dashboard/DOCUMENTATION_INDEX.md) for the technical appendix set
+
+## Submission Readiness Checklist
+
+- [x] Local startup flow verified
+- [x] Production build verified
+- [x] Backend test suite passing
+- [x] Lint passing
+- [x] Security audit passing
+- [x] Documentation refreshed with diagrams and visuals
 
 ## License
-Academic and portfolio usage.
+
+Portfolio, academic, and demonstration use.
 
 ## Document Metadata
-- Last Updated: March 12, 2026
-- Status: Active
+
+- Last Updated: April 1, 2026
+- Status: Submission Ready

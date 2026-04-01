@@ -1,117 +1,171 @@
-# Deployment Guide (Vercel + Render + Atlas)
+# Deployment Guide
 
-## 1. Target Topology
-- Frontend: Vercel (`PROJECT 1`)
-- Backend: Render Web Service (`PROJECT 1/server`)
-- Database: MongoDB Atlas
+This document describes the recommended production deployment model for SPID using Vercel, Render, and MongoDB Atlas.
 
-## 2. Deploy Database (Atlas)
-1. Create cluster (M0 or higher).
-2. Create DB user.
-3. Add network access (start with `0.0.0.0/0`, then restrict later).
-4. Copy connection string for `MONGODB_URI`.
+## Recommended Production Topology
 
-## 3. Deploy Backend (Render)
-### Service settings
+```mermaid
+flowchart LR
+  GitHub --> Vercel[Next.js Frontend]
+  GitHub --> Render[Express Backend]
+  Render --> Atlas[(MongoDB Atlas)]
+  Browser --> Vercel
+  Vercel --> Render
+```
+
+## Production Components
+
+| Layer | Platform | Responsibility |
+|---|---|---|
+| Frontend | Vercel | Next.js app delivery |
+| Backend | Render | API runtime and business logic |
+| Database | MongoDB Atlas | persistent operational data |
+
+## 1. MongoDB Atlas Setup
+
+1. Create a cluster
+2. Create a database user
+3. Add network access
+4. Copy the connection string for `MONGODB_URI`
+
+## 2. Backend Deployment On Render
+
+### Render Service Settings
+
 - Root directory: `PROJECT 1/server`
 - Build command: `npm install`
 - Start command: `npm start`
 
-### Required env vars
-- `NODE_ENV=production`
-- `PORT=10000`
-- `MONGODB_URI=<atlas-uri>`
-- `JWT_SECRET=<strong-secret>`
-- `JWT_EXPIRE=3h`
-- `COOKIE_EXPIRE=0.125`
-- `FRONTEND_URL=<vercel-url>`
-- `GOOGLE_CLIENT_ID=<optional>`
-- `GOOGLE_CLIENT_SECRET=<optional>`
-- `GOOGLE_CALLBACK_URL=<optional>`
+### Required Backend Environment Variables
 
-### Verify backend
-- Open `https://<render-service>.onrender.com/api/healthz`
-- Expect `{"success":true,...}`
+| Variable | Example |
+|---|---|
+| `NODE_ENV` | `production` |
+| `PORT` | `10000` |
+| `MONGODB_URI` | `<atlas-uri>` |
+| `JWT_SECRET` | `<strong-secret>` |
+| `JWT_EXPIRE` | `3h` |
+| `COOKIE_EXPIRE` | `0.125` |
+| `FRONTEND_URL` | `<vercel-url>` |
+| `GOOGLE_CLIENT_ID` | optional |
+| `GOOGLE_CLIENT_SECRET` | optional |
+| `GOOGLE_CALLBACK_URL` | optional |
 
-## 4. Deploy Frontend (Vercel)
-### Project settings
+### Backend Validation
+
+Open:
+
+`https://<render-service>.onrender.com/api/healthz`
+
+Expected:
+
+- JSON success response
+- `dbConnected: true`
+
+## 3. Frontend Deployment On Vercel
+
+### Vercel Settings
+
 - Root directory: `PROJECT 1`
 
-### Required env vars
-- `NEXT_PUBLIC_API_URL=https://<render-service>.onrender.com/api`
-- `NEXT_PUBLIC_APP_NAME=Smart Performance Intelligence Dashboard`
+### Required Frontend Environment Variables
 
-## 5. Final Integration
-1. Copy Vercel production URL.
-2. Set backend `FRONTEND_URL` to the exact Vercel URL.
-3. Redeploy backend.
-4. Test login and protected pages.
+| Variable | Example |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | `https://<render-service>.onrender.com/api` |
+| `NEXT_PUBLIC_APP_NAME` | `Smart Performance Intelligence Dashboard` |
 
-## 6. Production Validation
-- [ ] Login works (local auth)
-- [ ] Google login works (if enabled)
-- [ ] Approvals page accessible for admin
-- [ ] Student/faculty CRUD flows working
-- [ ] No CORS errors in browser console
+## 4. Integration Flow
 
-## 7. Troubleshooting
-### Frontend stuck on loading
-- Check backend health endpoint
-- Confirm `NEXT_PUBLIC_API_URL` includes `/api`
-- Confirm `/auth/me` returns valid response
-
-### Render cold start (slow first or second login)
-- Free Render instances sleep when idle; wake-up can take 10-30s.
-- This repo includes GitHub keep-alive workflow at `.github/workflows/keepalive-render.yml`.
-- Add repository secret:
-  - Name: `RENDER_HEALTHCHECK_URL`
-  - Value: `https://<render-service>.onrender.com/api/healthz`
-- Ensure GitHub Actions is enabled for the repo.
-- You can run the workflow manually from `Actions -> Keep Render Awake -> Run workflow`.
-- Scheduled ping runs every 10 minutes.
-
-### CORS blocked
-- Ensure backend `FRONTEND_URL` is exact (protocol + domain)
-- Redeploy backend after env changes
-
-### Google auth failure
-- Verify callback URL matches deployed backend auth callback
-- Verify client ID/secret on Render
-
-## 8. Operational Notes
-- Use Render logs to verify port detection and health checks.
-- Keep `NODE_ENV=production` in backend to avoid verbose logging.
-- Avoid committing `node_modules` to prevent slow deploys.
-
-## 9. Deployment Workflow
 ```mermaid
-flowchart LR
-  Dev[Local Dev] --> GitHub
-  GitHub --> Vercel
-  GitHub --> Render
-  Render --> MongoDB
-  Vercel --> Browser
+sequenceDiagram
+  participant DevOps
+  participant Vercel
+  participant Render
+  participant Atlas
+  DevOps->>Render: Deploy API + env vars
+  Render->>Atlas: Connect to database
+  DevOps->>Vercel: Deploy frontend + API URL
+  Vercel->>Render: Call backend APIs
+  Render-->>Vercel: Serve data
 ```
 
-## 10. Go-Live Checklist
-- [ ] Frontend build succeeds on Vercel
-- [ ] Backend `/api/healthz` responds successfully
-- [ ] `FRONTEND_URL` matches deployed Vercel domain exactly
-- [ ] Login works for admin account
-- [ ] Students and Faculty pages load without CORS errors
-- [ ] Approvals page works for admin
-- [ ] Student block/unblock and update flows work
+## 5. Production Readiness Checklist
 
-## 11. Quick Reference
-Backend (Render):
-- Root: `PROJECT 1/server`
-- Build: `npm install`
-- Start: `npm start`
+- [ ] backend `/api/healthz` returns success
+- [ ] frontend points to production backend URL
+- [ ] `FRONTEND_URL` exactly matches the frontend host
+- [ ] login works
+- [ ] admin approvals page works
+- [ ] students/faculty/performance pages load
+- [ ] no browser CORS errors
+- [ ] Google OAuth works if enabled
 
-Frontend (Vercel):
-- Root: `PROJECT 1`
-- `NEXT_PUBLIC_API_URL=https://<render-service>.onrender.com/api`
+## 6. Cold Start Notes
+
+If using a free Render instance:
+
+- the service may sleep when idle
+- first request may take 10 to 30 seconds
+- login can look slow if the service is waking up
+
+Mitigation already documented in the repo:
+
+- use the health endpoint for keepalive
+- optionally configure a scheduled ping workflow
+
+## 7. Common Production Issues
+
+### CORS blocked
+
+Cause:
+
+- frontend URL does not match `FRONTEND_URL`
+
+Fix:
+
+- update the exact deployed frontend origin in backend environment variables
+- redeploy backend
+
+### Frontend cannot reach backend
+
+Cause:
+
+- `NEXT_PUBLIC_API_URL` missing `/api`
+
+Fix:
+
+- ensure the variable ends with `/api`
+
+### Auth works locally but not in production
+
+Cause:
+
+- wrong callback URL or secret mismatch
+
+Fix:
+
+- verify JWT secret, Google callback URL, and deployed frontend URL
+
+## 8. Go-Live Checklist
+
+- [ ] build succeeds on Vercel
+- [ ] backend startup logs are healthy on Render
+- [ ] database accepts production connection
+- [ ] login and protected routes work
+- [ ] dashboard data renders
+- [ ] student and performance workflows are functional
+
+## 9. Reviewer-Friendly Deployment Summary
+
+This project is deployable in a standard modern web stack:
+
+- frontend and backend are independently deployable
+- the backend is stateless and suitable for managed hosting
+- database hosting is externalized to Atlas
+- environment variables are documented cleanly
 
 ## Document Metadata
-- Last Updated: March 12, 2026
-- Status: Active
+
+- Last Updated: April 1, 2026
+- Status: Production Blueprint
