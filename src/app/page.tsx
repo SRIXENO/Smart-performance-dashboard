@@ -168,7 +168,7 @@ export default function Home() {
                 <div className="mt-6 rounded-2xl border border-sky-300/20 bg-sky-400/10 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.25em] text-sky-200">Demo accounts</p>
                   <p className="mt-2 text-sm text-slate-100">Seeded admin, faculty, and student flows are available for local review.</p>
-                  <p className="mt-2 text-xs text-slate-300">Admin: admin@spid.com | Faculty: faculty@spid.com | Student: aarya.sharma@spid.com</p>
+                  <p className="mt-2 text-xs text-slate-300">Admin: admin@xeno.com | Faculty: faculty@spid.com | Student: aarya.sharma@spid.com</p>
                 </div>
               </div>
             </div>

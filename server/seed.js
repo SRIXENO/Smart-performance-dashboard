@@ -325,8 +325,8 @@ async function seedDatabase() {
 
     const adminUser = await createUser({
       name: 'Admin User',
-      email: 'admin@spid.com',
-      password: 'admin123',
+      email: 'admin@xeno.com',
+      password: 'adminsrixeno',
       role: 'admin',
       registerNumber: 'ADM-001',
       designation: 'System Administrator',
@@ -533,7 +533,7 @@ async function seedDatabase() {
     console.log('Database seeded successfully');
     console.log('');
     console.log('Demo credentials');
-    console.log('Admin   : admin@spid.com / admin123');
+    console.log('Admin   : admin@xeno.com / adminsrixeno');
     console.log('Faculty : faculty@spid.com / faculty123');
     console.log('Student : aarya.sharma@spid.com / student123');
     console.log('Viewer  : viewer@spid.com / viewer123 (pending approval)');

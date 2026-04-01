@@ -222,7 +222,7 @@ Use the seed script for a ready-to-review dataset:
 npm --prefix server run seed
 ```
 
-- Admin: `admin@spid.com / admin123`
+- Admin: `admin@xeno.com / adminsrixeno`
 - Faculty: `faculty@spid.com / faculty123`
 - Student: `aarya.sharma@spid.com / student123`
 - Viewer approval queue: `viewer@spid.com / viewer123`
