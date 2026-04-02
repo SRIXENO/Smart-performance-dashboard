@@ -98,6 +98,12 @@ export default function Performance() {
     return 'F';
   }, [formData.marks]);
 
+  useEffect(() => {
+    if (user?.role === 'student') {
+      router.replace('/dashboard');
+    }
+  }, [router, user?.role]);
+
   useEffect(() => () => {
     isMountedRef.current = false;
   }, []);
@@ -685,6 +691,10 @@ export default function Performance() {
       setIsBootstrappingMissing(false);
     }
   };
+
+  if (user?.role === 'student') {
+    return null;
+  }
 
   return (
     <div className="space-y-6">

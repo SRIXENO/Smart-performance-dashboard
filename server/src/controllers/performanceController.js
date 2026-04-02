@@ -4,6 +4,25 @@ const Subject = require('../models/Subject');
 const { getStudentConnectedProfile } = require('../services/academicDataService');
 const { upsertGlobalCache, upsertStudentCache } = require('../services/analyticsService');
 
+const findOwnedStudent = async (reqUser = null) => {
+  if (reqUser?.role !== 'student') return null;
+
+  const clauses = [];
+  const email = String(reqUser?.email || '').trim().toLowerCase();
+  const registerNumber = String(reqUser?.registerNumber || '').trim();
+  const studentId = String(reqUser?.studentId || '').trim();
+
+  if (email) clauses.push({ email });
+  if (registerNumber) {
+    clauses.push({ rollNumber: registerNumber });
+    clauses.push({ studentId: registerNumber });
+  }
+  if (studentId) clauses.push({ studentId });
+
+  if (!clauses.length) return null;
+  return Student.findOne({ $or: clauses }).select('_id').lean();
+};
+
 const buildMissingSummary = async ({ limit = 200, studentIds = null } = {}) => {
   const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(500, Math.floor(limit))) : 200;
   const studentQuery = {};
@@ -100,6 +119,24 @@ const getPerformance = async (req, res) => {
     const sortOrder = String(sortDir).toLowerCase() === 'asc' ? 1 : -1;
 
     const match = {};
+    if (req.user?.role === 'student') {
+      const ownedStudent = await findOwnedStudent(req.user);
+      if (!ownedStudent) {
+        return res.json({
+          success: true,
+          data: {
+            records: [],
+            pagination: {
+              currentPage: pageNum,
+              totalPages: 1,
+              totalRecords: 0,
+              limit: limitNum,
+            },
+          },
+        });
+      }
+      match.studentId = ownedStudent._id;
+    }
     if (studentId) match.studentId = studentId;
     if (subjectId) match.subjectId = subjectId;
     if (semester) match.semester = semester;
@@ -415,7 +452,12 @@ const deletePerformance = async (req, res) => {
 const getMissingPerformanceSummary = async (req, res) => {
   try {
     const limitRaw = Number(req.query.limit || 200);
-    const data = await buildMissingSummary({ limit: limitRaw });
+    let studentIds = null;
+    if (req.user?.role === 'student') {
+      const ownedStudent = await findOwnedStudent(req.user);
+      studentIds = ownedStudent ? [ownedStudent._id] : [];
+    }
+    const data = await buildMissingSummary({ limit: limitRaw, studentIds });
     return res.json({
       success: true,
       data,

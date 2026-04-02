@@ -70,6 +70,27 @@ const navigation: NavItem[] = [
   }
 ];
 
+const studentNavigation: NavItem[] = [
+  {
+    name: 'Dashboard',
+    href: '/dashboard',
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 13h8V3H3v10zm10 8h8V11h-8v10zM3 21h8v-6H3v6zm10-8h8V3h-8v10z" />
+      </svg>
+    )
+  },
+  {
+    name: 'My Profile',
+    href: '/students',
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9 9 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    )
+  },
+];
+
 const adminItem: NavItem = {
   name: 'New Approvals',
   href: '/admin/approvals',
@@ -103,8 +124,9 @@ const viewersItem: NavItem = {
 export default function Sidebar({ isOpen = false, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const baseItems = user?.role === 'student' ? studentNavigation : navigation;
   const items = [
-    ...navigation,
+    ...baseItems,
     ...(hasPermission(user, 'approvals.manage') ? [adminItem] : []),
     ...(hasPermission(user, 'viewers.manage') ? [viewersItem] : []),
     ...(hasPermission(user, 'activities.view') ? [loginHistoryItem] : []),

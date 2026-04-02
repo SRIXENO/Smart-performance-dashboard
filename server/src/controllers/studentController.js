@@ -38,6 +38,47 @@ const getYearSemesterDefaults = (year) => {
   return { semester, currentSemester: `Semester ${semester}` };
 };
 
+const buildStudentOwnershipClauses = (reqUser = null) => {
+  if (reqUser?.role !== 'student') return [];
+
+  const clauses = [];
+  const email = String(reqUser?.email || '').trim().toLowerCase();
+  const registerNumber = String(reqUser?.registerNumber || '').trim();
+  const studentId = String(reqUser?.studentId || '').trim();
+
+  if (email) clauses.push({ email });
+  if (registerNumber) {
+    clauses.push({ rollNumber: registerNumber });
+    clauses.push({ studentId: registerNumber });
+  }
+  if (studentId) clauses.push({ studentId });
+
+  return clauses;
+};
+
+const mergeStudentOwnershipIntoQuery = (query = {}, reqUser = null) => {
+  const ownershipClauses = buildStudentOwnershipClauses(reqUser);
+  if (!ownershipClauses.length) return reqUser?.role === 'student' ? { _id: null } : query;
+
+  const nextQuery = { ...query };
+  if (nextQuery.$or) {
+    const searchClauses = nextQuery.$or;
+    delete nextQuery.$or;
+    return {
+      ...nextQuery,
+      $and: [
+        { $or: ownershipClauses },
+        { $or: searchClauses },
+      ],
+    };
+  }
+
+  return {
+    ...nextQuery,
+    $or: ownershipClauses,
+  };
+};
+
 const buildStudentQuery = (filters = {}, reqUser = null) => {
   const { search, department, year, semester, status } = filters;
   const query = {};
@@ -55,7 +96,7 @@ const buildStudentQuery = (filters = {}, reqUser = null) => {
   if (semester) query.semester = parseInt(semester, 10);
   if (status) query.status = status;
 
-  return query;
+  return mergeStudentOwnershipIntoQuery(query, reqUser);
 };
 
 const buildBulkStudentMatch = ({ studentIds, department, year, semester, status }) => {

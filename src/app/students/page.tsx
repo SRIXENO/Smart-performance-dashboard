@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { studentsAPI } from '@/lib/api';
 import { Student } from '@/types';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -14,6 +15,7 @@ import { getApiErrorMessage } from '@/lib/apiError';
 
 export default function Students() {
   const { user } = useAuth();
+  const router = useRouter();
   const isViewer = user?.role === 'viewer' || user?.role === 'student';
   const isStudentRole = user?.role === 'student';
   const canManageStudents = hasPermission(user, 'students.manage');
@@ -85,6 +87,12 @@ export default function Students() {
     return () => clearTimeout(timeoutId);
   }, [search, department, year, semester]);
 
+  useEffect(() => {
+    if (!loading && isStudentRole && students.length === 1) {
+      router.replace(`/students/${students[0]._id}`);
+    }
+  }, [isStudentRole, loading, router, students]);
+
   const handleDelete = async (id: string, name: string) => {
     setConfirmModal({
       isOpen: true,
@@ -144,6 +152,12 @@ export default function Students() {
 
   return (
     <div className="space-y-6">
+      {!loading && isStudentRole && students.length === 1 ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-600">
+          Opening your profile...
+        </div>
+      ) : (
+        <>
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-900">Students</h1>
         {canManageStudents && (
@@ -474,6 +488,8 @@ export default function Students() {
           variant={toast.variant}
           onClose={() => setToast(null)}
         />
+      )}
+        </>
       )}
     </div>
   );
