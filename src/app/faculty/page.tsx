@@ -5,6 +5,7 @@ import { facultyAPI } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import ConfirmModal from '@/components/ConfirmModal';
+import StatusToast from '@/components/StatusToast';
 import { hasPermission } from '@/lib/permissions';
 import { getApiErrorMessage } from '@/lib/apiError';
 
@@ -116,6 +117,7 @@ export default function FacultyPage() {
     confirmStyle: 'danger' as 'danger' | 'primary' | 'warning',
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' | 'info' } | null>(null);
 
   const loadFaculty = async () => {
     setLoading(true);
@@ -198,7 +200,7 @@ export default function FacultyPage() {
       resetForm();
       await loadFaculty();
     } catch (error: any) {
-      alert(getApiErrorMessage(error, 'Failed to save faculty'));
+      setToast({ message: getApiErrorMessage(error, 'Failed to save faculty'), variant: 'error' });
     }
   };
 
@@ -220,7 +222,7 @@ export default function FacultyPage() {
           await loadFaculty();
           if (selected?._id === id) setSelected(null);
         } catch (error: any) {
-          alert(getApiErrorMessage(error, 'Failed to delete faculty'));
+          setToast({ message: getApiErrorMessage(error, 'Failed to delete faculty'), variant: 'error' });
         } finally {
           setIsDeleting(false);
         }
@@ -606,6 +608,13 @@ export default function FacultyPage() {
         cancelText="Cancel"
         loading={isDeleting}
       />
+      {toast && (
+        <StatusToast
+          message={toast.message}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

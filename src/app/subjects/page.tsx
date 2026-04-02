@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { subjectsAPI } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import SuccessToast from '@/components/SuccessToast';
+import StatusToast from '@/components/StatusToast';
 import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import { hasPermission } from '@/lib/permissions';
@@ -126,7 +127,8 @@ export default function SubjectManagement() {
       fetchSubjectGroups();
     } catch (error: any) {
       console.error('Submit error:', error);
-      alert(getApiErrorMessage(error, 'Failed to save subjects'));
+      setErrorMessage(getApiErrorMessage(error, 'Failed to save subjects'));
+      setShowErrorToast(true);
     }
   };
 
@@ -154,7 +156,8 @@ export default function SubjectManagement() {
           setConfirmModal({ ...confirmModal, isOpen: false });
           fetchSubjectGroups();
         } catch (error: any) {
-          alert(getApiErrorMessage(error, 'Failed to delete subject group'));
+          setErrorMessage(getApiErrorMessage(error, 'Failed to delete subject group'));
+          setShowErrorToast(true);
         } finally {
           setIsDeleting(false);
         }
@@ -486,19 +489,7 @@ export default function SubjectManagement() {
       )}
 
       {showErrorToast && (
-        <div className="fixed top-4 right-4 z-50 animate-slideIn">
-          <div className="bg-red-600 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3">
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            <span className="font-medium">{errorMessage}</span>
-            <button onClick={() => setShowErrorToast(false)} className="ml-4 text-white hover:text-gray-200">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
+        <StatusToast message={errorMessage} onClose={() => setShowErrorToast(false)} variant="error" />
       )}
     </div>
   );

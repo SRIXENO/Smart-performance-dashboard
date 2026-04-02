@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { studentsAPI } from '@/lib/api';
 import { Student } from '@/types';
 import ConfirmModal from '@/components/ConfirmModal';
+import StatusToast from '@/components/StatusToast';
 import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import { logger } from '@/lib/logger';
@@ -42,6 +43,7 @@ export default function Students() {
   });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' | 'info' } | null>(null);
 
   const departments = [
     'Computer Science',
@@ -99,7 +101,7 @@ export default function Students() {
           fetchStudents(pagination.currentPage);
         } catch (error: any) {
           logger.error('Failed to delete student:', error);
-          alert(getApiErrorMessage(error, 'Failed to delete student'));
+          setToast({ message: getApiErrorMessage(error, 'Failed to delete student'), variant: 'error' });
         } finally {
           setIsDeleting(false);
         }
@@ -132,7 +134,7 @@ export default function Students() {
           fetchStudents(pagination.currentPage);
         } catch (error: any) {
           logger.error('Failed to update student status:', error);
-          alert(getApiErrorMessage(error, 'Failed to update student status'));
+          setToast({ message: getApiErrorMessage(error, 'Failed to update student status'), variant: 'error' });
         } finally {
           setIsUpdatingStatus(null);
         }
@@ -466,6 +468,13 @@ export default function Students() {
         cancelText="Cancel"
         loading={confirmModal.action === 'delete' ? isDeleting : isUpdatingStatus !== null}
       />
+      {toast && (
+        <StatusToast
+          message={toast.message}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

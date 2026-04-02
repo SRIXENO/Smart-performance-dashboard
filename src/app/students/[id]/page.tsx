@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { studentsAPI } from '@/lib/api';
 import ConfirmModal from '@/components/ConfirmModal';
+import StatusToast from '@/components/StatusToast';
 import { useAuth } from '@/context/AuthContext';
 import { logger } from '@/lib/logger';
 import { hasPermission } from '@/lib/permissions';
@@ -32,6 +33,7 @@ export default function StudentDetail() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState('');
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' | 'info' } | null>(null);
 
   useEffect(() => {
     const fetchStudent = async () => {
@@ -63,7 +65,7 @@ export default function StudentDetail() {
           router.push('/students');
         } catch (error: any) {
           logger.error('Failed to delete student:', error);
-          alert(getApiErrorMessage(error, 'Failed to delete student'));
+          setToast({ message: getApiErrorMessage(error, 'Failed to delete student'), variant: 'error' });
           setIsDeleting(false);
         }
       }
@@ -109,7 +111,7 @@ export default function StudentDetail() {
           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
         } catch (error: any) {
           logger.error('Failed to update student status:', error);
-          alert(getApiErrorMessage(error, 'Failed to update student status'));
+          setToast({ message: getApiErrorMessage(error, 'Failed to update student status'), variant: 'error' });
         } finally {
           setIsUpdatingStatus(false);
         }
@@ -139,7 +141,7 @@ export default function StudentDetail() {
           }));
         } catch (error: any) {
           logger.error('Failed to save uploaded document:', error);
-          alert(getApiErrorMessage(error, 'Failed to upload document'));
+          setToast({ message: getApiErrorMessage(error, 'Failed to upload document'), variant: 'error' });
         } finally {
           setUploadingDoc('');
         }
@@ -577,6 +579,13 @@ export default function StudentDetail() {
         cancelText="Cancel"
         loading={confirmModal.action === 'delete' ? isDeleting : isUpdatingStatus}
       />
+      {toast && (
+        <StatusToast
+          message={toast.message}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

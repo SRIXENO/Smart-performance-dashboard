@@ -6,6 +6,7 @@ import { studentsAPI, subjectsAPI } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { useAuth } from '@/context/AuthContext';
 import CustomDropdown from '@/components/ui/CustomDropdown';
+import StatusToast from '@/components/StatusToast';
 
 const DEPARTMENT_CODE_MAP: Record<string, string> = {
   CS: 'Computer Science',
@@ -38,6 +39,7 @@ export default function EditStudent() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' | 'info' } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -276,12 +278,12 @@ export default function EditStudent() {
     e.preventDefault();
 
     if (newPassword && newPassword.length < 8) {
-      alert('New password must be at least 8 characters');
+      setToast({ message: 'New password must be at least 8 characters', variant: 'error' });
       return;
     }
 
     if (newPassword && newPassword !== confirmPassword) {
-      alert('New password and confirm password do not match');
+      setToast({ message: 'New password and confirm password do not match', variant: 'error' });
       return;
     }
 
@@ -298,7 +300,10 @@ export default function EditStudent() {
     } catch (error: any) {
       console.error('Failed to update student:', error);
       console.error('Error response:', error.response?.data);
-      alert(`Failed to update student: ${getApiErrorMessage(error, error.message)}`);
+      setToast({
+        message: `Failed to update student: ${getApiErrorMessage(error, error.message)}`,
+        variant: 'error',
+      });
     } finally {
       setSaving(false);
     }
@@ -340,7 +345,7 @@ export default function EditStudent() {
     };
     reader.onerror = () => {
       setUploadingDoc('');
-      alert('Failed to read selected file');
+      setToast({ message: 'Failed to read selected file', variant: 'error' });
     };
     reader.readAsDataURL(file);
   };
@@ -975,6 +980,13 @@ export default function EditStudent() {
           </div>
         </form>
       </div>
+      {toast && (
+        <StatusToast
+          message={toast.message}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
