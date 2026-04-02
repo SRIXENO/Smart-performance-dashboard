@@ -8,6 +8,15 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const { user, logout } = useAuth();
   const router = useRouter();
   const [clock, setClock] = useState(new Date());
+  const formattedClock = new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  }).format(clock);
 
   useEffect(() => {
     const timer = setInterval(() => setClock(new Date()), 1000);
@@ -45,7 +54,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
           </button>
           <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 truncate">Dashboard</h1>
-          <p className="text-xs text-slate-500 mt-1">Live insights | {clock.toLocaleString()}</p>
+          <p className="text-xs text-slate-500 mt-1">Live insights | {formattedClock}</p>
           </div>
         </div>
 
